@@ -1,0 +1,59 @@
+log_dir: logs
+log_file: systemx
+error_file: systemx_error
+
+sqlite_db: sqlite:///sandbox.sqlite
+
+#Liquid Robot settings
+robot_ip: 
+
+#Camera settings
+camera_type: FLIR
+#camera_name: "Genicam FLIR Blackfly S BFS-U3-70S7M 0159F411"
+camera_name: "Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410"
+exposure_time: 50000 # in microseconds
+image_dimension_x: 1920 # in pixels
+image_dimension_y: 1080 # in pixels
+
+# Temika settings
+temika_host: 127.0.0.1
+temika_port: 60000
+temika_timeout: 60
+temika_buffer_size: 1024
+temika_name: microscopeone
+
+# Illuminator settings
+illumination_type: Temika
+led_bitmask: 0x03 # 0x03 = 3 = 00000011 (led 0 + 1)
+
+# Focus settings
+focus_type: Temika
+normal_focus_speed: 10 # in microns/s
+max_focus_speed: 100 # in microns/s
+
+# Stage settings
+384_plate_minimum_column: 3
+384_plate_minimum_row: 3
+384_plate_maximum_column: 21
+384_plate_maximum_row: 14
+stage_type: Temika
+stage_force_to_origin: 130 # in mm
+stage_scale: 1000.0 # convert mm to microns
+max_stage_speed: 10000 # in microns/s
+normal_stage_speed: 3000 # in microns/s
+origin_offset_x: 4300 # in microns
+origin_offset_y: 3300 # in microns
+
+# Opentrons settings
+script_template: ./opentrons_protocols/template.json
+script_output_path: ./opentrons_protocols/script
+
+#Image file settings
+movie_file_directory: /Volumes/T7/Temika/Movies/
+movie_extension: .movie
+local_file_path: /Volumes/T7/Temika/Images/png/
+
+
+# Roboflow settings
+image_processing_workflow_name: test-validation-set/detect-count-and-visualize-3
+roboflow_api_key: TMlSASZ8SV6bioL6KYD3

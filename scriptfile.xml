@@ -1,0 +1,605 @@
+<temika>
+<!-- Set temperature_high and wait heating_time -->
+	<microscopeone>
+		<pwr number="0">
+			<feedback>
+				<set>30</set>
+				<enable>ON</enable>
+			</feedback>
+		</pwr>
+	</microscopeone>
+	<sleep>0:0:10</sleep>
+
+<timestamp>0</timestamp>
+<!-- Image all positions in a capillary -->
+	<!-- Start recording. -->
+	<save>
+		<header>
+capillary0_temperature30_t0
+Number of positions 1, dark image, fluorescent image pairs.
+		</header>
+		<basename>capillary0_temperature30_t0</basename>
+		<append>DATE</append>
+	</save>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><enumeration feature="TriggerMode">On</enumeration></genicam>
+		<record>ON</record>
+	</camera>
+	<microscopeone>
+		<record>ON</record>
+	</microscopeone>
+
+	<!-- Move to a position and acquire images -->
+	<microscopeone>
+		<afocus>
+			<enable>OFF</enable>
+		</afocus>
+		<stepper axis="x">
+			<move_absolute>17773.42 100</move_absolute>
+		</stepper>
+		<stepper axis="y">
+			<move_absolute>-14205.12 100</move_absolute>
+		</stepper>
+		<stepper axis="z">
+			<move_absolute>3403.05 10</move_absolute>
+		</stepper>
+		<stepper axis="a">
+			<move_absolute>13063.01 100</move_absolute>
+		</stepper>
+		<stepper axis="x">
+			<wait_moving_end></wait_moving_end>
+		</stepper>
+
+		<stepper axis="y">
+			<wait_moving_end></wait_moving_end>
+		</stepper>
+
+		<stepper axis="z">
+			<wait_moving_end></wait_moving_end>
+		</stepper>
+
+		<stepper axis="a">
+			<wait_moving_end></wait_moving_end>
+		</stepper>
+
+		<afocus>
+			<enable>ON</enable>
+			<wait_lock>0.2 10.3</wait_lock>
+		</afocus>
+	</microscopeone>
+	<microscopeone>
+		<illumination><enable>1</enable></illumination>
+	</microscopeone>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><float feature="ExposureTime">200000</float></genicam>
+		<send_trigger></send_trigger>
+	</camera>
+
+	<microscopeone>
+		<illumination><enable>0</enable></illumination>
+	</microscopeone>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><float feature="ExposureTime">200000</float></genicam>
+		<send_trigger></send_trigger>
+	</camera>
+
+	<microscopeone>
+		<illumination><enable>32</enable></illumination>
+	</microscopeone>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><float feature="ExposureTime">10000</float></genicam>
+		<send_trigger></send_trigger>
+	</camera>
+
+	<microscopeone>
+		<illumination><enable>64</enable></illumination>
+	</microscopeone>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><float feature="ExposureTime">100000</float></genicam>
+		<send_trigger></send_trigger>
+	</camera>
+
+	<!-- Stop recording. -->
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+		<record>OFF</record>
+	</camera>
+	<microscopeone>
+		<record>OFF</record>
+	</microscopeone>
+
+	<sleep>0:05:00</sleep>
+
+<timestamp>300</timestamp>
+<!-- Image all positions in a capillary -->
+	<!-- Start recording. -->
+	<save>
+		<header>
+capillary0_temperature30_t1
+Number of positions 1, dark image, fluorescent image pairs.
+		</header>
+		<basename>capillary0_temperature30_t1</basename>
+		<append>DATE</append>
+	</save>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><enumeration feature="TriggerMode">On</enumeration></genicam>
+		<record>ON</record>
+	</camera>
+	<microscopeone>
+		<record>ON</record>
+	</microscopeone>
+
+	<!-- Move to a position and acquire images -->
+	<microscopeone>
+		<afocus>
+			<enable>OFF</enable>
+		</afocus>
+		<stepper axis="x">
+			<move_absolute>17773.42 100</move_absolute>
+		</stepper>
+		<stepper axis="y">
+			<move_absolute>-14205.12 100</move_absolute>
+		</stepper>
+		<stepper axis="z">
+			<move_absolute>3403.05 10</move_absolute>
+		</stepper>
+		<stepper axis="a">
+			<move_absolute>13063.01 100</move_absolute>
+		</stepper>
+		<stepper axis="x">
+			<wait_moving_end></wait_moving_end>
+		</stepper>
+
+		<stepper axis="y">
+			<wait_moving_end></wait_moving_end>
+		</stepper>
+
+		<stepper axis="z">
+			<wait_moving_end></wait_moving_end>
+		</stepper>
+
+		<stepper axis="a">
+			<wait_moving_end></wait_moving_end>
+		</stepper>
+
+		<afocus>
+			<enable>ON</enable>
+			<wait_lock>0.2 10.3</wait_lock>
+		</afocus>
+	</microscopeone>
+	<microscopeone>
+		<illumination><enable>1</enable></illumination>
+	</microscopeone>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><float feature="ExposureTime">200000</float></genicam>
+		<send_trigger></send_trigger>
+	</camera>
+
+	<microscopeone>
+		<illumination><enable>0</enable></illumination>
+	</microscopeone>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><float feature="ExposureTime">200000</float></genicam>
+		<send_trigger></send_trigger>
+	</camera>
+
+	<microscopeone>
+		<illumination><enable>32</enable></illumination>
+	</microscopeone>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><float feature="ExposureTime">10000</float></genicam>
+		<send_trigger></send_trigger>
+	</camera>
+
+	<microscopeone>
+		<illumination><enable>64</enable></illumination>
+	</microscopeone>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><float feature="ExposureTime">100000</float></genicam>
+		<send_trigger></send_trigger>
+	</camera>
+
+	<!-- Stop recording. -->
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+		<record>OFF</record>
+	</camera>
+	<microscopeone>
+		<record>OFF</record>
+	</microscopeone>
+
+	<sleep>0:05:00</sleep>
+
+<timestamp>600</timestamp>
+<!-- Image all positions in a capillary -->
+	<!-- Start recording. -->
+	<save>
+		<header>
+capillary0_temperature30_t2
+Number of positions 1, dark image, fluorescent image pairs.
+		</header>
+		<basename>capillary0_temperature30_t2</basename>
+		<append>DATE</append>
+	</save>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><enumeration feature="TriggerMode">On</enumeration></genicam>
+		<record>ON</record>
+	</camera>
+	<microscopeone>
+		<record>ON</record>
+	</microscopeone>
+
+	<!-- Move to a position and acquire images -->
+	<microscopeone>
+		<afocus>
+			<enable>OFF</enable>
+		</afocus>
+		<stepper axis="x">
+			<move_absolute>17773.42 100</move_absolute>
+		</stepper>
+		<stepper axis="y">
+			<move_absolute>-14205.12 100</move_absolute>
+		</stepper>
+		<stepper axis="z">
+			<move_absolute>3403.05 10</move_absolute>
+		</stepper>
+		<stepper axis="a">
+			<move_absolute>13063.01 100</move_absolute>
+		</stepper>
+		<stepper axis="x">
+			<wait_moving_end></wait_moving_end>
+		</stepper>
+
+		<stepper axis="y">
+			<wait_moving_end></wait_moving_end>
+		</stepper>
+
+		<stepper axis="z">
+			<wait_moving_end></wait_moving_end>
+		</stepper>
+
+		<stepper axis="a">
+			<wait_moving_end></wait_moving_end>
+		</stepper>
+
+		<afocus>
+			<enable>ON</enable>
+			<wait_lock>0.2 10.3</wait_lock>
+		</afocus>
+	</microscopeone>
+	<microscopeone>
+		<illumination><enable>1</enable></illumination>
+	</microscopeone>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><float feature="ExposureTime">200000</float></genicam>
+		<send_trigger></send_trigger>
+	</camera>
+
+	<microscopeone>
+		<illumination><enable>0</enable></illumination>
+	</microscopeone>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><float feature="ExposureTime">200000</float></genicam>
+		<send_trigger></send_trigger>
+	</camera>
+
+	<microscopeone>
+		<illumination><enable>32</enable></illumination>
+	</microscopeone>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><float feature="ExposureTime">10000</float></genicam>
+		<send_trigger></send_trigger>
+	</camera>
+
+	<microscopeone>
+		<illumination><enable>64</enable></illumination>
+	</microscopeone>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><float feature="ExposureTime">100000</float></genicam>
+		<send_trigger></send_trigger>
+	</camera>
+
+	<!-- Stop recording. -->
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+		<record>OFF</record>
+	</camera>
+	<microscopeone>
+		<record>OFF</record>
+	</microscopeone>
+
+	<sleep>0:05:00</sleep>
+
+<timestamp>900</timestamp>
+<!-- Image all positions in a capillary -->
+	<!-- Start recording. -->
+	<save>
+		<header>
+capillary0_temperature30_t3
+Number of positions 1, dark image, fluorescent image pairs.
+		</header>
+		<basename>capillary0_temperature30_t3</basename>
+		<append>DATE</append>
+	</save>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><enumeration feature="TriggerMode">On</enumeration></genicam>
+		<record>ON</record>
+	</camera>
+	<microscopeone>
+		<record>ON</record>
+	</microscopeone>
+
+	<!-- Move to a position and acquire images -->
+	<microscopeone>
+		<afocus>
+			<enable>OFF</enable>
+		</afocus>
+		<stepper axis="x">
+			<move_absolute>17773.42 100</move_absolute>
+		</stepper>
+		<stepper axis="y">
+			<move_absolute>-14205.12 100</move_absolute>
+		</stepper>
+		<stepper axis="z">
+			<move_absolute>3403.05 10</move_absolute>
+		</stepper>
+		<stepper axis="a">
+			<move_absolute>13063.01 100</move_absolute>
+		</stepper>
+		<stepper axis="x">
+			<wait_moving_end></wait_moving_end>
+		</stepper>
+
+		<stepper axis="y">
+			<wait_moving_end></wait_moving_end>
+		</stepper>
+
+		<stepper axis="z">
+			<wait_moving_end></wait_moving_end>
+		</stepper>
+
+		<stepper axis="a">
+			<wait_moving_end></wait_moving_end>
+		</stepper>
+
+		<afocus>
+			<enable>ON</enable>
+			<wait_lock>0.2 10.3</wait_lock>
+		</afocus>
+	</microscopeone>
+	<microscopeone>
+		<illumination><enable>1</enable></illumination>
+	</microscopeone>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><float feature="ExposureTime">200000</float></genicam>
+		<send_trigger></send_trigger>
+	</camera>
+
+	<microscopeone>
+		<illumination><enable>0</enable></illumination>
+	</microscopeone>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><float feature="ExposureTime">200000</float></genicam>
+		<send_trigger></send_trigger>
+	</camera>
+
+	<microscopeone>
+		<illumination><enable>32</enable></illumination>
+	</microscopeone>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><float feature="ExposureTime">10000</float></genicam>
+		<send_trigger></send_trigger>
+	</camera>
+
+	<microscopeone>
+		<illumination><enable>64</enable></illumination>
+	</microscopeone>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><float feature="ExposureTime">100000</float></genicam>
+		<send_trigger></send_trigger>
+	</camera>
+
+	<!-- Stop recording. -->
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+		<record>OFF</record>
+	</camera>
+	<microscopeone>
+		<record>OFF</record>
+	</microscopeone>
+
+	<sleep>0:05:00</sleep>
+
+<timestamp>1200</timestamp>
+<!-- Image all positions in a capillary -->
+	<!-- Start recording. -->
+	<save>
+		<header>
+capillary0_temperature30_t4
+Number of positions 1, dark image, fluorescent image pairs.
+		</header>
+		<basename>capillary0_temperature30_t4</basename>
+		<append>DATE</append>
+	</save>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><enumeration feature="TriggerMode">On</enumeration></genicam>
+		<record>ON</record>
+	</camera>
+	<microscopeone>
+		<record>ON</record>
+	</microscopeone>
+
+	<!-- Move to a position and acquire images -->
+	<microscopeone>
+		<afocus>
+			<enable>OFF</enable>
+		</afocus>
+		<stepper axis="x">
+			<move_absolute>17773.42 100</move_absolute>
+		</stepper>
+		<stepper axis="y">
+			<move_absolute>-14205.12 100</move_absolute>
+		</stepper>
+		<stepper axis="z">
+			<move_absolute>3403.05 10</move_absolute>
+		</stepper>
+		<stepper axis="a">
+			<move_absolute>13063.01 100</move_absolute>
+		</stepper>
+		<stepper axis="x">
+			<wait_moving_end></wait_moving_end>
+		</stepper>
+
+		<stepper axis="y">
+			<wait_moving_end></wait_moving_end>
+		</stepper>
+
+		<stepper axis="z">
+			<wait_moving_end></wait_moving_end>
+		</stepper>
+
+		<stepper axis="a">
+			<wait_moving_end></wait_moving_end>
+		</stepper>
+
+		<afocus>
+			<enable>ON</enable>
+			<wait_lock>0.2 10.3</wait_lock>
+		</afocus>
+	</microscopeone>
+	<microscopeone>
+		<illumination><enable>1</enable></illumination>
+	</microscopeone>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><float feature="ExposureTime">200000</float></genicam>
+		<send_trigger></send_trigger>
+	</camera>
+
+	<microscopeone>
+		<illumination><enable>0</enable></illumination>
+	</microscopeone>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><float feature="ExposureTime">200000</float></genicam>
+		<send_trigger></send_trigger>
+	</camera>
+
+	<microscopeone>
+		<illumination><enable>32</enable></illumination>
+	</microscopeone>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><float feature="ExposureTime">10000</float></genicam>
+		<send_trigger></send_trigger>
+	</camera>
+
+	<microscopeone>
+		<illumination><enable>64</enable></illumination>
+	</microscopeone>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><float feature="ExposureTime">100000</float></genicam>
+		<send_trigger></send_trigger>
+	</camera>
+
+	<!-- Stop recording. -->
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+		<record>OFF</record>
+	</camera>
+	<microscopeone>
+		<record>OFF</record>
+	</microscopeone>
+
+	<sleep>0:05:00</sleep>
+
+<timestamp>1500</timestamp>
+<!-- Image all positions in a capillary -->
+	<!-- Start recording. -->
+	<save>
+		<header>
+capillary0_temperature30_t5
+Number of positions 1, dark image, fluorescent image pairs.
+		</header>
+		<basename>capillary0_temperature30_t5</basename>
+		<append>DATE</append>
+	</save>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><enumeration feature="TriggerMode">On</enumeration></genicam>
+		<record>ON</record>
+	</camera>
+	<microscopeone>
+		<record>ON</record>
+	</microscopeone>
+
+	<!-- Move to a position and acquire images -->
+	<microscopeone>
+		<afocus>
+			<enable>OFF</enable>
+		</afocus>
+		<stepper axis="x">
+			<move_absolute>17773.42 100</move_absolute>
+		</stepper>
+		<stepper axis="y">
+			<move_absolute>-14205.12 100</move_absolute>
+		</stepper>
+		<stepper axis="z">
+			<move_absolute>3403.05 10</move_absolute>
+		</stepper>
+		<stepper axis="a">
+			<move_absolute>13063.01 100</move_absolute>
+		</stepper>
+		<stepper axis="x">
+			<wait_moving_end></wait_moving_end>
+		</stepper>
+
+		<stepper axis="y">
+			<wait_moving_end></wait_moving_end>
+		</stepper>
+
+		<stepper axis="z">
+			<wait_moving_end></wait_moving_end>
+		</stepper>
+
+		<stepper axis="a">
+			<wait_moving_end></wait_moving_end>
+		</stepper>
+
+		<afocus>
+			<enable>ON</enable>
+			<wait_lock>0.2 10.3</wait_lock>
+		</afocus>
+	</microscopeone>
+	<microscopeone>
+		<illumination><enable>1</enable></illumination>
+	</microscopeone>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><float feature="ExposureTime">200000</float></genicam>
+		<send_trigger></send_trigger>
+	</camera>
+
+	<microscopeone>
+		<illumination><enable>0</enable></illumination>
+	</microscopeone>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><float feature="ExposureTime">200000</float></genicam>
+		<send_trigger></send_trigger>
+	</camera>
+
+	<microscopeone>
+		<illumination><enable>32</enable></illumination>
+	</microscopeone>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><float feature="ExposureTime">10000</float></genicam>
+		<send_trigger></send_trigger>
+	</camera>
+
+	<microscopeone>
+		<illumination><enable>64</enable></illumination>
+	</microscopeone>
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+	<genicam><float feature="ExposureTime">100000</float></genicam>
+		<send_trigger></send_trigger>
+	</camera>
+
+	<!-- Stop recording. -->
+	<camera name="Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410">
+		<record>OFF</record>
+	</camera>
+	<microscopeone>
+		<record>OFF</record>
+	</microscopeone>
+
+</temika>

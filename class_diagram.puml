@@ -1,0 +1,170 @@
+@startuml class_diagram
+skinparam classAttributeIconSize 0
+skinparam SameClassWidth true
+skinparam linetype ortho
+'skinparam MinClassWidth 120
+'skinparam MinClassHeight 150
+skinparam RoundCorner 5
+skinparam Padding 12
+skinparam ClassFontSize 16
+'skinparam linetype polyline
+'skin param ranksep 100
+'scale 2000 width
+'scale 3000 height
+'top to bottom direction
+
+!define datatype(x) class x << (D,#FF7700) DataType>>
+hide empty members
+hide circle
+hide attributes
+hide methods
+hide Salt
+hide TemperatureRamp
+hide TemperatureCycler
+hide LiquidHandler
+hide Component
+
+datatype(Salt) {
+  name: String
+  molecular_weight: Float
+}
+
+datatype(TemperatureRamp) {
+  start_temp: Float
+  end_temp: Float
+  molecular_weight: Float
+}
+
+!define datatype(x) class x << (D,#FF7700) DataType>>
+hide empty members
+datatype(Salt) {
+  name: String
+  molecular_weight: Float
+}
+
+class Experiment {
++id : Integer
++plate_id : Integer
++description : String
++notes : String
++creation_date_time : DateTime
++dispense_start : DateTime
++dispense_finish : DateTime
++anneal_start : DateTime
++anneal_finish : DateTime
+}
+
+class Plate {
++ id: Integer
++ name : String
++ serial_number : String
++ num_rows: Integer
++ num_columns: Integer
++ num_wells: Integer
++ centre_first_well_offset_x: Float
++ centre_first_well_offset_y: Float
++ well_type: Enum
++ well_dimension: Float
++ well_spacing_x: Float
++ well_spacing_y: Float
++ min_well_volume: Float
++ max_well_volume: Float
+}
+class Well {
++ well_row : Integer
++ well_column : Integer
++ sensor_address : String
++ calibration_factor: Float
++ active: Boolean
++ coverslip_thickness: Float
+}
+
+class Sample {
++ formula : Formula
++ annealing_profile: AnnealingProfile 
++ x_position : Float
++ y_position : Float
+}
+
+class TemperatureCycler << (S, Orchid) Control >> {
++ id : Integer
++ name : String
++ num_rows: Integer 
++ num_columns: Integer 
+run(AnnealingProfile): Boolean
+get_temps(): Float[]
+} 
+
+class LiquidHandler << (S, Orchid) Control >> {
++ id : Integer
++ name : String
++ max_num_components: Integer 
+set_up_components
+dispense(Formula): Boolean
+get_temps(): Float[]
+}
+
+class Image {
++ formula : Formula
++ x_position : Float
++ y_position : Float
+}
+
+class AnnealingProfile {
++ id : Int
++ name : String
++ isMaster : Boolean
++ temp_duration[]: TempDuration 
+}
+
+class Formulation {
++ id : Int
++ name : String
++ isMaster : Boolean
+}
+
+class Component {
++ id : Int
++ name : String
++ ratio : Float
+}
+
+class TempDuration {
++ start_temp : Float
++ end_temp : Float
++ time_mins: Int 
+}
+
+class Solution {
++ id : Int
++ name : String
++ solvent : String
++ salts[] : Salt
++ material[] : String
+}
+
+'together {class Experiment class Plate class Well}
+
+
+
+Experiment --* Plate : "                "
+Plate *--  Well : "     "
+Experiment *-d Sample
+'Experiment "0..*" -r "1" LiquidHandler : "     "
+'Experiment "0..*" -l "1" TemperatureCycler : "  " 
+Sample *--u  Well : "          " 
+Sample  --r AnnealingProfile 
+Sample  --l Formulation : "          " 
+Sample  *--  Image  
+Image  *-- Feature : "          "
+AnnealingProfile *-- TempDuration
+Formulation *--* Solution
+'Experiment -[hidden]d Formulation
+
+
+'(Formulation, Solution) ... Component
+
+
+
+
+@enduml

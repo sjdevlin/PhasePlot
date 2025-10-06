@@ -1,0 +1,12 @@
+PyYAML
+SQLAlchemy
+typing_extensions
+customtkinter
+matplotlib
+pyueye
+pySerial
+numpy
+scikit-image
+scipy
+opencv-python
+requests
