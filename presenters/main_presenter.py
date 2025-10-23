@@ -33,7 +33,10 @@ class MainPresenter():
         pass
 
     def open_plate_sandbox_window(self):
-        pass
+        from views import PlateSandboxView
+        from presenters import PlateSandboxPresenter
+        plate_sandbox_view = PlateSandboxView()
+        sandbox_presenter = PlateSandboxPresenter(plate_sandbox_view, self.db)
     
     def open_image_sandbox_window(self):
         from views import ImageSandboxView

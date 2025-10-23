@@ -12,12 +12,18 @@ class Experiment(Base):
     __tablename__ = "Experiment" #TODO: add an experiment detail table to store more information about the experiment
     id = Column(Integer, primary_key=True)
     plate_id = Column(Integer, ForeignKey("Plate.id"))
+    liquid_protocol_id = Column(Integer, ForeignKey("LiquidProtocol.id"))
+    annealer_id = Column(Integer, ForeignKey("Annealer.id"))
     description = Column(String)
     notes = Column(String)
     creation_date_time = Column(DateTime)
     dispensing_start_date_time = Column(DateTime)
     dispensing_finish_date_time = Column(DateTime)
     repeats = Column(Integer)
+    oil = Column(String)  # Initially String for quick implementation; consider table later
+    buffer = Column(String)  # Initially String for quick implementation; consider table later
+    nanostar = Column(String)  # in microMolar. Initially here for quick implementation; consider table later
+    max_ns_density = Column(Float)  # in microMolar. Initially here for quick implementation; consider table later
     status = Column(String)  # e.g., "in_progress", "completed", "failed"
     sample = relationship(
         "Sample",
@@ -25,19 +31,40 @@ class Experiment(Base):
         cascade="all, delete-orphan",
         single_parent=True,)
 
+class LiquidProtocol(Base):
+
+    #following variables are sqlalchemy objects related to the Experiment table in the database
+    #always follows a dyadic aliquot scheme with 8 steps
+
+    __tablename__ = "Protocol" #TODO: add an experiment detail table to store more information about the experiment
+    id = Column(Integer, primary_key=True)
+    description = Column(String)
+    notes = Column(String)
+    holding_temperature = Column(Float)  # in Celsius. Initially here for quick implementation; consider table later
+    buffer_location = Column(String)  # e.g., "A1" (well descriptor)
+    ns_dense_location = Column(String)  # e.g., "A2" (well descriptor)
+    oil_location = Column(String)  # e.g., "D1" (well descriptor)
+    emulsion_locations = Column(String)  # e.g., "B1" (well descriptor)
+    creation_date_time = Column(DateTime)
+    mix_aspirate_speed = Column(Float)  # Speed in µL/s
+    mix_dispense_speed = Column(Float)  # Speed in µL/s
+    number_mix_cycles = Column(Integer)
+    mix_volume = Column(Float)  # Volume in µL
+    mix_height_from_bottom = Column(Float)  # Height in mm
+    mix_pipette = Column(String)  # e.g., "p20", "p300"
+    dispense_pipette = Column(String)  # e.g., "p20", "p300"
+    source_buffer_volume = Column(Float)  # Volume in µL
+    source_NS_dense_volume = Column(Float)  # Volume in µL
+    source_oil_volume = Column(Float)  # Volume in µL
+    final_sample_dispense_volume = Column(Float)  # Volume in µL
+
 class Sample(Base):
     __tablename__ = "Sample"
     id = Column(Integer, primary_key=True)
     experiment_id = Column(Integer, ForeignKey("Experiment.id"))
     well_row = Column(Integer)
     well_column = Column(Integer)
-    mix_cycles = Column(Integer)
-    mix_aspirate = Column(Float)  # Speed in µL/s
-    mix_dispense = Column(Float)  # Speed in µL/s
-    mix_volume = Column(Float)  # Volume in µL
-    mix_height = Column(Float)  # Height in mm
-    pipette = Column(String)  # e.g., "p20", "p300
-    surfactant_percent = Column(Float)  # Percentage of surfactant in the solution
+    well_descriptor = Column(String)  # e.g., "A1", "B2"
     image = relationship("Image", backref="sample", cascade="all, delete-orphan", single_parent=True)
 
 

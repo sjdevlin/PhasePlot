@@ -57,3 +57,27 @@ local_file_path: /Volumes/T7/Temika/Images/png/
 # Roboflow settings
 image_processing_workflow_name: test-validation-set/detect-count-and-visualize-3
 roboflow_api_key: TMlSASZ8SV6bioL6KYD3
+
+# Annealer Settings
+annealer_port: /dev/cu.usbmodem21301
+#annealer_port: COM5
+annealer_baudrate: 115200
+annealer_retries: 2
+annealer_timeout: 2
+annealer_serial_delay: 0.2
+annealer_heat: "H"
+annealer_get_temp: "T"
+annealer_get_address: "C"
+annealer_zero_all: "A"
+annealer_get_serial_number: "N"
+annealer_set_serial_number: "S"
+annealer_get_num_wells: "W"
+celsius_multiplier: 0.005
+max_heat_intensity: 230
+calibration_min_temp_rise: 1.0 # rem to chnage this
+calibration_heating_time: 45.0 # rem to change this
+
+# Annealer PID settings
+kp: 400.0
+ki: 5
+kd: 5

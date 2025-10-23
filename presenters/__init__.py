@@ -4,3 +4,5 @@ from .experiment_detail_presenter import ExperimentDetailPresenter
 from .image_sandbox_presenter import ImageSandboxPresenter
 from .image_run_list_presenter import ImageRunListPresenter
 from .image_run_detail_presenter import ImageRunDetailPresenter 
+from .plate_sandbox_presenter import PlateSandboxPresenter
+from .plate_config_presenter import PlateConfigPresenter

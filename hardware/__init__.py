@@ -3,3 +3,4 @@ from .stage_controller import StageControllerFactory
 from .camera_controller import CameraControllerFactory
 from .focus_controller import FocusControllerFactory
 from .illumination_controller import IlluminationControllerFactory
+from .plate_controller import PlateController

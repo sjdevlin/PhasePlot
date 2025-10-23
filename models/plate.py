@@ -11,6 +11,7 @@ class Plate(Base):
     __tablename__ = "Plate"
     id = Column(Integer, primary_key=True)
     description = Column(String)
+    opentrons_name = Column(String) #e.g. Custom 36 Well Plate 35 µL
     outline_width = Column(Float)
     outline_length = Column(Float)
     outline_height = Column(Float)
@@ -19,6 +20,7 @@ class Plate(Base):
     num_wells = column_property(num_rows * num_cols)
     centre_first_well_offset_x = Column(Float)
     centre_first_well_offset_y = Column(Float)
+    well_type = Column(String)  #e.g. Circular, Square
     well_dimension = Column(Float)
     well_depth = Column(Float)
     well_spacing_x = Column(Float)
@@ -31,6 +33,14 @@ class Plate(Base):
         cascade="all, delete-orphan",
         single_parent=True,)
 
+class PlateWell(Base):
+    __tablename__ = "PlateWell"
+    id = Column(Integer, primary_key=True)
+    plate_id = Column(Integer, ForeignKey("Plate.id"))
+    well_row = Column(Integer)
+    well_col = Column(Integer)
+    well_descriptor = Column(String)
+    z_height = Column(Float)
 
 
 
