@@ -28,7 +28,7 @@ class ResultRun(Base):
     pid_ki = Column(Float)
     pid_kd = Column(Float)
     image = relationship(
-        "Image",
+        "ResultRunImage",
         backref="parent",
         cascade="all, delete-orphan",
         single_parent=True,)

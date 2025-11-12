@@ -32,11 +32,11 @@ class Plate(Base):
         backref="plate",
         cascade="all, delete-orphan",
         single_parent=True,)
+    # Plate is independent of Experiment; do not cascade delete experiments
     experiment = relationship(
         "Experiment",
         backref="plate",
-        cascade="all, delete-orphan",
-        single_parent=True,)
+    )
     
 def get_well_index(self, row, column):
                 for candidate in getattr(self, "well", []) or []:
