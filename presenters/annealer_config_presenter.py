@@ -2,7 +2,7 @@ from operators import AnnealerOperator
 from models import Plate
 import threading
 
-class PlateConfigPresenter():
+class AnnealerConfigPresenter():
     def __init__(self, view, db):
         self.view = view
         self.db = db

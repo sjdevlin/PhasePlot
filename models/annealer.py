@@ -9,18 +9,20 @@ class Annealer(Base):
     id = Column(Integer, primary_key=True)
     description = Column(String)
     configured = Column(Boolean)
-    well = relationship(
-        "AnnealerWell",
-        backref="Annealer",
-        cascade="all, delete-orphan",
-        single_parent=True,)
-    result_set = relationship(
-        "ResultSet",
-        backref="Annealer",
-        cascade="all, delete-orphan",
-        single_parent=True,)
-    num_columns = Column(Integer)
     number_active_sensors = Column(Integer)
+
+    wells = relationship(
+        "AnnealerWell",
+        backref="annealer",
+        cascade="all, delete-orphan",
+        single_parent=True,
+    )
+
+    result_sets = relationship(
+        "ResultSet",
+        backref="annealer",
+        # omit cascade/delete-orphan unless ResultSet is owned exclusively by Annealer
+    )
 
 class AnnealerWell(Base):
     __tablename__ = "AnnealerWell"

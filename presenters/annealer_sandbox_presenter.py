@@ -1,7 +1,7 @@
 from hardware import AnnealerController
 from services import Logger, AppConfig, DatabaseService
 
-class PlateSandboxPresenter():
+class AnnealerSandboxPresenter():
     def __init__(self, view, db):
         self.view = view
         self.db = db

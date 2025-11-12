@@ -3,7 +3,7 @@ from services import Logger, AppConfig, DatabaseService
 from models import Annealer, AnnealerWell
 from time import sleep
 
-class AnnealerOperator():
+class AnnealerConfigOperator():
     def __init__(self, db, progress_callback=None):
         self.db = db
         self.logger = Logger()

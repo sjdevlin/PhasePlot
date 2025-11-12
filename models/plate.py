@@ -38,11 +38,6 @@ class Plate(Base):
         backref="plate",
     )
     
-def get_well_index(self, row, column):
-                for candidate in getattr(self, "well", []) or []:
-                    if getattr(candidate, "well_row", None) == row and getattr(candidate, "well_column", None) == column:
-                        return candidate
-
 class PlateWell(Base):
     __tablename__ = "PlateWell"
     id = Column(Integer, primary_key=True)

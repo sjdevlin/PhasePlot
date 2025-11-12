@@ -30,7 +30,10 @@ class MainPresenter():
         pass
 
     def open_plate_config_window(self):
-        pass
+        from views import PlateConfigView
+        from presenters import PlateConfigPresenter
+        plate_config_view = PlateConfigView()  # Create a new view
+        plate_config_presenter = PlateConfigPresenter(plate_config_view, self.db)  # Initialize the new presenter with the root widget
 
     def open_plate_sandbox_window(self):
         from views import PlateSandboxView
