@@ -3,10 +3,10 @@ import tkinter as tk
 from tkinter import ttk
 
 
-class ImageRunListView():
+class ResultRunListView():
     def __init__(self):
         self.root_window = customtkinter.CTkToplevel()  # Bare class is passed TK root_window widget.
-        self.root_window.title("Results from Image Runs")
+        self.root_window.title("Result Runs")
         self.root_window.geometry("1000x600")
 
         # Main container frame that fills the root_window window.
@@ -17,8 +17,6 @@ class ImageRunListView():
         self.home_frame.grid_rowconfigure(0, weight=0)  # Intro row (fixed height)
         self.home_frame.grid_rowconfigure(1, weight=1)  # Table row (expandable)
         self.home_frame.grid_rowconfigure(2, weight=0)  # Button row (fixed height)
-        self.home_frame.grid_rowconfigure(3, weight=1)  # Table row (expandable)
-        self.home_frame.grid_rowconfigure(4, weight=0)  # Button row (fixed height)
         self.home_frame.grid_columnconfigure(0, weight=1)
         
         # ----------------------------
@@ -36,7 +34,7 @@ class ImageRunListView():
             self.intro_frame,
             text_color='white',
             text=(
-                'Process and View Imaging Runs'
+                'Process and View Result Runs'
             )
         )
         # Using grid inside the intro_frame.

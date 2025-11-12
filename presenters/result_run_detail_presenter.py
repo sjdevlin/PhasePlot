@@ -1,8 +1,8 @@
 from models import Experiment, Sample
 from services import AppConfig
 
-class ImageRunDetailPresenter():
-    def __init__(self, image_run_id, view, db):
+class ResultRunDetailPresenter():
+    def __init__(self, result_run_id, view, db):
         self.view = view
         self.db = db
         self.app_config = AppConfig()
@@ -13,7 +13,7 @@ class ImageRunDetailPresenter():
         self.view.next_site_button.configure(command=self.next_site)
         self.view.prev_site_button.configure(command=self.prev_site)
 
-        self.images = self.db.get_images_by_image_run_id(image_run_id)
+        self.images = self.db.get_images_by_result_run_id(result_run_id)
 
         # Sort images by sample number, site number, then stack index and pick the first image as a reference
         first_reference = sorted(self.images, key=lambda img: (img.sample_id, img.image_site_number))[0]

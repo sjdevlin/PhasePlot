@@ -1,4 +1,4 @@
-from operators import PlateOperator
+from operators import AnnealerOperator
 from models import Plate
 import threading
 
@@ -8,12 +8,12 @@ class PlateConfigPresenter():
         self.db = db
 
         self.view.check_plate_button.configure(command=self.check_plate)
-        self.operator = PlateOperator(self.db, self.update_progress)
+        self.operator = AnnealerOperator(self.db, self.update_progress)
 
 
-    def check_plate(self):
+    def check_annealer(self):
 
-        connection_status, serial_number = self.operator.check_plate()
+        connection_status, serial_number = self.operator.check_annealer()
 
         if connection_status:
             self.view.connection_status.insert("end", "Connection established.")
@@ -22,26 +22,26 @@ class PlateConfigPresenter():
             return
 
         if serial_number > 0:
-            self.view.update_terminal("Plate found with serial number: " + str(serial_number))
-            self.plate = self.db.get_plate_by_serial_number(serial_number)
-            if self.plate is not None:
-                self.view.update_terminal("Plate found in database.")
-                configure_new = self.view.ask_question("Plate found in database with ID:" + str(self.plate.id) + ".\nDo you want to re-configure as a new plate?")
+            self.view.update_terminal("Annealer found with serial number: " + str(serial_number))
+            self.annealer = self.db.get_annealer_by_serial_number(serial_number)
+            if self.annealer is not None:
+                self.view.update_terminal("Annealer found in database.")
+                configure_new = self.view.ask_question("Annealer found in database with ID:" + str(self.annealer.id) + ".\nDo you want to re-configure as a new annealer?")
         else:
-            self.view.update_terminal("Plate has no serial number.")
+            self.view.update_terminal("Annealer has no serial number.")
             return    
 
         if configure_new: #TODO process to fix logic here.  Configure new is none if plate not found
             self.view.root_window.update()
-            self.configure_plate()
+            self.configure_annealer()
     
-    def configure_plate(self):
+    def configure_annealer(self):
         from views import LogView
         import threading
         from services import Logger
 
         def run_and_refresh():
-            self.operator.configure_plate(self.plate)
+            self.operator.configure_annealer(self.annealer)
             # After completion, schedule a refresh of the view in the main thread.
             self.view.after(0, self.view.update_terminal("Configure thread complete."))
 
@@ -61,7 +61,7 @@ class PlateConfigPresenter():
         self.view.update_terminal(message)
 
         if addresses is not None:
-            self.view.address_status.insert("end", f"{len(addresses)} out of {self.plate.num_wells} sensors found.")
+            self.view.address_status.insert("end", f"{len(addresses)} out of {self.annealer.num_wells} sensors found.")
         if calibration_factors is not None and temperature is not None:
             self.view.calibrate_status.insert("end", f"{len(calibration_factors)} Sensors calibrated. Average temperature: {temperature}")
 

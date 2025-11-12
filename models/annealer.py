@@ -1,6 +1,6 @@
 
-from sqlalchemy import Column, Integer, Float, Boolean, String, ForeignKey
-from sqlalchemy.orm import declarative_base, relationship, column_property
+from sqlalchemy import Column, Integer, Float, Boolean, String, ForeignKey, func
+from sqlalchemy.orm import relationship, column_property
 from models import Base
 
 
@@ -14,11 +14,12 @@ class Annealer(Base):
         backref="Annealer",
         cascade="all, delete-orphan",
         single_parent=True,)
-    experiment = relationship(
-        "Experiment",
+    result_set = relationship(
+        "ResultSet",
         backref="Annealer",
         cascade="all, delete-orphan",
         single_parent=True,)
+    num_columns = Column(Integer)
     number_active_sensors = Column(Integer)
 
 class AnnealerWell(Base):
@@ -31,7 +32,9 @@ class AnnealerWell(Base):
     active = Column(Boolean)
     well_row = Column(Integer)
     well_col = Column(Integer)
-    well_descriptor = Column(String)
+    well_descriptor = column_property(
+        func.char(func.ascii('A') + well_row - 1) + func.cast(well_col, String)
+    )
 
 
 

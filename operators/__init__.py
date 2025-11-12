@@ -1,4 +1,4 @@
 from .experiment_operator import ExperimentOperator
-from .image_run_operator import ImageRunOperator
+from .result_run_operator import ResultRunOperator
 from .scriptfile_generator import ScriptfileGenerator
-from .plate_operator import PlateOperator
+from .annealer_operator import AnnealerOperator

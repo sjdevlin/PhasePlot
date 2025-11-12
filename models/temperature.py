@@ -10,20 +10,10 @@ class TemperatureProfile(Base):
     id = Column(Integer, primary_key=True)
     description = Column(String)
     notes = Column(String)
-    is_master = Column(Boolean)
-    detail_line = relationship(
-        "TemperatureProfileLine",
-        backref="parent",
-        cascade="all, delete-orphan",
-        single_parent=True,)
-
-class TemperatureProfileLine(Base):
-    __tablename__ = "TemperatureProfileLine"
-    id = Column(Integer, primary_key=True)
-    profile_id = Column(Integer, ForeignKey("TemperatureProfile.id"))
-    temp_start  = Column(Float)
-    temp_end  = Column(Float)
-    duration_mins = Column(Integer)
+    start_temp  = Column(Float)
+    end_temp  = Column(Float)
+    step_interval_mins = Column(Float)
+    soak_time_seconds = Column(Integer)
 
 
 

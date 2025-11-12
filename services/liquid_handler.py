@@ -6,7 +6,6 @@ and persisting matching Sample records. Uses DatabaseService for DB ops and
 AppConfig for output location.
 """
 
-from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Tuple, Dict
 import random
@@ -25,7 +24,6 @@ def well_to_rc(well: str) -> Tuple[int, int]:
     return ROW_LETTERS.index(row_letter), col_num - 1
 
 
-@dataclass
 class LiquidHandler:
     """Generates a Python protocol script for the Opentrons OT-2.
 
@@ -37,10 +35,9 @@ class LiquidHandler:
       - Determines destination wells for Samples and persists Sample records
     """
 
-    db: object
-    experiment: Experiment
-
-    def __post_init__(self):
+    def __init__(self, db, experiment: Experiment):
+        self.db = db
+        self.experiment = experiment
         self.logger = Logger()
         self.app_config = AppConfig()
 
@@ -52,12 +49,6 @@ class LiquidHandler:
         self.opentrons_name = getattr(plate, "opentrons_name", None)
 
         self.script_location: Path | None = None
-
-    # convenience initializer because dataclass doesn't call __post_init__ unless used
-    def __init__(self, db, experiment: Experiment):
-        object.__setattr__(self, "db", db)
-        object.__setattr__(self, "experiment", experiment)
-        self.__post_init__()
 
     # ─────────────────────────────────────────────────────────────
     def _load_protocol(self) -> LiquidProtocol:
@@ -211,60 +202,60 @@ def run(protocol: protocol_api.ProtocolContext):
     pr.aspirate(20, ns_well.bottom(2))
     pr.dispense(20, P(EMULSION_WELLS[3]))
     pr.mix(3, 30, P(EMULSION_WELLS[3]).bottom(1))
-    pr.blow_out(P(EMULSION_WELLS[3]].top())
+    pr.blow_out(P(EMULSION_WELLS[3]).top())
 
     # 25% at EMULSION_WELLS[1]: 10 uL Buffer + 10 uL of 50%
     pr.aspirate(10, buffer_well.bottom(2))
     pr.dispense(10, P(EMULSION_WELLS[1]))
-    pr.aspirate(10, P(EMULSION_WELLS[3]].bottom(1))
+    pr.aspirate(10, P(EMULSION_WELLS[3]).bottom(1))
     pr.dispense(10, P(EMULSION_WELLS[1]))
     pr.mix(3, 20, P(EMULSION_WELLS[1]).bottom(1))
-    pr.blow_out(P(EMULSION_WELLS[1]].top())
+    pr.blow_out(P(EMULSION_WELLS[1]).top())
 
     # 75% at EMULSION_WELLS[5]: 10 uL of 50% + 10 uL NS_Dense
-    pr.aspirate(10, P(EMULSION_WELLS[3]].bottom(1))
+    pr.aspirate(10, P(EMULSION_WELLS[3]).bottom(1))
     pr.dispense(10, P(EMULSION_WELLS[5]))
     pr.aspirate(10, ns_well.bottom(2))
     pr.dispense(10, P(EMULSION_WELLS[5]))
     pr.mix(3, 20, P(EMULSION_WELLS[5]).bottom(1))
-    pr.blow_out(P(EMULSION_WELLS[5]].top())
+    pr.blow_out(P(EMULSION_WELLS[5]).top())
 
     # 12.5% at EMULSION_WELLS[0]: 5 uL Buffer + 5 uL of 25%
     pr.aspirate(5, buffer_well.bottom(2))
     pr.dispense(5, P(EMULSION_WELLS[0]))
-    pr.aspirate(5, P(EMULSION_WELLS[1]].bottom(1))
+    pr.aspirate(5, P(EMULSION_WELLS[1]).bottom(1))
     pr.dispense(5, P(EMULSION_WELLS[0]))
     pr.mix(3, 10, P(EMULSION_WELLS[0]).bottom(1))
-    pr.blow_out(P(EMULSION_WELLS[0]].top())
+    pr.blow_out(P(EMULSION_WELLS[0]).top())
 
     # 37.5% at EMULSION_WELLS[2]: 5 uL of 25% + 5 uL of 50%
-    pr.aspirate(5, P(EMULSION_WELLS[1]].bottom(1))
+    pr.aspirate(5, P(EMULSION_WELLS[1]).bottom(1))
     pr.dispense(5, P(EMULSION_WELLS[2]))
-    pr.aspirate(5, P(EMULSION_WELLS[3]].bottom(1))
+    pr.aspirate(5, P(EMULSION_WELLS[3]).bottom(1))
     pr.dispense(5, P(EMULSION_WELLS[2]))
     pr.mix(3, 10, P(EMULSION_WELLS[2]).bottom(1))
-    pr.blow_out(P(EMULSION_WELLS[2]].top())
+    pr.blow_out(P(EMULSION_WELLS[2]).top())
 
     # 62.5% at EMULSION_WELLS[4]: 5 uL of 50% + 5 uL of 75%
-    pr.aspirate(5, P(EMULSION_WELLS[3]].bottom(1))
+    pr.aspirate(5, P(EMULSION_WELLS[3]).bottom(1))
     pr.dispense(5, P(EMULSION_WELLS[4]))
-    pr.aspirate(5, P(EMULSION_WELLS[5]].bottom(1))
+    pr.aspirate(5, P(EMULSION_WELLS[5]).bottom(1))
     pr.dispense(5, P(EMULSION_WELLS[4]))
     pr.mix(3, 10, P(EMULSION_WELLS[4]).bottom(1))
-    pr.blow_out(P(EMULSION_WELLS[4]].top())
+    pr.blow_out(P(EMULSION_WELLS[4]).top())
 
     # 87.5% at EMULSION_WELLS[6]: 5 uL of 75% + 5 uL of 100%
-    pr.aspirate(5, P(EMULSION_WELLS[5]].bottom(1))
+    pr.aspirate(5, P(EMULSION_WELLS[5]).bottom(1))
     pr.dispense(5, P(EMULSION_WELLS[6]))
     pr.aspirate(5, ns_well.bottom(2))
     pr.dispense(5, P(EMULSION_WELLS[6]))
     pr.mix(3, 10, P(EMULSION_WELLS[6]).bottom(1))
-    pr.blow_out(P(EMULSION_WELLS[6]].top())
+    pr.blow_out(P(EMULSION_WELLS[6]).top())
 
     # Finally: 100% in EMULSION_WELLS[7]
     pr.aspirate(10, ns_well.bottom(2))
     pr.dispense(10, P(EMULSION_WELLS[7]))
-    pr.blow_out(P(EMULSION_WELLS[7]].top())
+    pr.blow_out(P(EMULSION_WELLS[7]).top())
 
     # Keep same tip for all the above as requested
     pr.drop_tip()

@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, joinedload
 from models import *
+from models.results import ResultRun
 from services import Logger, AppConfig
 
 class DatabaseService:
@@ -11,6 +12,11 @@ class DatabaseService:
 
 ##Temperature Profile
 
+    def get_temperature_profile_by_id(self, temp_profile_id):
+        with self.Session() as session: 
+           return session.query(TemperatureProfile).filter_by(id=temp_profile_id).first()
+
+##Plates
 
     def get_all_plates(self):
         with self.Session() as session: 
@@ -19,6 +25,21 @@ class DatabaseService:
     def get_plate_by_id(self, plate_id):
         with self.Session() as session: 
            return session.query(Plate).filter_by(id=plate_id).first()
+        
+    def get_plate_by_serial_number(self, ser_number):
+        with self.Session() as session: 
+           return session.query(Plate).options(joinedload(Plate.well)).filter_by(serial_number=ser_number).first()
+
+    def add_plate(self, plate):
+        with self.Session() as session:
+            session.add(plate)
+            session.commit()
+            return plate.id
+
+#Annealer
+    def get_annealer_by_id(self, annealer_id):
+        with self.Session() as session: 
+           return session.query(Annealer).options(joinedload(Annealer.well)).filter_by(id=annealer_id).first()
 
 ##Experiments
 
@@ -36,7 +57,7 @@ class DatabaseService:
         with self.Session() as session:
             return session.query(Experiment).options(joinedload(Experiment.sample)).all()
           
-    def update_experiment(self, experiment):
+    def update_experiment(self, experiment):#TODO check this is ever used now - may be a hnag over from systemXnative
         with self.Session() as session:
             session.merge(experiment)  # Merges the detached object into the session
             session.commit()
@@ -76,37 +97,62 @@ class DatabaseService:
         with self.Session() as session: 
             return session.query(Sample).options.filter_by(experiment_id=experiment_id).all()
 
+
+#Results
+
+    def get_all_result_sets(self):
+        with self.Session() as session:
+            return session.query(ResultSet).all()
+        
+    def get_result_set_by_id(self, result_set_id):
+        with self.Session() as session: 
+            return session.query(ResultSet).filter_by(id=result_set_id).first()
+        
+    def get_all_result_runs(self):
+        with self.Session() as session: 
+            return session.query(ResultRun).options(joinedload(ResultRun.image)).all()
+
+    def get_number_result_runs_by_exp_and_set(self, experiment_id, result_set_id):
+        with self.Session() as session:
+            return session.query(ResultRun).filter_by(experiment_id=experiment_id, result_set_id=result_set_id).count()
+
+    def add_result_run(self, result_run):
+        with self.Session() as session:
+            session.add(result_run)
+            session.commit()
+            return result_run.id
+        
+    def get_result_run_by_id(self, result_run_id):
+        with self.Session() as session: 
+            return session.query(ResultRun).filter_by(id=result_run_id).first()
+
+
+    def get_images_by_result_run_id(self, result_run_id):
+        with self.Session() as session: 
+            return session.query(ResultRunImage).filter_by(result_run_id=result_run_id).order_by(ResultRunImage.id).all()
+
+    def update_result_run(self, result_run):
+        with self.Session() as session:
+            session.merge(result_run)  # Merges the detached object into the session
+            session.commit()
+            return True
+
+    def delete_result_run(self, result_run_id):
+        with self.Session() as session:
+            result_run = session.query(ResultRun).filter_by(id=result_run_id).first()
+            session.delete(result_run)
+            session.commit()
+
+
 #images
 
-    def get_number_image_runs_by_exp_and_set(self, experiment_id, image_set_id):
-        with self.Session() as session:
-            return session.query(ImageRun).filter_by(experiment_id=experiment_id, image_set_id=image_set_id).count()
-
-    def get_image_set_by_id(self, exp_id):
+    def get_image_set_by_id(self, image_set_id):
         with self.Session() as session: 
-            return session.query(ImageSet).filter_by(id=exp_id).first()
+            return session.query(ImageSet).filter_by(id=image_set_id).first()
 
     def get_all_image_sets(self):
         with self.Session() as session:
             return session.query(ImageSet).all()
-
-    def add_image_run(self, image_run):
-        with self.Session() as session:
-            session.add(image_run)
-            session.commit()
-            return image_run.id
-
-    def get_image_run_by_id(self, exp_id):
-        with self.Session() as session: 
-            return session.query(ImageRun).filter_by(id=exp_id).first()
-
-    def get_all_image_runs(self):
-        with self.Session() as session: 
-            return session.query(ImageRun).options(joinedload(ImageRun.image)).all()
-
-    def get_images_by_image_run_id(self, image_run_id):
-        with self.Session() as session: 
-            return session.query(Image).filter_by(image_run_id=image_run_id).order_by(Image.id).all()
 
     def add_image(self, image):
         with self.Session() as session:
@@ -114,23 +160,11 @@ class DatabaseService:
             session.commit()
             return image.id
         
-    def update_image_run(self, image_run):
-        with self.Session() as session:
-            session.merge(image_run)  # Merges the detached object into the session
-            session.commit()
-            return True
-
     def update_image(self, image):
         with self.Session() as session:
             session.merge(image)  # Merges the detached object into the session
             session.commit()
             return True
-
-    def delete_image_run(self, image_run_id):
-        with self.Session() as session:
-            image_run = session.query(ImageRun).filter_by(id=image_run_id).first()
-            session.delete(image_run)
-            session.commit()
 
 
 """

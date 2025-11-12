@@ -75,7 +75,7 @@ class ExperimentListView():
             foreground="gray99",
             outline="",
             borderwidth=0,
-            font=("Arial", 12, "bold"),
+            font=("Arial", 10, "bold"),
             relief="flat",
             bordercolor="transparent"
         )
@@ -109,7 +109,7 @@ class ExperimentListView():
         self.exp_table.pack(fill="both", expand=True)
 #        self.table.grid(row=0, column=0, sticky="nsew", padx=15, pady=15)       
 
-       # ----------------------------
+        # ----------------------------
         # Button Row for Experiment Table
         # ----------------------------
 
@@ -150,35 +150,39 @@ class ExperimentListView():
         self.script_button.grid(sticky="",row=0, column=2, padx=5, pady=10)
 
 
-       # ----------------------------
-        # Fourth Row: Experiment Table Frame
         # ----------------------------
-        self.image_set_table_frame = customtkinter.CTkScrollableFrame(
+        # Fourth Row: Result Set Table Frame
+        # ----------------------------
+        self.result_set_table_frame = customtkinter.CTkScrollableFrame(
             master=self.home_frame,
             width=800,
             height=250,
             fg_color='transparent',
             border_width=0
         )
-        self.image_set_table_frame.grid(row=3, column=0, sticky="nsew", padx=100, pady=20)
+        self.result_set_table_frame.grid(row=3, column=0, sticky="nsew", padx=100, pady=20)
         
         
-        self.img_columns = ('ID', 'Description', 'Lens', 'Z Stack')
-        self.img_table = ttk.Treeview(self.image_set_table_frame, columns=self.img_columns, show='headings')
+        self.rs_columns = ('ID', 'Description', 'Lens', 'Z Stack')
+        self.rs_table = ttk.Treeview(self.result_set_table_frame, columns=self.rs_columns, show='headings')
         
         # Setup headings.
-        self.img_table.heading('ID', text='ID')
-        self.img_table.heading('Description', text='Description')
-        self.img_table.heading('Lens', text='Lens')
-        self.img_table.heading('Z Stack', text='Z Stack')
+        self.rs_table.heading('ID', text='ID')
+        self.rs_table.heading('Description', text='Description')
+        self.rs_table.heading('Lens', text='Lens')
+        self.rs_table.heading('Range', text='Range')
+        self.rs_table.heading('Step', text='Step')
+        self.rs_table.heading('Z Stack', text='Z Stack')
         
         # Setup columns.
-        self.img_table.column("ID", width=30, anchor='w',minwidth=40, stretch=False)
-        self.img_table.column("Description", width=350, anchor='w')
-        self.img_table.column("Lens", width=75, anchor='w')
-        self.img_table.column("Z Stack", width=75, anchor='w',minwidth=60, stretch=False)
+        self.rs_table.column("ID", width=30, anchor='w',minwidth=40, stretch=False)
+        self.rs_table.column("Description", width=300, anchor='w')
+        self.rs_table.column("Lens", width=50, anchor='w')
+        self.rs_table.column("Range", width=50, anchor='w')
+        self.rs_table.column("Step", width=50, anchor='w')
+        self.rs_table.column("Z Stack", width=50, anchor='w',minwidth=60, stretch=False)
         
-        self.img_table.pack(fill="both", expand=True)
+        self.rs_table.pack(fill="both", expand=True)
 #        self.table.grid(row=0, column=0, sticky="nsew", padx=15, pady=15)       
 
         # ----------------------------
@@ -208,21 +212,22 @@ class ExperimentListView():
         for row in data:
             self.exp_table.insert("", "end", values=row)
 
-    def show_image_sets(self, data):
+    def show_result_sets(self, data):
         # First clear table
-        self.img_table.delete(*self.img_table.get_children())
+        self.rs_table.delete(*self.rs_table.get_children())
         # Then restore rows from data
+
         for row in data:
-            self.img_table.insert("", "end", values=row)
+            self.rs_table.insert("", "end", values=row)
 
 
     def exp_bind_row_selection(self, callback):
         """Expose a method for the presenter to bind the row selection event."""
         self.exp_table.bind('<<TreeviewSelect>>', callback)
 
-    def img_bind_row_selection(self, callback):
+    def rs_bind_row_selection(self, callback):
         """Expose a method for the presenter to bind the row selection event."""
-        self.img_table.bind('<<TreeviewSelect>>', callback)
+        self.rs_table.bind('<<TreeviewSelect>>', callback)
 
     def get_id_of_selected_exp_row(self):
         """Helper method to retrieve the currently selected row's values."""
@@ -232,11 +237,11 @@ class ExperimentListView():
             
         return None
 
-    def get_id_of_selected_img_row(self):
+    def get_id_of_selected_rs_row(self):
         """Helper method to retrieve the currently selected row's values."""
-        selected_item = self.img_table.selection()
+        selected_item = self.rs_table.selection()
         if selected_item:
-            return self.img_table.item(selected_item[0], "values")[0]
+            return self.rs_table.item(selected_item[0], "values")[0]
             
         return None
 

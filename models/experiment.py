@@ -1,6 +1,6 @@
 from tokenize import String
-from sqlalchemy import Column, Integer, Float, Boolean, String, ForeignKey, DateTime
-from sqlalchemy.orm import declarative_base, relationship, column_property
+from sqlalchemy import Column, Integer, Float, Boolean, String, ForeignKey, DateTime, func
+from sqlalchemy.orm import relationship, column_property
 from models import Base, Plate
 from datetime import datetime
 
@@ -13,7 +13,6 @@ class Experiment(Base):
     id = Column(Integer, primary_key=True)
     plate_id = Column(Integer, ForeignKey("Plate.id"))
     liquid_protocol_id = Column(Integer, ForeignKey("LiquidProtocol.id"))
-    annealer_id = Column(Integer, ForeignKey("Annealer.id"))
     description = Column(String)
     notes = Column(String)
     creation_date_time = Column(DateTime)
@@ -22,8 +21,8 @@ class Experiment(Base):
     repeats = Column(Integer)
     oil = Column(String)  # Initially String for quick implementation; consider table later
     buffer = Column(String)  # Initially String for quick implementation; consider table later
-    nanostar = Column(String)  # in microMolar. Initially here for quick implementation; consider table later
-    max_ns_density = Column(Float)  # in microMolar. Initially here for quick implementation; consider table later
+    nanostar = Column(String)  # Initially here for quick implementation; consider table later
+    max_ns_concentration = Column(Float)  # in microMolar. Initially here for quick implementation; consider table later
     status = Column(String)  # e.g., "in_progress", "completed", "failed"
     sample = relationship(
         "Sample",
@@ -36,7 +35,7 @@ class LiquidProtocol(Base):
     #following variables are sqlalchemy objects related to the Experiment table in the database
     #always follows a dyadic aliquot scheme with 8 steps
 
-    __tablename__ = "Protocol" #TODO: add an experiment detail table to store more information about the experiment
+    __tablename__ = "LiquidProtocol" #TODO: add an experiment detail table to store more information about the experiment
     id = Column(Integer, primary_key=True)
     description = Column(String)
     notes = Column(String)
@@ -63,8 +62,11 @@ class Sample(Base):
     id = Column(Integer, primary_key=True)
     experiment_id = Column(Integer, ForeignKey("Experiment.id"))
     well_row = Column(Integer)
-    well_column = Column(Integer)
-    well_descriptor = Column(String)  # e.g., "A1", "B2"
+    well_col = Column(Integer)
+    well_descriptor = column_property(
+        func.char(func.ascii('A') + well_row - 1) + func.cast(well_col, String)
+    )
+    ns_concentration = Column(Float)  # in microMolar
     image = relationship("Image", backref="sample", cascade="all, delete-orphan", single_parent=True)
 
 

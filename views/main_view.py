@@ -17,7 +17,7 @@ class MainView():
         self.results_button = customtkinter.CTkButton(self.home_frame, text="Results",state=customtkinter.NORMAL)
         self.annealing_button = customtkinter.CTkButton(self.home_frame, text="Annealing Profiles", state=customtkinter.DISABLED)   
         self.imaging_button = customtkinter.CTkButton(self.home_frame, text="Imaging", state=customtkinter.DISABLED)    
-        self.plate_config_button = customtkinter.CTkButton(self.home_frame, text="Configure Annealer",state=customtkinter.DISABLED)
+        self.plate_config_button = customtkinter.CTkButton(self.home_frame, text="Configure Annealer",state=customtkinter.NORMAL)
         self.plate_sandbox_button = customtkinter.CTkButton(self.home_frame, text="Annealer Sandbox",state=customtkinter.NORMAL)
         self.image_sandbox_button = customtkinter.CTkButton(self.home_frame, text="Image Sandbox",state=customtkinter.NORMAL)
 

@@ -4,7 +4,7 @@ from tkinter import ttk
 from PIL import Image, ImageTk
 from services import Movie2Tiff
 
-class ImageRunDetailView():
+class ResultRunDetailView():
     def __init__(self):
 
         self.convertor = Movie2Tiff()  # Initialize the converter service

@@ -3,10 +3,14 @@ from serial import Serial
 from time import sleep
 from services import Logger, AppConfig
 
-class PlateController():
+class AnnealerController():
 
-    def __init__(self):
+    def __init__(self, annealer_parameters=None):
         
+        #init does not need a serial number since only annealer can be conencted and 
+        #it just queries the one picked up on the oprt specified by the config file
+        #and then loads addresses and calibration based on the annealer's serial no.
+
         self.logger = Logger() # Singleton instance
         my_app_config = AppConfig()  # Singleton instance - may be opened multiple times from different classes
 
@@ -22,6 +26,9 @@ class PlateController():
         self.annealer_set_serial_number = my_app_config.get("annealer_set_serial_number")
         self.annealer_zero_all_wells = my_app_config.get("annealer_zero_all_wells")
         self.celsius_multiplier = my_app_config.get("celsius_multiplier")
+
+        if annealer_parameters is not None:
+            self.annealer_parameters = annealer_parameters
 
     def connect(self):
         try:
@@ -43,18 +50,18 @@ class PlateController():
             self.ser.close()
         
 
-    def send_command(self, command):
+    def _send_command(self, command):
         self.ser.write((command + '\n').encode())
 
-    def read_response(self):
+    def _read_response(self):
         return self.ser.readline().decode().strip()
 
     def get_serial_number(self):
         retries = self.annealer_retries
         while retries > 0:
-            self.send_command(self.annealer_get_serial_number)
+            self._send_command(self.annealer_get_serial_number)
             sleep(self.annealer_serial_delay)
-            response = self.read_response()
+            response = self._read_response()
             try:
                 response_int = int(response)  # Try converting to an integer
                 self.logger.info(f"Serial number returned: {response}")
@@ -72,9 +79,9 @@ class PlateController():
         retries = self.annealer_retries
         command = f"{self.annealer_set_serial_number} {serial_number}"
         while retries > 0:
-            self.send_command(command)
+            self._send_command(command)
             sleep(self.annealer_serial_delay)
-            response = self.read_response()
+            response = self._read_response()
             if response == str(serial_number):
                 self.logger.info(f"Serial number {response} saved to Plate")
                 return True
@@ -88,9 +95,9 @@ class PlateController():
     def get_sensors(self, num_wells):
         retries = self.annealer_retries
         while retries > 0:
-            self.send_command(self.annealer_get_address)
+            self._send_command(self.annealer_get_address)
             sleep(self.annealer_serial_delay)
-            response = self.read_response()
+            response = self._read_response()
             addresses = response.split('*')
             addresses = [addr.strip() for addr in addresses if addr.strip()]
             if len(addresses) == num_wells:
@@ -103,8 +110,21 @@ class PlateController():
             self.logger.error(f"Failed to get all addresses.  Found {len(addresses)} out of {num_wells}.")
             return addresses
 
-    def get_temperature_celsius(self, address, calibration_factor=1):
+    def get_temperature_celsius(self, address=None, row=None, column=None):
+
         retries = self.annealer_retries
+
+        if self.annealer_parameters is not None:
+            found = False
+            for well in self.annealer_parameters:
+                if well.row == str(row).upper() and well.column == int(column):
+                        calibration_factor = float(well.calibration_factor)
+                        address = well.sensor_address
+                        found = True
+                        break
+            if not found:
+                self.logger.error(f"No entry found for well {row}{column}; using 0.0")
+                return None 
 
         while retries > 0:
             self.send_command(f"{self.annealer_get_temp} {address}")
@@ -118,11 +138,11 @@ class PlateController():
 
             try:
                 response_int = int(response)  # Try converting to an integer
-                float_temperture = (float(response_int) + calibration_factor) * self.celsius_multiplier 
+                float_temperature = (float(response_int) + calibration_factor) * self.celsius_multiplier 
 #                self.logger.info(f"Sensor {address} returned temperature: {float_temperture}")
                 self.ser.reset_output_buffer() # Clear output buffer
                 self.ser.reset_input_buffer() # Clear input buffer
-                return float_temperture
+                return float_temperature
             except ValueError:
                 retries -= 1
                 self.ser.reset_input_buffer() # Clear input buffer
@@ -136,7 +156,20 @@ class PlateController():
         
 
         
-    def apply_heat(self, index, intensity):
+    def apply_heat(self, intensity, index=None, row=None, column=None):
+
+        if self.annealer_parameters is not None:
+            found = False
+            for well in self.annealer_parameters:
+                if well.row == str(row).upper() and well.column == int(column):
+                        index = well.well_index
+                        self.logger.info(f"Applying {intensity} heat to well {row}{column} with index {index}")
+                        found = True
+                        break
+            if not found:
+                self.logger.error(f"No entry found for well {row}{column}; using 0.0")
+                return None
+
         command = self.annealer_heat + " " + str(index) + " " + str(intensity)
         retries = self.annealer_retries
         while retries > 0:
@@ -144,7 +177,7 @@ class PlateController():
             sleep(self.annealer_serial_delay)
             response = self.read_response()
             if response == command:
-                self.logger.info(f"Applied {intensity} heat to well {index}")
+                self.logger.info(f"Applied {intensity} heat to well with index {index}")
                 self.ser.reset_input_buffer() # Clear input buffer
                 self.ser.reset_output_buffer() # Clear output buffer
                 return True

@@ -1,6 +1,6 @@
 
-from sqlalchemy import Column, Integer, Float, Boolean, String, ForeignKey
-from sqlalchemy.orm import declarative_base, relationship, column_property
+from sqlalchemy import Column, Integer, Float, Boolean, String, ForeignKey, func
+from sqlalchemy.orm import relationship, column_property
 from models import Base
 
 
@@ -27,11 +27,21 @@ class Plate(Base):
     well_spacing_y = Column(Float)
     min_well_volume = Column(Float)
     max_well_volume = Column(Float)
+    well = relationship(
+        "PlateWell",
+        backref="plate",
+        cascade="all, delete-orphan",
+        single_parent=True,)
     experiment = relationship(
         "Experiment",
         backref="plate",
         cascade="all, delete-orphan",
         single_parent=True,)
+    
+def get_well_index(self, row, column):
+                for candidate in getattr(self, "well", []) or []:
+                    if getattr(candidate, "well_row", None) == row and getattr(candidate, "well_column", None) == column:
+                        return candidate
 
 class PlateWell(Base):
     __tablename__ = "PlateWell"
@@ -39,7 +49,9 @@ class PlateWell(Base):
     plate_id = Column(Integer, ForeignKey("Plate.id"))
     well_row = Column(Integer)
     well_col = Column(Integer)
-    well_descriptor = Column(String)
+    well_descriptor = column_property(
+        func.char(func.ascii('A') + well_row - 1) + func.cast(well_col, String)
+    )
     z_height = Column(Float)
 
 
