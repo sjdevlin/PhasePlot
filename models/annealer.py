@@ -33,7 +33,7 @@ class AnnealerWell(Base):
     sensor_address = Column(String)
     active = Column(Boolean)
     well_row = Column(Integer)
-    well_col = Column(Integer)
+    well_column = Column(Integer)
     well_descriptor = column_property(
         func.char(func.ascii('A') + well_row - 1) + func.cast(well_col, String)
     )

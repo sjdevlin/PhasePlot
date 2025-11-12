@@ -43,7 +43,7 @@ class PlateWell(Base):
     id = Column(Integer, primary_key=True)
     plate_id = Column(Integer, ForeignKey("Plate.id"))
     well_row = Column(Integer)
-    well_col = Column(Integer)
+    well_column = Column(Integer)
     well_descriptor = column_property(
         func.char(func.ascii('A') + well_row - 1) + func.cast(well_col, String)
     )

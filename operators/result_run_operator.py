@@ -1,6 +1,5 @@
 from hardware import *
 from datetime import datetime
-from hardware.annealer_controller import AnnealerController
 from models.results import ResultRunData
 from services import Logger, AppConfig, Movie2Tiff, PIDCalculator, pid_calculator
 from models import Experiment, Sample, ImageSet, ResultRun, ResultRunImage
@@ -16,12 +15,7 @@ class ResultRunOperator:
         self.experiment = experiment
         self.plate = self.db.get_plate_by_id(self.experiment.plate_id)
         self.image_set = self.db.get_image_set_by_id(self.result_set.image_set_id)
-        self.temperature_profile = self.db.get_temperature_profile_by_id(self.result_set.temperature_profile_id)
-        self.annealer = self.db.get_annealer_by_id(self.result_set.annealer_id)
         self.converter = Movie2Tiff()  # Initialize the Movie2Tiff converter
-
-        annealer_parameters = self.db.get_annealer_by_id(self.annealer.id)
-        self.annealer_controller = AnnealerController(annealer_parameters=annealer_parameters) # all annealers same so no need for factory here
 
         camera_type = self.app_config.get("camera_type", "default_camera") #change to do this in the camera initialization
         self.camera_controller = CameraControllerFactory.create_camera_controller(camera_type)
@@ -33,24 +27,39 @@ class ResultRunOperator:
                                                          self.app_config.get("illumination_intensity", 0.3))
         self.camera_controller.set_shutter_speed(self.app_config.get("shutter_speed", 10000))
         self.movie_path = self.app_config.get("movie_file_directory", "./")
-        self.MAX_INTENSITY = self.app_config.get("max_heat_intensity")
+
+        number_prev_runs_of_exp_set = self.db.get_number_result_runs_by_exp_and_set(self.experiment.id, self.result_set.id)
+
+        KP = self.app_config.get("kp")
+        KI = self.app_config.get("ki")
+        KD = self.app_config.get("kd")
 
 
+        self.result_run_id = self.db.add_result_run(ResultRun(
+            experiment_id=self.experiment.id,
+            result_set_id=self.result_set.id,            
+            description= (f"{self.experiment.description}: Result Run: {number_prev_runs_of_exp_set + 1}"),
+            notes=(f"Result Set: {self.image_set.description}"),
+            start_date_time= datetime.now(),
+            status="Not Started",
+            number_of_samples=len(self.experiment.sample),
+            pid_kp = KP,
+            pid_ki = KI,
+            pid_kd = KD
+        ))
 
+        self.result_run = self.db.get_result_run_by_id(self.result_run_id)
+        self.time_at_temperature = {}
+        self.result_run.target_temperature = {} # this needs to be in result run so it can be shared between threads
 
+        for sample in self.experiment.sample:
+            self.time_at_temperature[sample.id] = 0
+            self.result_run.target_temperature[sample.id] = self.result_set.temperature_profile.start_temp
 
 
     def run(self):
         from views import LogView
         from tkinter import messagebox
-
-        # check the annealer is connected
-        if self.annealer_controller.connect():
-            self.logger.info("Annealer connected")
-        else:
-            self.logger.error("Annealer not connected")
-            return
-
 
         # ask user to ensure that image is in focus before starting the run
         # create window that pauses the run until the user clicks "Continue"
@@ -76,39 +85,7 @@ class ResultRunOperator:
        # First create the image run in the database, then retrieve it.  
         # This ensures that the image run is created before we start the imaging process.
 
-        number_prev_runs_of_exp_set = self.db.get_number_result_runs_by_exp_and_set(self.experiment.id, self.result_set_set.id)
-
-        self.result_run_id = self.db.add_result_run(ResultRun(
-            experiment_id=self.experiment.id,
-            result_set_id=self.result_set.id,
-            description= (f"{self.experiment.description}: Result Run: {number_prev_runs_of_exp_set + 1}"),
-            notes=(f"Result Set: {self.image_set.description}"),
-            image_run_start_date_time= datetime.now(),
-            image_run_status="Not Started",
-            number_of_samples=len(self.experiment.sample)
-        ))
-
-        self.result_run = self.db.get_result_run_by_id(self.result_run_id)
-
         # Iterate through each sample in the experiment
-        self.logger.info(f"Started result run for experiment {self.experiment.id} with result set {self.result_set.id}")
-
-        KP = self.app_config.get("kp")
-        KI = self.app_config.get("ki")
-        KD = self.app_config.get("kd")
-
-        self.pid_kp = KP
-        self.pid_ki = KI
-        self.pid_kd = KD
-
-        pid_controllers = {}
-        target_temperature = {}
-        time_target_temperature_reached = {}
-        for sample in self.experiment.sample:
-            pid_controllers[sample.id] = PIDCalculator(KP, KI, KD)
-            target_temperature[sample.id] = self.temperature_profile.get_start_temperature()
-            time_target_temperature_reached[sample.id] = datetime.now()
-            #remember these are dictionaries keyed by sample.id
 
         #home the stage before starting the imaging run
         #self._home_stage()
@@ -116,26 +93,21 @@ class ResultRunOperator:
         self.focus_controller.move_z(self.move_position)  #TODO change to config value
 
         exp_complete = False
+
+
         while not exp_complete:
 
             for sample in self.experiment.sample:
 
-                temperature_in_range = self.control_temperature(sample, pid_controllers[sample.id], target_temperature[sample.id])
+                while (self.time_at_temperature[sample.id] < self.result_set.temperature_profile.soak_time_seconds):
+                    sleep (1)
+                    # Once soak time is reached, proceed to image
 
-                if not temperature_in_range:
-                    time_target_temperature_reached[sample.id] = datetime.now()
-                else:
-                    elapsed_time_at_target_temperature = (datetime.now() - time_target_temperature_reached[sample.id]).total_seconds()
-
-                if elapsed_time_at_target_temperature > self.result_set.temperature_profile.soak_time_seconds:
-                    # Once temperature is in range, proceed to image
-                    self.logger.info(f"Temperature in range for sample {sample.id}. Proceeding to image.")
-                    target_temperature[sample.id] = self.temperature_profile.get_next_temperature(target_temperature[sample.id])
-
+                self.logger.info(f"Soak time reached for sample {sample.id}. Proceeding to image.")
 
                 for site_number in range(self.image_set.number_of_sites):
 
-                    filename = f"{self.movie_path}/{self.image_run.id}_{sample.well_row}_{sample.well_column}_{site_number}"
+                    filename = f"{self.movie_path}/{self.result_run.id}_{sample.well_row}_{sample.well_column}_{site_number}"
                     self.camera_controller.set_filename(filename)
 
                     self._move_stage_to_site(sample, site_number)
@@ -147,10 +119,12 @@ class ResultRunOperator:
                     self._readjust_focus()
 
                 self.focus_controller.move_z(self.move_position)  # Drop Z for next major move
+                self.result_run.target_temperature[sample.id] -= self.result_set.temperature_profile.step_size
+                self.time_at_temperature[sample.id] = 0  # Reset time at temperature for 
 
         self.finish_date_time = datetime.now()
         self.status = "Complete"
-        self.db.update_image_run(self.experiment)
+        self.db.update_result_run(self.result_run)
         self.logger.info("Imaging complete")
 
     def _home_stage(self):
@@ -204,7 +178,7 @@ class ResultRunOperator:
 
             new_image = Image(
                     sample_id=sample.id,
-                    image_run_id=self.image_run.id,
+                    result_run_id=self.result_run.id,
                     image_site_number=site_number,
                     image_stack_number=focus_scores.index(score),  # Use the index of the score as the stack ID
                     image_dimension_x=self.camera_controller.image_dimension_x,
@@ -222,71 +196,3 @@ class ResultRunOperator:
         self.logger.info(f"Image stack extracted for movie {movie_filename}")
 
 
-    def set_and_hold_start_temperature(self):
-        """
-        Set and hold the start temperature for the annealer.
-        """
-        target_temp = self.temperature_profile.get_start_temperature()
-        self.logger.info(f"Setting annealer to start temperature: {start_temp}°C")
-        last_poll_time = datetime.now()  
-        some_wells_not_at_temp = True
-
-        while some_wells_not_at_temp:
-
-            some_wells_not_at_temp = False
-
-            for sample in self.experiment.sample:
-
-                well_row = sample.well_row
-                well_column = sample.well_column
-                well_index = (well_row - 1) * self.annealer.num_columns + (well_column - 1) # done differently elsewhere why?
-                address = self.annealer.well[well_index].sensor_address
-                calibration_factor = self.annealer.well[well_index].calibration_factor
-                current_temp = self.annealer.get_temperature_celsius(address)
-
-                error = target_temp - current_temp
-                if abs(error) > 0.5:  # TODO make config value
-                    some_wells_not_at_temp = True
-
-                pid_proportion = 0
-                pid_integral = 0
-                pid_derivative = 0
-
-                if error > 1.0:
-                    intensity = self.MAX_INTENSITY
-                    pid_calculator[sample.id].reset()
-                elif error < -1.0:
-                    intensity = 0
-                    pid_calculator[sample.id].reset()
-                else: 
-                    pid = pid_calculator[sample.id]
-                    pid_output, pid_proportion, pid_integral, pid_derivative = pid.update(error, interval)
-                    intensity = max(0, min(int(pid_output), self.MAX_INTENSITY))
-
-                # Apply the computed heating intensity to the well
-                self.plate_controller.apply_heat(well_index, intensity)
-                
-                elapsed_seconds = int((current_time - self.experiment.anneal_start_date_time).total_seconds())
-                elapsed_minutes = int(elapsed_seconds / 60)
-
-                new_sample_data = ResultRunData(
-                        sample_id=sample.id,
-                        result_run_id=self.result_run.id,
-                        reading_date_time=current_time,
-                        target_temperature=target_temp,
-                        elapsed_minutes=elapsed_minutes,
-                        actual_temperature=current_temp,
-                        heat_applied=intensity
-                    )
-                
-
-
-
-            current_time = datetime.now()
-            interval = (current_time - last_poll_time).total_seconds()
-            last_poll_time = current_time
-
-
-
-
-        self.logger.info(f"Annealer set to hold at {start_temp}°C")

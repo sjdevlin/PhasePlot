@@ -40,7 +40,7 @@ class ResultRun(Base):
 
 
 class ResultRunImage(Base):
-    __tablename__ = "Image"
+    __tablename__ = "ResultRunImage"
     id = Column(Integer, primary_key=True)
     sample_id = Column(Integer, ForeignKey("Sample.id"))
     result_set_id = Column(Integer, ForeignKey("ResultSet.id"))

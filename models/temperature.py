@@ -12,7 +12,7 @@ class TemperatureProfile(Base):
     notes = Column(String)
     start_temp  = Column(Float)
     end_temp  = Column(Float)
-    step_interval_mins = Column(Float)
+    step_size = Column(Float)
     soak_time_seconds = Column(Integer)
 
 

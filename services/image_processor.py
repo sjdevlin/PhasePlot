@@ -120,11 +120,11 @@ class ImageProcessor:
     # Public API
     # ------------------------------------------------------------------
 
-    def analyze(self, image_run_id: int):
-        """Analyze all images for *image_run_id* and persist droplet stats."""
-        images = self.db.get_images_by_image_run_id(image_run_id)
+    def analyze(self, result_run_id: int):
+        """Analyze all images for *result_run_id* and persist droplet stats."""
+        images = self.db.get_images_by_result_run_id(result_run_id)
         if not images:
-            print(f"No images for run {image_run_id}")
+            print(f"No images for run {result_run_id}")
             return
 
         # Group by (sample_id, site_number)

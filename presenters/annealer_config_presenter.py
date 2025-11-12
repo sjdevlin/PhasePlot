@@ -1,4 +1,4 @@
-from operators import AnnealerOperator
+from operators import AnnealerConfigOperator
 from models import Plate
 import threading
 
@@ -8,7 +8,7 @@ class AnnealerConfigPresenter():
         self.db = db
 
         self.view.check_plate_button.configure(command=self.check_plate)
-        self.operator = AnnealerOperator(self.db, self.update_progress)
+        self.operator = AnnealerConfigOperator(self.db, self.update_progress)
 
 
     def check_annealer(self):

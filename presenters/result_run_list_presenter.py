@@ -7,8 +7,8 @@ class ResultRunListPresenter():
         self.db = db
         self.view.res_bind_row_selection(self.on_res_row_selected)
         self.refresh_view()
-        self.view.review_button.configure(command=self.review_image_run)
-        self.view.process_button.configure(command=self.process_image_run)
+        self.view.review_button.configure(command=self.review_result_run)
+        self.view.process_button.configure(command=self.process_result_run)
         self.selected_res_row = None
 
 
@@ -30,7 +30,7 @@ class ResultRunListPresenter():
             res.description,
             res.number_of_samples,
             len(res.image),
-            res.image_run_start_date_time.strftime('%Y-%m-%d %H:%M:%S') if res.image_run_start_date_time else ""
+            res.start_date_time.strftime('%Y-%m-%d %H:%M:%S') if res.start_date_time else ""
             )
             for res in results
         ]

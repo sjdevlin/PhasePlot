@@ -1,6 +1,6 @@
 from models import Experiment, Sample, ResultSet, ImageSet, TemperatureProfile
 from datetime import datetime
-from operators import ExperimentOperator, ResultRunOperator
+from operators import ExperimentOperator, ResultRunOperator, TemperatureOperator
 import copy
 
 
@@ -110,27 +110,18 @@ class ExperimentListPresenter():
         from views import LogView
         import threading
 
-        new_result_run = ResultRunOperator(self.db.get_experiment_by_id(self.selected_exp_row),
-                                            self.db.get_result_set_by_id(self.selected_rs_row),
-                                            self.db)
-        
-        # Since Logger is a singleton, simply create it here.
-        from services import Logger
-        log_file_path = Logger().log_file
-        #TODO consider log window to always access singleton logger and no need to pass the reference
-        
-        # Create a new window to display the log file in real time.
-        log_window = LogView(self.view.root_window, log_file_path)
-        
-        # Run the annealing process in a separate thread.
-        def run_and_refresh():
-            new_result_run.run()
-            # After completion, schedule a refresh of the view in the main thread.
-            self.view.root_window.after(0, self.refresh_view)
+        result_set = self.db.get_result_set_by_id(self.selected_rs_row)
+        experiment = self.db.get_experiment_by_id(self.selected_exp_row)
+        temperature_profile = self.db.get_temperature_profile_by_id(result_set.temperature_profile_id)
 
-#        thread = threading.Thread(target=run_and_refresh, daemon=True)
-#        thread.start()
-        run_and_refresh() #TODO replace with threading when the GUI is stable
+        result_run_operator = ResultRunOperator(experiment, result_set, self.db)        
+        temperature_operator = TemperatureOperator( temperature_profile, result_run_operator.result_run, self.db)
+        
+        result_thread = threading.Thread(target=result_run_operator.run, daemon=True)
+        result_thread.start()
+
+        temperature_thread = threading.Thread(target=temperature_operator.run, daemon=True)
+        temperature_thread.start()
 
 
     def generate_script(self):

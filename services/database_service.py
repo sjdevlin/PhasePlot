@@ -121,7 +121,13 @@ class DatabaseService:
             session.add(result_run)
             session.commit()
             return result_run.id
-        
+
+    def add_result_run_data(self, result_run_data):
+        with self.Session() as session:
+            session.add(result_run_data)
+            session.commit()
+            return result_run_data.id
+
     def get_result_run_by_id(self, result_run_id):
         with self.Session() as session: 
             return session.query(ResultRun).filter_by(id=result_run_id).first()
