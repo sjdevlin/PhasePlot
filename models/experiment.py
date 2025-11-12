@@ -1,4 +1,3 @@
-from tokenize import String
 from sqlalchemy import Column, Integer, Float, Boolean, String, ForeignKey, DateTime, func
 from sqlalchemy.orm import relationship, column_property
 from models import Base, Plate
@@ -12,7 +11,16 @@ class Experiment(Base):
     __tablename__ = "Experiment" #TODO: add an experiment detail table to store more information about the experiment
     id = Column(Integer, primary_key=True)
     plate_id = Column(Integer, ForeignKey("Plate.id"))
-    liquid_protocol_id = Column(Integer, ForeignKey("LiquidProtocol.id"))
+    # Nullable FK: Experiments may reference a LiquidProtocol, but protocols are independent
+    # and can exist without any Experiment. Multiple Experiments can share the same protocol.
+    liquid_protocol_id = Column(Integer, ForeignKey("LiquidProtocol.id", ondelete="SET NULL"), nullable=True)
+    # Relationship: no cascade delete from LiquidProtocol → Experiment to preserve experiments
+    liquid_protocol = relationship(
+        "LiquidProtocol",
+        back_populates="experiments",
+        cascade="none",
+        passive_deletes=True,
+    )
     description = Column(String)
     notes = Column(String)
     creation_date_time = Column(DateTime)
@@ -56,6 +64,12 @@ class LiquidProtocol(Base):
     source_NS_dense_volume = Column(Float)  # Volume in µL
     source_oil_volume = Column(Float)  # Volume in µL
     final_sample_dispense_volume = Column(Float)  # Volume in µL
+    # Back-reference to experiments using this protocol
+    experiments = relationship(
+        "Experiment",
+        back_populates="liquid_protocol",
+        cascade="none",
+    )
 
 class Sample(Base):
     __tablename__ = "Sample"
