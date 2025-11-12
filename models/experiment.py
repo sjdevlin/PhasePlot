@@ -11,16 +11,10 @@ class Experiment(Base):
     __tablename__ = "Experiment" #TODO: add an experiment detail table to store more information about the experiment
     id = Column(Integer, primary_key=True)
     plate_id = Column(Integer, ForeignKey("Plate.id"))
-    # Nullable FK: Experiments may reference a LiquidProtocol, but protocols are independent
-    # and can exist without any Experiment. Multiple Experiments can share the same protocol.
-    liquid_protocol_id = Column(Integer, ForeignKey("LiquidProtocol.id", ondelete="SET NULL"), nullable=True)
-    # Relationship: no cascade delete from LiquidProtocol → Experiment to preserve experiments
-    liquid_protocol = relationship(
-        "LiquidProtocol",
-        back_populates="experiments",
-        cascade="none",
-        passive_deletes=True,
-    )
+    # Enforced FK: each Experiment must reference a LiquidProtocol.
+    # Deleting a referenced LiquidProtocol will be restricted by the DB (no cascade).
+    liquid_protocol_id = Column(Integer, ForeignKey("LiquidProtocol.id"), nullable=False)
+    liquid_protocol = relationship("LiquidProtocol", back_populates="experiments")
     description = Column(String)
     notes = Column(String)
     creation_date_time = Column(DateTime)
@@ -65,11 +59,7 @@ class LiquidProtocol(Base):
     source_oil_volume = Column(Float)  # Volume in µL
     final_sample_dispense_volume = Column(Float)  # Volume in µL
     # Back-reference to experiments using this protocol
-    experiments = relationship(
-        "Experiment",
-        back_populates="liquid_protocol",
-        cascade="none",
-    )
+    experiments = relationship("Experiment", back_populates="liquid_protocol")
 
 class Sample(Base):
     __tablename__ = "Sample"
