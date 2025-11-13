@@ -69,8 +69,9 @@ class ResultRunOperator:
         self.focus_position = self.focus_controller.get_z()  # Get the current Z position as a reference for focus
         first_well_row = self.experiment.sample[0].well_row
         first_well_column = self.experiment.sample[0].well_column
-        first_well_index = self.plate.get_well_index(first_well_row, first_well_column)
-        stored_z_height = first_well_index.z_height
+        
+
+        stored_z_height = self.plate.get_well_z_height(first_well_row, first_well_column)
 
         difference = abs(self.focus_position - stored_z_height)
 
@@ -176,7 +177,7 @@ class ResultRunOperator:
 
         for file, score in zip(filenames, focus_scores):
 
-            new_image = Image(
+            new_image = ResultRunImage(
                     sample_id=sample.id,
                     result_run_id=self.result_run.id,
                     image_site_number=site_number,
@@ -191,7 +192,7 @@ class ResultRunOperator:
                     )
 
                 # Save the image to the database
-            self.db.add_image(new_image)
+            self.db.add_result_run_image(new_image)
 
         self.logger.info(f"Image stack extracted for movie {movie_filename}")
 

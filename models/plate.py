@@ -37,16 +37,28 @@ class Plate(Base):
         "Experiment",
         backref="plate",
     )
+
+    def get_well_z_height(self, well_row, well_column):
+        """Retrieve the z-height for a specific well in the plate.
+
+        Args:
+            well_row (str): The row identifier of the well (e.g., 'A', 'B', etc.).
+            well_column (int): The column number of the well (e.g., 1, 2, etc.).
+
+        Returns:
+            float: The z-height of the specified well, or None if not found.
+        """
+        for well in self.well:
+            if well.well_row == well_row and well.well_column == well_column:
+                return well.z_height
+        return None
     
 class PlateWell(Base):
     __tablename__ = "PlateWell"
     id = Column(Integer, primary_key=True)
     plate_id = Column(Integer, ForeignKey("Plate.id"))
-    well_row = Column(Integer)
+    well_row = Column(String)
     well_column = Column(Integer)
-    well_descriptor = column_property(
-        func.char(func.ascii('A') + well_row - 1) + func.cast(well_col, String)
-    )
     z_height = Column(Float)
 
 

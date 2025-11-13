@@ -49,8 +49,8 @@ class ResultRunListPresenter():
         # Create a new window to display the log file in real time.
         log_window = LogView(self.view.root_window, log_file_path)
 
-        self.result_processor = ResultProcessor(db_service=self.db, match_tolerance = 10)  
-        self.result_processor.analyze(self.selected_res_row)
+        self.image_processor = ImageProcessor(db_service=self.db, match_tolerance = 10)  
+        self.image_processor.analyze(self.selected_res_row)
 
         pass
         
@@ -58,7 +58,7 @@ class ResultRunListPresenter():
 
         from views import ResultRunDetailView
         from services import Logger
-        from presenters import ImageRunDetailPresenter
+        from presenters import ResultRunDetailPresenter
 
         results_id = self.view.get_id_of_selected_res_row()
         results_detail_view = ResultRunDetailView()  # Create a new view

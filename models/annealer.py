@@ -32,7 +32,7 @@ class AnnealerWell(Base):
     calibration_factor = Column(Float)
     sensor_address = Column(String)
     active = Column(Boolean)
-    well_row = Column(Integer)
+    well_row = Column(String)
     well_column = Column(Integer)
     well_descriptor = column_property(
         func.char(func.ascii('A') + well_row - 1) + func.cast(well_col, String)

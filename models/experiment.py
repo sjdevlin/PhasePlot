@@ -65,11 +65,8 @@ class Sample(Base):
     __tablename__ = "Sample"
     id = Column(Integer, primary_key=True)
     experiment_id = Column(Integer, ForeignKey("Experiment.id"))
-    well_row = Column(Integer)
+    well_row = Column(String)
     well_column = Column(Integer)
-    well_descriptor = column_property(
-        func.char(func.ascii('A') + well_row - 1) + func.cast(well_col, String)
-    )
     ns_concentration = Column(Float)  # in microMolar
     image = relationship("Image", backref="sample", cascade="all, delete-orphan", single_parent=True)
 

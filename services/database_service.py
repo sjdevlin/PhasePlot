@@ -127,6 +127,13 @@ class DatabaseService:
             session.add(result_run_data)
             session.commit()
             return result_run_data.id
+        
+    def add_result_run_image(self, result_run_image):
+        with self.Session() as session:
+            session.add(result_run_image)
+            session.commit()
+            return result_run_image.id
+
 
     def get_result_run_by_id(self, result_run_id):
         with self.Session() as session: 

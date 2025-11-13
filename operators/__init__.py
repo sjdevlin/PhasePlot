@@ -1,6 +1,5 @@
 from .experiment_operator import ExperimentOperator
 from .result_run_operator import ResultRunOperator
-from .liquid_handler import LiquidHandler
 from .annealer_config_operator import AnnealerConfigOperator
 from .temperature_operator import TemperatureOperator
 
