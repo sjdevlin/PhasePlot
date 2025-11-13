@@ -16,6 +16,13 @@ class DatabaseService:
         with self.Session() as session: 
            return session.query(TemperatureProfile).filter_by(id=temp_profile_id).first()
 
+##Annealer
+
+    def get_annealer_by_serial_number(self, ser_number):
+        with self.Session() as session: 
+           return session.query(Annealer).options(joinedload(Annealer.well)).filter_by(serial_number=ser_number).first()
+
+
 ##Plates
 
     def get_all_plates(self):
@@ -174,7 +181,11 @@ class DatabaseService:
         with self.Session() as session:
             return session.query(ImageSet).all()
         
+#Liquid Protocols
 
+    def get_liquid_protocol_by_id(self, protocol_id):
+        with self.Session() as session:
+            return session.query(LiquidProtocol).filter_by(id=protocol_id).first()
 
 """
     def update_experiment(self, experiment_id, new_status):

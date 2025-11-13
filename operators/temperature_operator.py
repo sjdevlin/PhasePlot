@@ -15,16 +15,18 @@ class TemperatureOperator:
 
         self.result_set = self.db.get_result_set_by_id(self.result_run.result_set_id)
         self.experiment = self.db.get_experiment_by_id(self.result_run.experiment_id)
-        annealer_parameters = self.db.get_annealer_by_id(self.result_set.annealer_id)
-        self.annealer_controller = AnnealerController(annealer_parameters=annealer_parameters) # all annealers same so no need for factory here
+
+        self.annealer_controller = AnnealerController() # all annealers same so no need for factory here
 
         if self.annealer_controller.connect():
             self.logger.info("Annealer connected")
+            serial_number = self.annealer_controller.get_serial_number()
+            self.annealer_prarameters = self.db.get_annealer_by_serial_number(serial_number)
+            self.result_run.annealer_id = self.annealer_prarameters.id
         else:
             self.logger.error("Annealer not connected")
             return
 
-        self.annealer_controller.zero_all_wells()
 
 
     def run(self):
@@ -55,7 +57,7 @@ class TemperatureOperator:
                 well_column = sample.well_column
 
                 current_time = datetime.now()
-                current_temp = self.annealer_controller.get_temperature_celsius(well_row=well_row, well_column=well_column)
+                current_temp = self.annealer_controller.get_temperature_celsius(well_row=well_row, well_column=well_column, annealer_parameters=self.annealer_prarameters)
 
                 error = self.result_run.target_temperature[sample.id] - current_temp
                 if abs(error) > 0.2:  # TODO make config value

@@ -7,7 +7,6 @@ class ResultSet(Base):
     __tablename__ = "ResultSet"
     id = Column(Integer, primary_key=True)
     image_set_id = Column(Integer, ForeignKey("ImageSet.id"))
-    annealer_id = Column(Integer, ForeignKey("Annealer.id"))
     temperature_profile_id = Column(Integer, ForeignKey("TemperatureProfile.id"))
     description = Column(String)
     notes = Column(String)
@@ -18,6 +17,7 @@ class ResultRun(Base):
     id = Column(Integer, primary_key=True)
     result_set_id = Column(Integer, ForeignKey("ResultSet.id"))
     experiment_id = Column(Integer, ForeignKey("Experiment.id"))
+    annealer_id = Column(Integer, ForeignKey("Annealer.id"))
     description = Column(String)
     notes = Column(String)
     start_date_time = Column(DateTime)

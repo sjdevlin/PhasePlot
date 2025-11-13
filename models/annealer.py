@@ -18,8 +18,8 @@ class Annealer(Base):
         single_parent=True,
     )
 
-    result_sets = relationship(
-        "ResultSet",
+    result_runs = relationship(
+        "ResultRun",
         backref="annealer",
         # omit cascade/delete-orphan unless ResultSet is owned exclusively by Annealer
     )
@@ -34,9 +34,6 @@ class AnnealerWell(Base):
     active = Column(Boolean)
     well_row = Column(String)
     well_column = Column(Integer)
-    well_descriptor = column_property(
-        func.char(func.ascii('A') + well_row - 1) + func.cast(well_col, String)
-    )
 
 
 

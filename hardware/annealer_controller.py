@@ -5,7 +5,7 @@ from services import Logger, AppConfig
 
 class AnnealerController():
 
-    def __init__(self, annealer_parameters=None):
+    def __init__(self):
         
         #init does not need a serial number since only annealer can be conencted and 
         #it just queries the one picked up on the oprt specified by the config file
@@ -26,9 +26,6 @@ class AnnealerController():
         self.annealer_set_serial_number = my_app_config.get("annealer_set_serial_number")
         self.annealer_zero_all_wells = my_app_config.get("annealer_zero_all_wells")
         self.celsius_multiplier = my_app_config.get("celsius_multiplier")
-
-        if annealer_parameters is not None:
-            self.annealer_parameters = annealer_parameters
 
     def connect(self):
         try:
@@ -110,11 +107,11 @@ class AnnealerController():
             self.logger.error(f"Failed to get all addresses.  Found {len(addresses)} out of {num_wells}.")
             return addresses
 
-    def get_temperature_celsius(self, address=None, row=None, column=None):
+    def get_temperature_celsius(self, address=None, row=None, column=None, annealer_parameters=None):
 
         retries = self.annealer_retries
 
-        if self.annealer_parameters is not None:
+        if annealer_parameters is not None:
             found = False
             for well in self.annealer_parameters:
                 if well.row == str(row).upper() and well.column == int(column):
@@ -125,6 +122,9 @@ class AnnealerController():
             if not found:
                 self.logger.error(f"No entry found for well {row}{column}; using 0.0")
                 return None 
+        else:
+            calibration_factor = 1.0
+            #TODO: check that this way of overloading is good practice
 
         while retries > 0:
             self.send_command(f"{self.annealer_get_temp} {address}")
@@ -207,4 +207,5 @@ class AnnealerController():
         else:
             self.logger.error(f"No response to zero command.")
             return None
+
 
