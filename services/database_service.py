@@ -128,11 +128,18 @@ class DatabaseService:
             session.commit()
             return result_run_data.id
         
-    def add_result_run_image(self, result_run_image):
+    def add_image(self, image):
         with self.Session() as session:
-            session.add(result_run_image)
+            session.add(image)
             session.commit()
-            return result_run_image.id
+            return image.id
+        
+    def update_image(self, image):
+        with self.Session() as session:
+            session.merge(image)  # Merges the detached object into the session
+            session.commit()
+            return True
+
 
 
     def get_result_run_by_id(self, result_run_id):
@@ -142,7 +149,7 @@ class DatabaseService:
 
     def get_images_by_result_run_id(self, result_run_id):
         with self.Session() as session: 
-            return session.query(ResultRunImage).filter_by(result_run_id=result_run_id).order_by(ResultRunImage.id).all()
+            return session.query(Image).filter_by(result_run_id=result_run_id).order_by(Image.id).all()
 
     def update_result_run(self, result_run):
         with self.Session() as session:
@@ -166,18 +173,7 @@ class DatabaseService:
     def get_all_image_sets(self):
         with self.Session() as session:
             return session.query(ImageSet).all()
-
-    def add_image(self, image):
-        with self.Session() as session:
-            session.add(image)
-            session.commit()
-            return image.id
         
-    def update_image(self, image):
-        with self.Session() as session:
-            session.merge(image)  # Merges the detached object into the session
-            session.commit()
-            return True
 
 
 """

@@ -28,7 +28,7 @@ class ResultRun(Base):
     pid_ki = Column(Float)
     pid_kd = Column(Float)
     image = relationship(
-        "ResultRunImage",
+        "Image",
         backref="parent",
         cascade="all, delete-orphan",
         single_parent=True,)
@@ -39,8 +39,8 @@ class ResultRun(Base):
         single_parent=True,)
 
 
-class ResultRunImage(Base):
-    __tablename__ = "ResultRunImage"
+class Image(Base):
+    __tablename__ = "Image"
     id = Column(Integer, primary_key=True)
     sample_id = Column(Integer, ForeignKey("Sample.id"))
     result_set_id = Column(Integer, ForeignKey("ResultSet.id"))

@@ -7,7 +7,7 @@ from math import hypot
 from pathlib import Path
 
 # SQLAlchemy Image model is imported for type hinting / ORM updates
-from models import ResultRunImage
+from models import Image
 from services import AppConfig
 
 

@@ -2,7 +2,7 @@ from hardware import *
 from datetime import datetime
 from models.results import ResultRunData
 from services import Logger, AppConfig, Movie2Tiff, PIDCalculator, pid_calculator
-from models import Experiment, Sample, ImageSet, ResultRun, ResultRunImage
+from models import Experiment, Sample, ImageSet, ResultRun, Image
 from time import sleep
 import random
 
@@ -177,7 +177,7 @@ class ResultRunOperator:
 
         for file, score in zip(filenames, focus_scores):
 
-            new_image = ResultRunImage(
+            new_image = Image(
                     sample_id=sample.id,
                     result_run_id=self.result_run.id,
                     image_site_number=site_number,
