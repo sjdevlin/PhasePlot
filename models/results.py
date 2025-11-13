@@ -43,7 +43,7 @@ class Image(Base):
     __tablename__ = "Image"
     id = Column(Integer, primary_key=True)
     sample_id = Column(Integer, ForeignKey("Sample.id"))
-    result_set_id = Column(Integer, ForeignKey("ResultSet.id"))
+    result_run_id = Column(Integer, ForeignKey("ResultRun.id"))
     site_number = Column(Integer)
     stack_number = Column(Integer)
     dimension_x = Column(Integer)
