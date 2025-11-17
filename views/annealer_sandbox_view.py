@@ -1,7 +1,7 @@
 import customtkinter
 from tkinter import ttk, messagebox
 
-class PlateSandboxView():
+class AnnealerSandboxView():
     def __init__(self, on_close_callback=None):
         self.on_close_callback = on_close_callback
         self.root = customtkinter.CTkToplevel()  # Create the Toplevel window.

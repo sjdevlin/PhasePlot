@@ -15,17 +15,17 @@ class MainView():
 
         self.experiment_button = customtkinter.CTkButton(self.home_frame, text="Experiment", state=customtkinter.NORMAL)
         self.results_button = customtkinter.CTkButton(self.home_frame, text="Results",state=customtkinter.NORMAL)
-        self.annealing_button = customtkinter.CTkButton(self.home_frame, text="Annealing Profiles", state=customtkinter.DISABLED)   
+        self.plate_config_button = customtkinter.CTkButton(self.home_frame, text="Plate Config", state=customtkinter.NORMAL)   
         self.imaging_button = customtkinter.CTkButton(self.home_frame, text="Imaging", state=customtkinter.DISABLED)    
-        self.plate_config_button = customtkinter.CTkButton(self.home_frame, text="Configure Annealer",state=customtkinter.NORMAL)
+        self.annealer_config_button = customtkinter.CTkButton(self.home_frame, text="Configure Annealer",state=customtkinter.NORMAL)
         self.plate_sandbox_button = customtkinter.CTkButton(self.home_frame, text="Annealer Sandbox",state=customtkinter.NORMAL)
         self.image_sandbox_button = customtkinter.CTkButton(self.home_frame, text="Image Sandbox",state=customtkinter.NORMAL)
 
         self.experiment_button.grid(row=1, column=0, sticky="nsew", padx=20, pady=20)
         self.results_button.grid(row=2, column=0, sticky="nsew", padx=20, pady=20,)
-        self.annealing_button.grid(row=3, column=0, sticky="nsew", padx=20, pady=20)
+        self.plate_config_button.grid(row=3, column=0, sticky="nsew", padx=20, pady=20)
         self.imaging_button.grid(row=4, column=0, sticky="nsew", padx=20, pady=20)
-        self.plate_config_button.grid(row=5, column=0, sticky="nsew", padx=20, pady=20)
+        self.annealer_config_button.grid(row=5, column=0, sticky="nsew", padx=20, pady=20)
         self.plate_sandbox_button.grid(row=6, column=0, sticky="nsew", padx=20, pady=20)
         self.image_sandbox_button.grid(row=7, column=0, sticky="nsew", padx=20, pady=20)
 

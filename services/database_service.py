@@ -31,7 +31,7 @@ class DatabaseService:
 
     def get_plate_by_id(self, plate_id):
         with self.Session() as session: 
-           return session.query(Plate).filter_by(id=plate_id).first()
+           return session.query(Plate).options(joinedload(Plate.well)).filter_by(id=plate_id).first()
         
     def get_plate_by_serial_number(self, ser_number):
         with self.Session() as session: 
