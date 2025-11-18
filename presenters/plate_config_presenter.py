@@ -1,5 +1,6 @@
 from hardware import StageControllerFactory, FocusControllerFactory
 from services import Logger, AppConfig, DatabaseService
+from services.well_translator import well_to_indices
 
 class PlateConfigPresenter():
     def __init__(self, view, db):
@@ -38,7 +39,7 @@ class PlateConfigPresenter():
 
     def store_z_value(self):
         if self.selected_well_index is not None:
-            z_value = self.focus_controller.get_current_z_height()
+            z_value = self.focus_controller.get_z()
             self.plate.well[self.selected_well_index].z_height = z_value
             self.db.update_plate(self.plate)
             self.display_plate()
@@ -52,15 +53,19 @@ class PlateConfigPresenter():
             for index, well in enumerate(self.plate.well):
                 if well.well_row == self.selected_well_row and well.well_column == self.selected_well_column:
                     self.selected_well_index = index
+                    row_int, column_int = well_to_indices(well.well_row, well.well_column)
                     break
             # Move stage to selected well
-#            x_pos = self.plate.well[self.selected_well_index].x_position
-#            y_pos = self.plate.well[self.selected_well_index].y_position
-#            self.stage_controller.move_to_position(x_pos, y_pos)
-            # Update Z height display
-            z_height = self.plate.well[self.selected_well_index].z_height
-            if z_height is not None:
-                self.view.z_height.configure(text=f"{z_height:.2f} um")
+            old_z_height = self.focus_controller.get_z()
+            self.focus_controller.move_z(old_z_height - 200, speed="normal") 
+            x = self.plate.centre_first_well_offset_x + column_int * self.plate.well_spacing_x
+            y = self.plate.centre_first_well_offset_y + row_int * self.plate.well_spacing_y
+            self.stage_controller.move(position = x, axis= "x", speed="normal")
+            self.stage_controller.move(position = y, axis= "y", speed="normal")
+            self.focus_controller.move_z(old_z_height, speed="normal")
+            stored_z_height = self.plate.well[self.selected_well_index].z_height
+            if stored_z_height is not None:
+                self.view.z_height.configure(text=f"{stored_z_height:.2f} um")
             self.display_plate()
 
     def display_plate(self):

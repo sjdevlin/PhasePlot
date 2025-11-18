@@ -42,6 +42,12 @@ class DatabaseService:
             session.add(plate)
             session.commit()
             return plate.id
+        
+    def update_plate(self, plate):
+        with self.Session() as session:
+            session.merge(plate)  # Merges the detached object into the session
+            session.commit()
+            return True
 
 #Annealer
     def get_annealer_by_id(self, annealer_id):

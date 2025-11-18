@@ -137,9 +137,9 @@ dmypy.json
 
 # Project-specific files
 # SQLite databases
-*.sqlite
-*.sqlite3
-*.db
+#*.sqlite
+#*.sqlite3
+#*.db
 
 # Excel files (if these are generated/temporary)
 *.xlsx

@@ -1,5 +1,6 @@
 import customtkinter
 from tkinter import ttk, messagebox
+from services import well_to_indices, indices_to_well
 
 class PlateConfigView():
     def __init__(self, on_close_callback=None):
@@ -59,7 +60,7 @@ class PlateConfigView():
         for widget in self.plate_frame.winfo_children():
             widget.destroy()
 
-        scale = 3  # Change this to be a parameter if needed.
+        scale = 2  # Change this to be a parameter if needed.
         self.canvas = customtkinter.CTkCanvas(self.plate_frame, width=plate_width*scale+1, height=plate_length*scale+1,
                                                highlightthickness=0, bd=0)
         self.canvas.create_rectangle(1, 1, plate_width*scale, plate_length*scale, fill="gray30", state='disabled', width=0)
@@ -71,10 +72,10 @@ class PlateConfigView():
         for well in well_data:
             row, column, selected = well
             # Convert row label (e.g., "A", "B", "AA") to an integer with A=1
-            row_int = (ord(row) - ord('A') + 1)
-            x = (offset_x * scale * 2) + (column * scale * well_spacing_x * 2)
-            y = (offset_y * scale * 2) + (row_int * scale * well_spacing_y * 2)
-            r = well_diameter 
+            row_int, column_int = well_to_indices(row, column)
+            x = (offset_x * scale ) + (column_int * scale * well_spacing_x )
+            y = (offset_y * scale ) + (row_int * scale * well_spacing_y )
+            r = well_diameter * scale 
             fill_color = "white" 
             well_button_id = self.canvas.create_oval(
                 2+(x - r), 2+(y - r), 2+(x + r), 2+(y + r), 
@@ -89,7 +90,7 @@ class PlateConfigView():
                     2+(x - 2*r), 2+(y - 2*r), 2+(x + 2*r), 2+(y + 2*r), 
                     fill="", 
                     outline="gray99",
-                    width=3
+                    width=4
                 )
                  
     def get_row_col_selected_well(self, event):

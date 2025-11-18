@@ -1,6 +1,6 @@
 log_dir: logs
-log_file: systemx
-error_file: systemx_error
+log_file: phase_plot
+error_file: phase_plot_error
 
 sqlite_db: sqlite:///sandbox.sqlite
 
@@ -41,8 +41,12 @@ stage_force_to_origin: 130 # in mm
 stage_scale: 1000.0 # convert mm to microns
 max_stage_speed: 10000 # in microns/s
 normal_stage_speed: 3000 # in microns/s
-origin_offset_x: 4300 # in microns
-origin_offset_y: 3300 # in microns
+#origin_offset_x: 4300 # in microns - for 384 ibidi well
+#origin_offset_y: 3300 # in microns - for 384 ibidi well
+origin_offset_x: 4700 # in microns - for 36 well
+origin_offset_y: 3300 # in microns - for 36 well 
+
+
 
 # Opentrons settings
 script_template: ./opentrons_protocols/template.json
