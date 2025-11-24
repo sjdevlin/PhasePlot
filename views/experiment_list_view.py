@@ -163,7 +163,7 @@ class ExperimentListView():
         self.result_set_table_frame.grid(row=3, column=0, sticky="nsew", padx=100, pady=20)
         
         
-        self.rs_columns = ('ID', 'Description', 'Lens', 'Z Stack')
+        self.rs_columns = ('ID', 'Description', 'Lens', 'Range', 'Step', 'Z Stack')
         self.rs_table = ttk.Treeview(self.result_set_table_frame, columns=self.rs_columns, show='headings')
         
         # Setup headings.
