@@ -45,7 +45,7 @@ class LiquidProtocol(Base):
     buffer_location = Column(String)  # e.g., "A1" (well descriptor)
     ns_dense_location = Column(String)  # e.g., "A2" (well descriptor)
     oil_location = Column(String)  # e.g., "D1" (well descriptor)
-    emulsion_locations = Column(String)  # e.g., "B1" (well descriptor)
+    stock_locations = Column(String)  # e.g., "B1" (well descriptor)
     creation_date_time = Column(DateTime)
     mix_aspirate_speed = Column(Float)  # Speed in µL/s
     mix_dispense_speed = Column(Float)  # Speed in µL/s
