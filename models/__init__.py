@@ -1,5 +1,5 @@
 from .base import Base
-from .plate import Plate
+from .plate import Plate, PlateWell
 from .experiment import Experiment, Sample, LiquidProtocol
 from .image import ImageSet
 from .results import ResultSet, ResultRunData, Image, ResultRun

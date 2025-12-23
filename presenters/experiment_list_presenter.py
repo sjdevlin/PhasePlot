@@ -54,18 +54,18 @@ class ExperimentListPresenter():
         ]
         self.view.show_experiments(data)
 
-        data = [
-            (
-            rss.id,
-            rss.description,
-            rss.lens,
-            str(self.db.get_temperature_profile_by_id(rss.temperature_profile_id).start_temp)\
-                + " - " + str(self.db.get_temperature_profile_by_id(rss.temperature_profile_id).end_temp),
-            self.db.get_temperature_profile_by_id(rss.temperature_profile_id).step_interval_mins \
-                if rss.temperature_profile_id else "error",
-            rss.stack_size)
-            for rss in result_sets
-        ]
+        data = []
+        for rss in result_sets:
+            temp_profile = self.db.get_temperature_profile_by_id(rss.temperature_profile_id)
+            image_set = self.db.get_image_set_by_id(rss.image_set_id)
+            data.append((
+                rss.id,
+                rss.description,
+                image_set.lens,
+                str(temp_profile.start_temp) + " - " + str(temp_profile.end_temp),
+                temp_profile.step_size,
+                image_set.stack_size
+            ))
 
         self.view.show_result_sets(data)
 
