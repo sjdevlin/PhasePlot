@@ -20,7 +20,7 @@ class DatabaseService:
 
     def get_annealer_by_serial_number(self, ser_number):
         with self.Session() as session: 
-           return session.query(Annealer).options(joinedload(Annealer.well)).filter_by(serial_number=ser_number).first()
+           return session.query(Annealer).options(joinedload(Annealer.wells)).filter_by(serial_number=ser_number).first()
 
 
 ##Plates

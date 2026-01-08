@@ -7,6 +7,8 @@ from models import Base
 class Annealer(Base):
     __tablename__ = "Annealer"
     id = Column(Integer, primary_key=True)
+    serial_number = Column(Integer, unique=True)
+    plate_id = Column(Integer, ForeignKey("Plate.id"))
     description = Column(String)
     configured = Column(Boolean)
     number_active_sensors = Column(Integer)

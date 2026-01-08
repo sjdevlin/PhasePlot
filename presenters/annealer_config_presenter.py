@@ -7,7 +7,7 @@ class AnnealerConfigPresenter():
         self.view = view
         self.db = db
 
-        self.view.check_plate_button.configure(command=self.check_plate)
+        self.view.check_plate_button.configure(command=self.check_annealer)
         self.operator = AnnealerConfigOperator(self.db, self.update_progress)
 
 
@@ -27,6 +27,8 @@ class AnnealerConfigPresenter():
             if self.annealer is not None:
                 self.view.update_terminal("Annealer found in database.")
                 configure_new = self.view.ask_question("Annealer found in database with ID:" + str(self.annealer.id) + ".\nDo you want to re-configure as a new annealer?")
+            else:
+                configure_new = self.view.ask_question("Annealer with serial number:" + str(serial_number) + " not found in database.\nDo you want to configure as a new annealer?")
         else:
             self.view.update_terminal("Annealer has no serial number.")
             return    

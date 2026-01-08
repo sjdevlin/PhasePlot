@@ -16,17 +16,21 @@ class AnnealerSandboxPresenter():
         self.view.on_close_callback = self.on_view_close
 
         if connection_status:
+            self.annealer_controller.zero_all_wells()
             serial_number = self.annealer_controller.get_serial_number()
             if serial_number is not None and serial_number > 0:
                 self.logger.info(f"Connected to annealer {serial_number}")
                 self.annealer = self.db.get_annealer_by_serial_number(serial_number)
                 if self.annealer is not None:
-                    self.annealer_controller.zero_all_wells()
                     self.logger.info(f"Annealer found in database with ID: {self.annealer.id}")
+                else:
+                    self.logger.error(f"Annealer with serial number {serial_number} not found in database")
+                    self.view.display_error(f"Annealer with serial number {serial_number} not found in database")
             else:
                 self.logger.error("Failed to connect to annealer")
                 self.view.display_error("Failed to connect to annealer")
 
+            self.plate = self.db.get_plate_by_id(self.annealer.plate_id)
             self.selected_well_index = None
             self.display_plate()
             self.view.apply_button.configure(command=self.apply_heat)
@@ -62,10 +66,10 @@ class AnnealerSandboxPresenter():
             self.display_plate()
 
     def display_plate(self):
-        plate_width = self.annealer.outline_width
-        plate_height = self.annealer.outline_height
-        offset_x = self.annealer.centre_first_well_offset_x
-        offset_y = self.annealer.centre_first_well_offset_y
+        plate_width = self.plate.outline_width
+        plate_height = self.plate.outline_height
+        offset_x = self.plate.centre_first_well_offset_x
+        offset_y = self.plate.centre_first_well_offset_y
         well_diameter = self.plate.well_dimension
         well_spacing_x = self.plate.well_spacing_x
         well_spacing_y = self.plate.well_spacing_y

@@ -113,7 +113,7 @@ class AnnealerController():
 
         if annealer_parameters is not None:
             found = False
-            for well in self.annealer_parameters:
+            for well in annealer_parameters:
                 if well.row == str(row).upper() and well.column == int(column):
                         calibration_factor = float(well.calibration_factor)
                         address = well.sensor_address
@@ -127,9 +127,9 @@ class AnnealerController():
             #TODO: check that this way of overloading is good practice
 
         while retries > 0:
-            self.send_command(f"{self.annealer_get_temp} {address}")
+            self._send_command(f"{self.annealer_get_temp} {address}")
             sleep(self.annealer_serial_delay)
-            response = self.read_response()
+            response = self._read_response()
 
             if response is None:  # If read_response() times out or returns nothing
                 self.logger.warning(f"Timeout from sensor {address}, retrying...")
@@ -173,7 +173,7 @@ class AnnealerController():
         command = self.annealer_heat + " " + str(index) + " " + str(intensity)
         retries = self.annealer_retries
         while retries > 0:
-            self.send_command(command)
+            self._send_command(command)
             sleep(self.annealer_serial_delay)
             response = self.read_response()
             if response == command:
@@ -194,7 +194,7 @@ class AnnealerController():
         command = "A"
         retries = self.annealer_retries
         while retries > 0:
-            self.send_command(command)
+            self._send_command(command)
             sleep(self.annealer_serial_delay)
             response = self.read_response()
             if response == command:
