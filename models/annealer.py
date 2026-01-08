@@ -11,6 +11,7 @@ class Annealer(Base):
     plate_id = Column(Integer, ForeignKey("Plate.id"))
     description = Column(String)
     configured = Column(Boolean)
+    num_wells = Column(Integer)
     number_active_sensors = Column(Integer)
 
     wells = relationship(

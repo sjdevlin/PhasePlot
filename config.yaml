@@ -63,9 +63,9 @@ image_processing_workflow_name: test-validation-set/detect-count-and-visualize-3
 roboflow_api_key: TMlSASZ8SV6bioL6KYD3
 
 # Annealer Settings
-#annealer_port: /dev/cu.usbmodem21301 # macOS
+annealer_port: /dev/cu.usbmodem101 # macOS
 #annealer_port: COM5 # windows PC
-annealer_port: /dev/ttyACM1 # linux
+#annealer_port: /dev/ttyACM1 # linux
 
 #can use following script to find correct port on linux
 #for port in /dev/ttyACM*; do echo "=== $port ==="; udevadm info --name=$port | grep -E "ID_VENDOR|ID_MODEL|ID_SERIAL" | head -5; done

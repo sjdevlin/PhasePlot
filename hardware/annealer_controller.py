@@ -8,7 +8,7 @@ class AnnealerController():
     def __init__(self):
         
         #init does not need a serial number since only annealer can be conencted and 
-        #it just queries the one picked up on the oprt specified by the config file
+        #it just queries the one picked up on the port specified by the config file
         #and then loads addresses and calibration based on the annealer's serial no.
 
         self.logger = Logger() # Singleton instance
@@ -107,32 +107,17 @@ class AnnealerController():
             self.logger.error(f"Failed to get all addresses.  Found {len(addresses)} out of {num_wells}.")
             return addresses
 
-    def get_temperature_celsius(self, address=None, row=None, column=None, annealer_parameters=None):
+    def get_temperature_celsius(self, sensor_address=None, calibration_factor=1.0):
 
         retries = self.annealer_retries
 
-        if annealer_parameters is not None:
-            found = False
-            for well in annealer_parameters:
-                if well.row == str(row).upper() and well.column == int(column):
-                        calibration_factor = float(well.calibration_factor)
-                        address = well.sensor_address
-                        found = True
-                        break
-            if not found:
-                self.logger.error(f"No entry found for well {row}{column}; using 0.0")
-                return None 
-        else:
-            calibration_factor = 1.0
-            #TODO: check that this way of overloading is good practice
-
         while retries > 0:
-            self._send_command(f"{self.annealer_get_temp} {address}")
+            self._send_command(f"{self.annealer_get_temp} {sensor_address}")
             sleep(self.annealer_serial_delay)
             response = self._read_response()
 
             if response is None:  # If read_response() times out or returns nothing
-                self.logger.warning(f"Timeout from sensor {address}, retrying...")
+                self.logger.warning(f"Timeout from sensor {sensor_address}, retrying...")
                 retries -= 1
                 continue  # Retry
 
@@ -151,31 +136,19 @@ class AnnealerController():
 
 
         else:
-            self.logger.error(f"Too many errors from sensor {address}.")
+            self.logger.error(f"Too many errors from sensor {sensor_address}.")
             return None
         
 
         
-    def apply_heat(self, intensity, index=None, row=None, column=None):
-
-        if self.annealer_parameters is not None:
-            found = False
-            for well in self.annealer_parameters:
-                if well.row == str(row).upper() and well.column == int(column):
-                        index = well.well_index
-                        self.logger.info(f"Applying {intensity} heat to well {row}{column} with index {index}")
-                        found = True
-                        break
-            if not found:
-                self.logger.error(f"No entry found for well {row}{column}; using 0.0")
-                return None
+    def apply_heat(self, intensity, index=None):
 
         command = self.annealer_heat + " " + str(index) + " " + str(intensity)
         retries = self.annealer_retries
         while retries > 0:
             self._send_command(command)
             sleep(self.annealer_serial_delay)
-            response = self.read_response()
+            response = self._read_response()
             if response == command:
                 self.logger.info(f"Applied {intensity} heat to well with index {index}")
                 self.ser.reset_input_buffer() # Clear input buffer
@@ -196,7 +169,7 @@ class AnnealerController():
         while retries > 0:
             self._send_command(command)
             sleep(self.annealer_serial_delay)
-            response = self.read_response()
+            response = self._read_response()
             if response == command:
                 self.logger.info(f"Switched off all wells")
                 self.ser.reset_input_buffer() # Clear input buffer

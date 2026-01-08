@@ -42,7 +42,7 @@ class AnnealerConfigOperator():
         responses = []
         addresses = self.addresses.copy()
         for address in self.addresses:
-            temperature = self.annealer_controller.get_temperature_celsius(address) 
+            temperature = self.annealer_controller.get_temperature_celsius(sensor_address=address) 
             if temperature is not None:
                 responses.append(temperature)
             else:
@@ -73,21 +73,12 @@ class AnnealerConfigOperator():
         new_annealer = Annealer(
             serial_number=self.annealer.serial_number + 1,
             description=self.annealer.description + " (configured: ) + datetime.now().strftime('%Y-%m-%d %H:%M:%S')",
-            outline_width=self.annealer.outline_width,
-            outline_height=self.annealer.outline_height,
-            num_rows=self.annealer.num_rows,
-            num_cols=self.annealer.num_cols,
-            centre_first_well_offset_x=self.annealer.centre_first_well_offset_x,
-            centre_first_well_offset_y=self.annealer.centre_first_well_offset_y,
-            well_dimension=self.annealer.well_dimension,
-            well_spacing_x=self.annealer.well_spacing_x,
-            well_spacing_y=self.annealer.well_spacing_y,
-            min_well_volume=self.annealer.min_well_volume,
-            max_well_volume=self.annealer.max_well_volume,
+            plate_id=self.annealer.plate_id,
+            num_wells=self.annealer.num_wells,
             configured=True,
             number_active_sensors=len(self.addresses)
         )
-        #save plate in order to get a new plate_id
+        #save annealer in order to get a new annealer_id
 
         self.old_temperatures = {address: self.starting_temperature for address in self.addresses}
         self.new_temperatures = {address: self.starting_temperature for address in self.addresses}  # Moved outside the loop
@@ -107,10 +98,9 @@ class AnnealerConfigOperator():
                             calibration_factor=self.calibration_factors[sensor_address],
                             well_index=well_index,
                             active=True,
-                            well_row=(well_index) // new_annealer.num_cols,
-                            well_col=(well_index) % new_annealer.num_cols
                         )
-                        
+                #TODO: calculate row and col using a lookup based on annealer type
+
                 self.addresses.remove(sensor_address)
 
             else:
@@ -119,8 +109,6 @@ class AnnealerConfigOperator():
                             calibration_factor=0.0,
                             active=False,
                             well_index=well_index,
-                            well_row=well_index // new_annealer.num_cols,
-                            well_col=well_index % new_annealer.num_cols
                         )
                         
             new_annealer.well.append(new_well)

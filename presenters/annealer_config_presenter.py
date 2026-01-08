@@ -1,5 +1,5 @@
 from operators import AnnealerConfigOperator
-from models import Plate
+from models import Plate, Annealer
 import threading
 
 class AnnealerConfigPresenter():
@@ -30,7 +30,8 @@ class AnnealerConfigPresenter():
             else:
                 configure_new = self.view.ask_question("Annealer with serial number:" + str(serial_number) + " not found in database.\nDo you want to configure as a new annealer?")
         else:
-            self.view.update_terminal("Annealer has no serial number.")
+            configure_new = self.view.ask_question("Annealer has no serial number. Do you want to configure as a new annealer?")
+            self.annealer = Annealer(serial_number=0, description="New Annealer", plate_id=0, num_rows=8, num_cols=12)  # Default values
             return    
 
         if configure_new: #TODO process to fix logic here.  Configure new is none if plate not found

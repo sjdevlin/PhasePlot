@@ -56,10 +56,10 @@ class AnnealerSandboxPresenter():
 
     def on_well_selected(self, event):
         self.selected_well_index = self.view.get_id_of_selected_well(event)
-        if self.selected_well_index is not None and self.annealer.well[self.selected_well_index].active:
+        if self.selected_well_index is not None and self.annealer.wells[self.selected_well_index].active:
             temperature = self.annealer_controller.get_temperature_celsius(
-                self.annealer.well[self.selected_well_index].sensor_address, 
-                self.annealer.well[self.selected_well_index].calibration_factor
+                self.annealer.wells[self.selected_well_index].sensor_address, 
+                self.annealer.wells[self.selected_well_index].calibration_factor
             )
             if temperature is not None:
                 self.view.well_temperature_value.configure(text=f"{temperature:.2f}°C")
@@ -67,7 +67,7 @@ class AnnealerSandboxPresenter():
 
     def display_plate(self):
         plate_width = self.plate.outline_width
-        plate_height = self.plate.outline_height
+        plate_length = self.plate.outline_length
         offset_x = self.plate.centre_first_well_offset_x
         offset_y = self.plate.centre_first_well_offset_y
         well_diameter = self.plate.well_dimension
@@ -75,9 +75,9 @@ class AnnealerSandboxPresenter():
         well_spacing_y = self.plate.well_spacing_y
 
         well_data = []
-        for well in self.plate.well:
+        for well in self.annealer.wells:
             well_status = "Active" if well.active else "Inactive"
             is_selected = (self.selected_well_index == well.well_index)
-            well_data.append((well.well_index, well.well_row, well.well_col, well_status, is_selected))
+            well_data.append((well.well_index, well.well_row, well.well_column, well_status, is_selected))
 
-        self.view.show_plate(plate_width, plate_height, offset_x, offset_y, well_spacing_x, well_spacing_y, well_diameter, well_data, self.on_well_selected)
+        self.view.show_plate(plate_width, plate_length, offset_x, offset_y, well_spacing_x, well_spacing_y, well_diameter, well_data, self.on_well_selected)

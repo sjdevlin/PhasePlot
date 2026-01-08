@@ -48,15 +48,15 @@ class AnnealerSandboxView():
             self.on_close_callback()
         self.root.destroy()
 
-    def show_plate(self, plate_width, plate_height, offset_x, offset_y, well_spacing_x, well_spacing_y, well_diameter, well_data, callback):
+    def show_plate(self, plate_width, plate_length, offset_x, offset_y, well_spacing_x, well_spacing_y, well_diameter, well_data, callback):
         # Clear the plate frame
         for widget in self.plate_frame.winfo_children():
             widget.destroy()
 
         scale = 3  # Change this to be a parameter if needed.
-        self.canvas = customtkinter.CTkCanvas(self.plate_frame, width=plate_width*scale+1, height=plate_height*scale+1,
+        self.canvas = customtkinter.CTkCanvas(self.plate_frame, width=plate_width*scale+1, height=plate_length*scale+1,
                                                highlightthickness=0, bd=0)
-        self.canvas.create_rectangle(1, 1, plate_width*scale, plate_height*scale, fill="gray30", state='disabled', width=0)
+        self.canvas.create_rectangle(1, 1, plate_width*scale, plate_length*scale, fill="gray30", state='disabled', width=0)
         self.canvas.grid(row=0, column=0, sticky="", padx=0, pady=0)
         self.canvas.bind("<Button-1>", callback)
 
@@ -64,7 +64,7 @@ class AnnealerSandboxView():
         for well in well_data:
             well_index, row, column, status, selected = well
             x = (offset_x * scale) + (column * scale * well_spacing_x)
-            y = (offset_y * scale) + (row * scale * well_spacing_y)
+            y = (offset_y * scale) + ((ord(row) - ord('A')) * scale * well_spacing_y)
             r = well_diameter * scale 
             fill_color = "white" if status == 'Active' else "gray20"
             well_button_id = self.canvas.create_oval(
