@@ -69,3 +69,5 @@ class ImageSandboxView():
         self.move_stage_button = customtkinter.CTkButton(self.home_frame, text="Move Stage", state=customtkinter.NORMAL)
         self.move_stage_button.grid(row=9, column=0, sticky="e", padx=0, pady=5)
 
+    def display_error(self, message):
+        messagebox.showerror("Error", message)

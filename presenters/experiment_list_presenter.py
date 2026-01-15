@@ -109,18 +109,24 @@ class ExperimentListPresenter():
     def run_experiment(self):
         from views import LogView
         import threading
+        from tkinter import messagebox
 
         result_set = self.db.get_result_set_by_id(self.selected_rs_row)
         experiment = self.db.get_experiment_by_id(self.selected_exp_row)
         temperature_profile = self.db.get_temperature_profile_by_id(result_set.temperature_profile_id)
 
-        result_run_operator = ResultRunOperator(experiment, result_set, self.db)        
-        temperature_operator = TemperatureOperator( temperature_profile, result_run_operator.result_run, self.db)
+        # Show user prompts on main thread before starting worker threads
+        messagebox.showinfo("Important", "Have you reset the X and Y co-ords to the origin?")  
+        messagebox.showinfo("Focus Check", "Please go to first well and ensure that the image is in focus and enable autofocus before starting the run.")  
+        #start camera with trigger off and then on when imaging starts
+        result_run_operator = ResultRunOperator(experiment, result_set, temperature_profile, self.db)        
+        temperature_operator = TemperatureOperator(temperature_profile, result_run_operator.result_run, self.db)
         
-        result_thread = threading.Thread(target=result_run_operator.run, daemon=True)
+        # Start threads as non-daemon so they complete their work
+        result_thread = threading.Thread(target=result_run_operator.run, daemon=False)
         result_thread.start()
 
-        temperature_thread = threading.Thread(target=temperature_operator.run, daemon=True)
+        temperature_thread = threading.Thread(target=temperature_operator.run, daemon=False)
         temperature_thread.start()
 
 

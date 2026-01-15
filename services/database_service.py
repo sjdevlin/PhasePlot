@@ -141,13 +141,13 @@ class DatabaseService:
             session.commit()
             return result_run_data.id
         
-    def add_image(self, image):
+    def add_result_run_image(self, image):
         with self.Session() as session:
             session.add(image)
             session.commit()
             return image.id
         
-    def update_image(self, image):
+    def update_result_run_image(self, image):
         with self.Session() as session:
             session.merge(image)  # Merges the detached object into the session
             session.commit()

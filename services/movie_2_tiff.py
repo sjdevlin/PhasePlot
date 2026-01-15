@@ -344,7 +344,17 @@ class Movie2Tiff:
             out = np.empty((h, w), dtype=np.uint16)
             for r in range(h):
                 off = r * stride
-                row = np.frombuffer(buf[off : off + w * 2], dtype="<u2", count=w)
+                required_bytes = w * 2
+                available_bytes = len(buf) - off
+                
+                if available_bytes < required_bytes:
+                    raise ValueError(
+                        f"Buffer too small at row {r}: need {required_bytes} bytes, "
+                        f"have {available_bytes} bytes (offset={off}, buf_len={len(buf)}, "
+                        f"width={w}, height={h}, stride={stride})"
+                    )
+                
+                row = np.frombuffer(buf[off : off + required_bytes], dtype="<u2", count=w)
                 if hdr.endianness == G_BIG_ENDIAN:
                     row = row.byteswap()
                 out[r] = row

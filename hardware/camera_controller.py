@@ -82,16 +82,19 @@ class FlirCameraAdapter(BaseCamera):
         self.image_dimension_x = self.app_config.get("image_dimension_x", 1920)  # Default to 1920 if not set
         self.image_dimension_y = self.app_config.get("image_dimension_y", 1080)
         # permanent camera settings
+
+    def set_trigger(self):
         command = f"<camera name=\"{self.camera_name}\">"
         command += "<genicam>"
         command += "<boolean feature=\"AcquisitionFrameRateEnable\">ON</boolean>"
         command += "<enumeration feature=\"AcquisitionMode\">Continuous</enumeration>"
-        command += "<enumeration feature=\"TriggerMode\">On</enumeration>"
+        command += f"<enumeration feature=\"TriggerMode\">On</enumeration>"
         command += "<enumeration feature=\"TriggerSource\">Software</enumeration>"
         command += "<command feature=\"TriggerSoftware\"></command>"
         command += "</genicam>"
         command += "</camera>"
         self.temika_comms.send_command(command)
+
 
     def set_shutter_speed(self, speed):
         command = f"<camera name=\"{self.camera_name}\">"

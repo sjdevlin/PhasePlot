@@ -7,12 +7,13 @@ from time import sleep
 import random
 
 class ResultRunOperator:
-    def __init__(self, experiment, result_set, db):
+    def __init__(self, experiment, result_set, temperature_profile, db):
         self.db = db
         self.logger = Logger()
         self.app_config = AppConfig()
         self.result_set = result_set
         self.experiment = experiment
+        self.temperature_profile = temperature_profile
         self.plate = self.db.get_plate_by_id(self.experiment.plate_id)
         self.image_set = self.db.get_image_set_by_id(self.result_set.image_set_id)
         self.converter = Movie2Tiff()  # Initialize the Movie2Tiff converter
@@ -49,39 +50,34 @@ class ResultRunOperator:
         ))
 
         self.result_run = self.db.get_result_run_by_id(self.result_run_id)
-        self.time_at_temperature = {}
+        self.result_run.time_at_temperature = {}
         self.result_run.target_temperature = {} # this needs to be in result run so it can be shared between threads
 
         for sample in self.experiment.sample:
-            self.time_at_temperature[sample.id] = 0
-            self.result_run.target_temperature[sample.id] = self.result_set.temperature_profile.start_temp
+            self.result_run.time_at_temperature[sample.id] = 0
+            self.result_run.target_temperature[sample.id] = self.temperature_profile.start_temp
 
 
     def run(self):
+        print("DEBUG: run() method started", flush=True)
         from views import LogView
-        from tkinter import messagebox
+        import tkinter as tk
+        
+        # Note: User interaction prompts moved to presenter to run on main thread
+        # This method should run on a worker thread without blocking tkinter
+        
+        self.logger.info("Camera trigger enabled")
+        self.camera_controller.set_trigger()  # Ensure trigger mode is on
 
-        # ask user to ensure that image is in focus before starting the run
-        # create window that pauses the run until the user clicks "Continue"
-        # save the z value i focus for future reference       
-        messagebox.showinfo("Important", "Have you reset the X and Y co-ords to the origin?")  
-        messagebox.showinfo("Focus Check", "Please go to first well and ensure that the image is in focus and enable autofocus before starting the run.")  
         self.focus_position = self.focus_controller.get_z()  # Get the current Z position as a reference for focus
+        
         first_well_row = self.experiment.sample[0].well_row
         first_well_column = self.experiment.sample[0].well_column
         
 
         stored_z_height = self.plate.get_well_z_height(first_well_row, first_well_column)
 
-        difference = abs(self.focus_position - stored_z_height)
-
-        if difference < 5.0: #TODO make config value
-            self.logger.info("Stored Z height looks good, starting the run.")
-        else:
-            self.logger.error("Z Height difference too large. Please refocus and try again.")
-            return
-
-        self.move_position = self.focus_position - 50  # Move Z position for the next major move
+        self.move_position = self.focus_position - 100  # Move Z position for the next major move
 
        # First create the image run in the database, then retrieve it.  
         # This ensures that the image run is created before we start the imaging process.
@@ -95,13 +91,13 @@ class ResultRunOperator:
 
         exp_complete = False
 
-
         while not exp_complete:
 
             for sample in self.experiment.sample:
 
-                while (self.time_at_temperature[sample.id] < self.result_set.temperature_profile.soak_time_seconds):
-                    sleep (1)
+                while (self.result_run.time_at_temperature[sample.id] < self.temperature_profile.soak_time_seconds):
+                    print(f"Checking {sample.id}. Time at target temperature {self.result_run.time_at_temperature[sample.id]}", flush=True)
+                    sleep (1)  #this blocks the imaging so we dont keep moving all over the place just samples are right temp
                     # Once soak time is reached, proceed to image
 
                 self.logger.info(f"Soak time reached for sample {sample.id}. Proceeding to image.")
@@ -112,16 +108,23 @@ class ResultRunOperator:
                     self.camera_controller.set_filename(filename)
 
                     self._move_stage_to_site(sample, site_number)
-                    self._readjust_focus()
+                    stored_z_height = self.plate.get_well_z_height(sample.well_row, sample.well_column)
+
+                    self._readjust_focus(stored_z_height)
 
                     self._take_stack(sample, site_number)
                     movie_filename = f"{filename}{self.app_config.get('movie_extension', '.movie')}"
                     self._process_stack(movie_filename, sample, site_number)
-                    self._readjust_focus()
+                    self._readjust_focus(stored_z_height)
 
-                self.focus_controller.move_z(self.move_position)  # Drop Z for next major move
-                self.result_run.target_temperature[sample.id] -= self.result_set.temperature_profile.step_size
-                self.time_at_temperature[sample.id] = 0  # Reset time at temperature for 
+                self.focus_controller.move_z(stored_z_height-100)  # Drop Z for next major move
+                self.result_run.target_temperature[sample.id] -= self.temperature_profile.step_size
+                self.result_run.time_at_temperature[sample.id] = 0  # Reset time at temperature for 
+
+            exp_complete = True
+            for sample in self.experiment.sample:
+                if self.result_run.target_temperature[sample.id] >= self.temperature_profile.end_temp:
+                    exp_complete = False    
 
         self.finish_date_time = datetime.now()
         self.status = "Complete"
@@ -141,9 +144,13 @@ class ResultRunOperator:
 
     def _move_stage_to_site(self, sample, site_number):
 
-        x = self.plate.centre_first_well_offset_x + (sample.well_column * self.plate.well_spacing_x)
+        # Convert well row (letter) and column (1-based index) to zero-based indexes
+        row_index = ord(sample.well_row.upper()) - ord('A')
+        col_index = sample.well_column - 1
+
+        x = self.plate.centre_first_well_offset_x + (col_index * self.plate.well_spacing_x)
         x = x + (self.plate.well_dimension * random.uniform(-0.15, 0.15))
-        y = self.plate.centre_first_well_offset_y + (sample.well_row * self.plate.well_spacing_y)
+        y = self.plate.centre_first_well_offset_y + (row_index * self.plate.well_spacing_y)
         y = y + (self.plate.well_dimension * random.uniform(-0.15, 0.15))
 
         self.stage_controller.move(position = x, axis= "x", speed="normal")
@@ -160,14 +167,18 @@ class ResultRunOperator:
             self.camera_controller.capture_image()
         self.camera_controller.stop_recording()
 
-    def _readjust_focus(self):
+    def _readjust_focus(self, stored_z_height=None):
         """
         Adjust the focus before taking images.
         This method can be extended to include more sophisticated focus adjustments if needed.
         """
-        self.focus_controller.move_z(self.focus_position)  # Return to last focus
-        self.focus_controller.autofocus(True)  # Enable autofocus to get in position then disable it
-        self.focus_controller.autofocus(False)  # Disable autofocus after getting in position
+
+        if stored_z_height is not None:
+            self.focus_controller.move_z(stored_z_height)  # Return to last focus
+        else:
+            self.focus_controller.autofocus(True)  # Enable autofocus to get in position then disable it
+            self.focus_controller.autofocus(False)  # Disable autofocus after getting in position
+
         self.focus_position = self.focus_controller.get_z()  # Get the current Z position as a reference for focus
 
     def _process_stack(self, movie_filename, sample, site_number):
@@ -180,13 +191,13 @@ class ResultRunOperator:
             new_image = Image(
                     sample_id=sample.id,
                     result_run_id=self.result_run.id,
-                    image_site_number=site_number,
-                    image_stack_number=focus_scores.index(score),  # Use the index of the score as the stack ID
-                    image_dimension_x=self.camera_controller.image_dimension_x,
-                    image_dimension_y=self.camera_controller.image_dimension_y,
-                    image_file_path=str(file),
-                    image_timestamp=datetime.now(),
-                    image_focus_score=score,  # Focus score calculated from the Movie2Tiff conversion
+                    site_number=site_number,
+                    stack_number=focus_scores.index(score),  # Use the index of the score as the stack ID
+                    dimension_x=self.camera_controller.image_dimension_x,
+                    dimension_y=self.camera_controller.image_dimension_y,
+                    file_path=str(file),
+                    timestamp=datetime.now(),
+                    focus_score=score,  # Focus score calculated from the Movie2Tiff conversion
                     average_droplet_size=0.0,  # Placeholder, to be calculated later
                     standard_deviation_droplet_size=0.0  # Placeholder, to be calculated later
                     )

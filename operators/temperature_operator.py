@@ -56,14 +56,26 @@ class TemperatureOperator:
                 well_row = sample.well_row
                 well_column = sample.well_column
 
+                annealer_well = next(
+                    (well for well in self.annealer_prarameters.wells
+                     if well.well_row == well_row and well.well_column == well_column),
+                    None
+                )
+                sensor_address = annealer_well.sensor_address
+                calibration_offset = annealer_well.calibration_factor
+                heater_index = annealer_well.well_index
+
                 current_time = datetime.now()
-                current_temp = self.annealer_controller.get_temperature_celsius(well_row=well_row, well_column=well_column, annealer_parameters=self.annealer_prarameters)
+                # can i get address for this row and well ?
+                current_temp = self.annealer_controller.get_temperature_celsius(sensor_address=sensor_address, calibration_factor=calibration_offset)
 
                 error = self.result_run.target_temperature[sample.id] - current_temp
                 if abs(error) > 0.2:  # TODO make config value
                     time_target_temperature_reached[sample.id] = datetime.now()
+                    self.result_run.time_at_temperature[sample.id] = 0
                 else:
                     self.result_run.time_at_temperature[sample.id] = (datetime.now() - time_target_temperature_reached[sample.id]).total_seconds()
+                    self.logger.info(f"Sample {sample.id} has been at target temperature for {self.result_run.time_at_temperature[sample.id]} seconds")
 
                 pid_proportion = 0
                 pid_integral = 0
@@ -81,7 +93,9 @@ class TemperatureOperator:
                     intensity = max(0, min(int(pid_output), MAX_INTENSITY))
 
                 # Apply the computed heating intensity to the well
-                self.annealer_controller.apply_heat(intensity, well_row=well_row, well_column=well_column)
+
+                
+                self.annealer_controller.apply_heat(intensity, index=heater_index)
                 
                 elapsed_seconds = int((current_time - self.result_run.start_date_time).total_seconds())
                 elapsed_minutes = int(elapsed_seconds / 60)
