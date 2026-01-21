@@ -62,6 +62,11 @@ class TemperatureOperator:
                     None
                 )
                 sensor_address = annealer_well.sensor_address
+
+                if sensor_address is None:
+                    self.logger.error(f"Fatal: No sensor address found for sample {sample.id} in well {well_row}{well_column}")
+                    exit(1)
+                    
                 calibration_offset = annealer_well.calibration_factor
                 heater_index = annealer_well.well_index
 
@@ -95,7 +100,7 @@ class TemperatureOperator:
                 # Apply the computed heating intensity to the well
 
                 
-                self.annealer_controller.apply_heat(intensity, index=heater_index)
+                self.annealer_controller.apply_heat( index=heater_index, intensity=intensity)
                 
                 elapsed_seconds = int((current_time - self.result_run.start_date_time).total_seconds())
                 elapsed_minutes = int(elapsed_seconds / 60)

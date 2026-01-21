@@ -18,7 +18,7 @@ image_dimension_y: 1080 # in pixels
 # Temika settings
 temika_host: 127.0.0.1
 temika_port: 60000
-temika_timeout: 60
+temika_timeout: 90
 temika_buffer_size: 1024
 temika_name: microscopeone
 

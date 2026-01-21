@@ -99,7 +99,7 @@ class ResultRunOperator:
                     # Once soak time is reached, proceed to image
 
                 self.logger.info(f"Soak time reached for sample {sample.id}. Proceeding to image.")
-
+                                                                                                                 
                 for site_number in range(self.image_set.number_of_sites):
 
                     filename = f"{self.movie_path}/{self.result_run.id}_{sample.well_row}_{sample.well_column}_{site_number}"
