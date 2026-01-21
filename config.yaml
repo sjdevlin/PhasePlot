@@ -43,6 +43,8 @@ max_stage_speed: 10000 # in microns/s
 normal_stage_speed: 3000 # in microns/s
 #origin_offset_x: 4300 # in microns - for 384 ibidi well
 #origin_offset_y: 3300 # in microns - for 384 ibidi well
+#origin_offset_x: 4700 # in microns - for 36 well
+#origin_offset_y: 3300 # in microns - for 36 well 
 origin_offset_x: 4700 # in microns - for 36 well
 origin_offset_y: 3300 # in microns - for 36 well 
 
@@ -64,9 +66,9 @@ image_processing_workflow_name: test-validation-set/detect-count-and-visualize-3
 roboflow_api_key: TMlSASZ8SV6bioL6KYD3
 
 # Annealer Settings
-annealer_port: /dev/cu.usbmodem2101 # macOS
+#annealer_port: /dev/cu.usbmodem2101 # macOS
 #annealer_port: COM5 # windows PC
-#annealer_port: /dev/ttyACM1 # linux
+annealer_port: /dev/ttyACM1 # linux
 
 #can use following script to find correct port on linux
 #for port in /dev/ttyACM*; do echo "=== $port ==="; udevadm info --name=$port | grep -E "ID_VENDOR|ID_MODEL|ID_SERIAL" | head -5; done
