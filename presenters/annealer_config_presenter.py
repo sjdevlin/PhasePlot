@@ -31,8 +31,9 @@ class AnnealerConfigPresenter():
                 configure_new = self.view.ask_question("Annealer with serial number:" + str(serial_number) + " not found in database.\nDo you want to configure as a new annealer?")
         else:
             configure_new = self.view.ask_question("Annealer has no serial number. Do you want to configure as a new annealer?")
-            self.annealer = Annealer(serial_number=0, description="New Annealer", plate_id=0, num_rows=8, num_cols=12)  # Default values
-            return    
+            self.annealer = Annealer(serial_number=0, description="24 Well Custom Annealer", plate_id=2, num_wells=24 )  # Default values
+            #This Annealer is temporary just a placeholder to reatin same logic as above. It will be overwritten.
+            #TODO: Rethink all this hard coding !
 
         if configure_new: #TODO process to fix logic here.  Configure new is none if plate not found
             self.view.root_window.update()

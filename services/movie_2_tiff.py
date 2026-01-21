@@ -132,7 +132,7 @@ class FrameHeader:
 class Movie2Tiff:
     """Extract every frame from a TemI movie to TIFF or PNG and return focus scores."""
 
-    def __init__(self, compression: str = "tiff_lzw", downsample: bool = True, convert_8bit: bool = True, output_format: str = "tiff") -> None:
+    def __init__(self, compression: str = "tiff_lzw", downsample: bool = True, convert_8bit: bool = True, output_format: str = "png") -> None:
         compression = compression.lower()
         output_format = output_format.lower()
         

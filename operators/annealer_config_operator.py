@@ -2,6 +2,7 @@ from hardware import AnnealerController
 from services import Logger, AppConfig, DatabaseService
 from models import Annealer, AnnealerWell
 from time import sleep
+from datetime import datetime
 
 class AnnealerConfigOperator():
     def __init__(self, db, progress_callback=None):
@@ -72,7 +73,7 @@ class AnnealerConfigOperator():
 
         new_annealer = Annealer(
             serial_number=self.annealer.serial_number + 1,
-            description=self.annealer.description + " (configured: ) + datetime.now().strftime('%Y-%m-%d %H:%M:%S')",
+            description=self.annealer.description + f" (configured: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')})",
             plate_id=self.annealer.plate_id,
             num_wells=self.annealer.num_wells,
             configured=True,
@@ -81,48 +82,58 @@ class AnnealerConfigOperator():
         #save annealer in order to get a new annealer_id
 
         self.old_temperatures = {address: self.starting_temperature for address in self.addresses}
-        self.new_temperatures = {address: self.starting_temperature for address in self.addresses}  # Moved outside the loop
+        self.new_temperatures = {address: self.starting_temperature for address in self.addresses}
 
         for well_index in range(self.annealer.num_wells):
             try:
-                self.annealer_controller.apply_heat(well_index, self.heat_intensity)        
-            except:
-                self.logger.error(f"Failed to apply heat to well {well_index}")
+                self.annealer_controller.apply_heat(index=well_index, intensity=self.heat_intensity)        
+            except Exception as e:
+                self.logger.error(f"Failed to apply heat to well {well_index}: {e}")
                 continue 
 
             sensor_address = self.find_address()
-                                          # Temperature has increased by more than 0.5°C
-            if sensor_address is not None :
+            
+            if sensor_address is not None:
+                # TODO: calculate row and col using a lookup based on annealer type
+                row, col = self._calculate_row_col(well_index)
                 new_well = AnnealerWell(
                             sensor_address=sensor_address,
                             calibration_factor=self.calibration_factors[sensor_address],
                             well_index=well_index,
+                            well_row=row,
+                            well_column=col,
                             active=True,
                         )
-                #TODO: calculate row and col using a lookup based on annealer type
-
                 self.addresses.remove(sensor_address)
-
+                self.logger.info(f"Sensor {sensor_address} assigned to well {well_index} (row={row}, col={col})")
             else:
+                row, col = self._calculate_row_col(well_index)
                 new_well = AnnealerWell(
                             sensor_address="",
                             calibration_factor=0.0,
-                            active=False,
                             well_index=well_index,
+                            well_row=row,
+                            well_column=col,
+                            active=False,
                         )
+                self.logger.info(f"Well {well_index} (row={row}, col={col}) assigned no sensor")
                         
-            new_annealer.well.append(new_well)
-            self.logger.info(f"Sensor {sensor_address} assigned to well {well_index}")
-            #self.progress_callback(None, None, None, f"Sensor {sensor_address} assigned to well {well_index}")
-
-            # Shift new temperatures to old for the next iteration
-            self.annealer_controller.apply_heat(well_index, 0) # turn off heater        
+            new_annealer.wells.append(new_well)
+            self.annealer_controller.apply_heat(well_index, 0)
 
         self.db.add_annealer(new_annealer)
-        #self.progress_callback(None, None, None, f"Annealer configured with ID: {new_annealer.id}.")
         self.annealer_controller.set_serial_number(new_annealer.serial_number)
         self.logger.info(f"Annealer configured with ID: {new_annealer.id}.")
 
+    def _calculate_row_col(self, well_index):
+        """Calculate row and column from well index based on annealer type."""
+        # TODO: make this more felxible based on different annealer types
+        if self.annealer.num_wells == 24:
+            row = chr(ord('A') + (well_index // 6))
+            column = well_index % 6 + 1
+            return row, column
+        else:   
+            return 0, 0
 
     def find_address(self):
 
@@ -148,13 +159,14 @@ class AnnealerConfigOperator():
                     max_temp_change = new_temp - old_temp
                     max_temp_address = address
 
-                self.old_temperatures.update(self.new_temperatures)
+        # Update old temperatures after processing all sensors
+        self.old_temperatures.update(self.new_temperatures)
 
         if max_temp_change > self.calibration_min_temp_rise:
             return max_temp_address
         else:
-            self.logger.warning(f"Sensor {max_temp_address} did not meet the minimum temperature rise of {self.calibration_min_temp_rise}C.")
-            max_temp_address = None
+            self.logger.warning(f"Sensor did not meet the minimum temperature rise of {self.calibration_min_temp_rise}C. Max change: {max_temp_change:.1f}C")
+            return None
 
 
 

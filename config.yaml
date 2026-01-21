@@ -55,8 +55,8 @@ script_output_path: ./opentrons_protocols/script
 #Image file settings
 #movie_file_directory: /Volumes/T7/Temika/Movies ? Macos ?
 movie_file_directory: /run/media/sd2030/T7/Temika/Movies
+image_file_directory: /run/media/sd2030/T7/Temika/Images
 movie_extension: .movie
-local_file_path: /run/media/sd2030/T7/Temika/Images/png
 
 
 # Roboflow settings
@@ -64,9 +64,9 @@ image_processing_workflow_name: test-validation-set/detect-count-and-visualize-3
 roboflow_api_key: TMlSASZ8SV6bioL6KYD3
 
 # Annealer Settings
-#annealer_port: /dev/cu.usbmodem101 # macOS
+annealer_port: /dev/cu.usbmodem2101 # macOS
 #annealer_port: COM5 # windows PC
-annealer_port: /dev/ttyACM1 # linux
+#annealer_port: /dev/ttyACM1 # linux
 
 #can use following script to find correct port on linux
 #for port in /dev/ttyACM*; do echo "=== $port ==="; udevadm info --name=$port | grep -E "ID_VENDOR|ID_MODEL|ID_SERIAL" | head -5; done
@@ -83,9 +83,9 @@ annealer_get_serial_number: "N"
 annealer_set_serial_number: "S"
 annealer_get_num_wells: "W"
 celsius_multiplier: 0.005
-max_heat_intensity: 150
-calibration_min_temp_rise: 1.0 # rem to chnage this
-calibration_heating_time: 45.0 # rem to change this
+max_heat_intensity: 200
+calibration_min_temp_rise: 2.0 # rem to chnage this
+calibration_heating_time: 30.0 # rem to change this
 
 # Annealer PID settings
 kp: 300.0

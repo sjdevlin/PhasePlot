@@ -140,8 +140,7 @@ class AnnealerController():
             return None
         
 
-        
-    def apply_heat(self, intensity, index=None):
+    def apply_heat(self, index=None, intensity=0):
 
         command = self.annealer_heat + " " + str(index) + " " + str(intensity)
         retries = self.annealer_retries

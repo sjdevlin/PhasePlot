@@ -28,6 +28,7 @@ class ResultRunOperator:
                                                          self.app_config.get("illumination_intensity", 0.3))
         self.camera_controller.set_shutter_speed(self.app_config.get("shutter_speed", 10000))
         self.movie_path = self.app_config.get("movie_file_directory", "./")
+        self.image_path = self.app_config.get("image_file_directory", "./")
 
         number_prev_runs_of_exp_set = self.db.get_number_result_runs_by_exp_and_set(self.experiment.id, self.result_set.id)
 
@@ -69,15 +70,11 @@ class ResultRunOperator:
         self.logger.info("Camera trigger enabled")
         self.camera_controller.set_trigger()  # Ensure trigger mode is on
 
-        self.focus_position = self.focus_controller.get_z()  # Get the current Z position as a reference for focus
-        
         first_well_row = self.experiment.sample[0].well_row
         first_well_column = self.experiment.sample[0].well_column
         
-
         stored_z_height = self.plate.get_well_z_height(first_well_row, first_well_column)
 
-        self.move_position = self.focus_position - 100  # Move Z position for the next major move
 
        # First create the image run in the database, then retrieve it.  
         # This ensures that the image run is created before we start the imaging process.
@@ -87,6 +84,8 @@ class ResultRunOperator:
         #home the stage before starting the imaging run
         #self._home_stage()
         self.focus_controller.autofocus(False)  # Ensure autofocus is off before homing
+        self.focus_position = self.focus_controller.get_z()  # Get the current Z position as a reference for focus
+        self.move_position = self.focus_position - 100  # Move Z position for the next major move
         self.focus_controller.move_z(self.move_position)  #TODO change to config value
 
         exp_complete = False
@@ -96,7 +95,6 @@ class ResultRunOperator:
             for sample in self.experiment.sample:
 
                 while (self.result_run.time_at_temperature[sample.id] < self.temperature_profile.soak_time_seconds):
-                    print(f"Checking {sample.id}. Time at target temperature {self.result_run.time_at_temperature[sample.id]}", flush=True)
                     sleep (1)  #this blocks the imaging so we dont keep moving all over the place just samples are right temp
                     # Once soak time is reached, proceed to image
 
@@ -109,7 +107,6 @@ class ResultRunOperator:
 
                     self._move_stage_to_site(sample, site_number)
                     stored_z_height = self.plate.get_well_z_height(sample.well_row, sample.well_column)
-
                     self._readjust_focus(stored_z_height)
 
                     self._take_stack(sample, site_number)
@@ -181,11 +178,10 @@ class ResultRunOperator:
 
         self.focus_position = self.focus_controller.get_z()  # Get the current Z position as a reference for focus
 
-    def _process_stack(self, movie_filename, sample, site_number):
+    def _process_stack(self, movie_filename, image_filename, sample, site_number):
 
         self.logger.info(f"Processing image stack {movie_filename} at site number {site_number} for sample {sample.id}")
-        filenames, focus_scores = self.converter.convert(movie_name = movie_filename)
-
+        filenames, focus_scores = self.converter.convert(movie_name = movie_filename, file_stub=image_filename )
         for file, score in zip(filenames, focus_scores):
 
             new_image = Image(

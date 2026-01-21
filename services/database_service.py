@@ -22,6 +22,11 @@ class DatabaseService:
         with self.Session() as session: 
            return session.query(Annealer).options(joinedload(Annealer.wells)).filter_by(serial_number=ser_number).first()
 
+    def add_annealer(self, annealer):
+        with self.Session() as session:
+            session.add(annealer)
+            session.commit()
+            return annealer.id
 
 ##Plates
 
