@@ -72,6 +72,20 @@ class ResultRunDetailView():
         )
         self.next_stack_button.grid(sticky="s",row=1, column=1, padx=5, pady=80)
 
+        self.prev_temp_button = customtkinter.CTkButton(
+            master=self.home_frame,
+            text="Down in Temp",
+            state=customtkinter.NORMAL
+        )
+        self.prev_temp_button.grid(sticky="n",row=1, column=2, padx=5, pady=80)
+
+        self.next_temp_button = customtkinter.CTkButton(
+            master=self.home_frame,
+            text="Up in Temp",
+            state=customtkinter.NORMAL
+        )
+        self.next_temp_button.grid(sticky="s",row=1, column=2, padx=5, pady=80)
+
 
         # ----------------------------
         # Bottom Row: Button Frame

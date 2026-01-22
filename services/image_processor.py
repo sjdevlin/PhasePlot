@@ -130,7 +130,7 @@ class ImageProcessor:
         # Group by (sample_id, site_number)
         site_groups = defaultdict(list)
         for img in images:
-            site_groups[(img.sample_id, img.image_site_number)].append(img)
+            site_groups[(img.sample_id, img.site_number)].append(img)
 
         for (sample_id, site_no), img_list in site_groups.items():
             # ------------------------------------------------------------------
@@ -139,19 +139,19 @@ class ImageProcessor:
             prediction_cache = {}
             for img in img_list:
                 try:
-                    preds, anno = self._infer_image(f"{self.image_directory}{img.image_file_path}")
+                    preds, anno = self._infer_image(f"{self.image_directory}{img.file_path}")
                 except Exception as exc:
-                    print(f"Roboflow fail on {img.image_file_path}: {exc}")
+                    print(f"Roboflow fail on {img.file_path}: {exc}")
                     preds, anno = [], None
                 prediction_cache[img.id] = preds
                 if anno:
-                    self._save_annotated_image(img.image_file_path, anno)
+                    self._save_annotated_image(img.file_path, anno)
 
             # ------------------------------------------------------------------
             # 2) Pick **one** best‑focus slice for the whole site to seed droplet centres
             # ------------------------------------------------------------------
-            best_img = max(img_list, key=lambda im: im.image_focus_score or 0)
-            w, h = best_img.image_dimension_x, best_img.image_dimension_y
+            best_img = max(img_list, key=lambda im: im.focus_score or 0)
+            w, h = best_img.dimension_x, best_img.dimension_y
 
             seed_droplets = []  # list[dict]: {x,y,max_width}
             for p in prediction_cache[best_img.id]:
