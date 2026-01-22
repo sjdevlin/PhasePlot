@@ -1,5 +1,6 @@
 from hardware import *
 from datetime import datetime
+from pathlib import Path
 from models.results import ResultRunData
 from services import Logger, AppConfig, Movie2Tiff, PIDCalculator, pid_calculator
 from models import Experiment, Sample, ImageSet, ResultRun, Image
@@ -29,6 +30,9 @@ class ResultRunOperator:
         self.camera_controller.set_shutter_speed(self.app_config.get("shutter_speed", 10000))
         self.movie_path = self.app_config.get("movie_file_directory", "./")
         self.image_path = self.app_config.get("image_file_directory", "./")
+
+        if not self._ensure_output_dirs():
+            raise RuntimeError("Output directories not writable; aborting result run setup")
 
         number_prev_runs_of_exp_set = self.db.get_number_result_runs_by_exp_and_set(self.experiment.id, self.result_set.id)
 
@@ -203,5 +207,19 @@ class ResultRunOperator:
             self.db.add_result_run_image(new_image)
 
         self.logger.info(f"Image stack extracted for movie {movie_filename}")
+
+    def _ensure_output_dirs(self) -> bool:
+        """Ensure movie/image directories exist and are writable before run."""
+        for path in (self.movie_path, self.image_path):
+            p = Path(path).expanduser()
+            try:
+                p.mkdir(parents=True, exist_ok=True)
+                test_file = p / ".write_test"
+                test_file.write_text("ok")
+                test_file.unlink(missing_ok=True)
+            except Exception as exc:
+                self.logger.error(f"Output path not writable: {p} ({exc})")
+                return False
+        return True
 
 
