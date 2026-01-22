@@ -14,10 +14,13 @@ class AnnealerConfigOperator():
     def check_annealer(self):
         #establish connection
         self.annealer_controller = AnnealerController()
+        serial_number = None
         connection_status = self.annealer_controller.connect()
 
         if connection_status:
             serial_number = self.annealer_controller.get_serial_number()
+        else:
+            self.logger.error("Annealer connection failed.")
         
         return connection_status, serial_number
 
@@ -28,16 +31,29 @@ class AnnealerConfigOperator():
         self.annealer_controller.zero_all_wells()
 
         #get sensors
-        self.addresses = self.annealer_controller.get_sensors(self.annealer.num_wells)
-        self.progress_callback(self.addresses, None, None, "Sensors found")
+        self.addresses = self.annealer_controller.get_sensors(self.annealer.num_wells) or []
+        if not self.addresses:
+            self.logger.error("No sensors detected; aborting annealer configuration.")
+            if self.progress_callback:
+                self.progress_callback([], None, None, "No sensors detected")
+            return
+        if self.progress_callback:
+            self.progress_callback(self.addresses, None, None, "Sensors found")
 
         #calibrate sensors
         temperature = self.calibrate()
-        self.progress_callback(None, self.calibration_factors, temperature, "Calibration complete")
+        if temperature is None:
+            self.logger.error("Calibration failed; aborting annealer configuration.")
+            if self.progress_callback:
+                self.progress_callback(None, None, None, "Calibration failed")
+            return
+        if self.progress_callback:
+            self.progress_callback(None, self.calibration_factors, temperature, "Calibration complete")
 
         #allocate sensors
         self.allocate_sensors()
-        self.progress_callback(None, None, None, "Allocation Starting")
+        if self.progress_callback:
+            self.progress_callback(None, None, None, "Allocation Starting")
 
     def calibrate(self):
         responses = []
@@ -49,6 +65,10 @@ class AnnealerConfigOperator():
             else:
                 self.logger.warning(f"Sensor {address} is being removed from calibration due to error.")
                 addresses.remove(address) # should ensure response & address list are same length
+
+        if not responses:
+            self.logger.error("Calibration failed: no valid temperature responses.")
+            return None
 
         average_response = sum(responses) / len(responses)
         self.calibration_factors = {}
@@ -67,9 +87,9 @@ class AnnealerConfigOperator():
 
     def allocate_sensors(self):
 
-        self.heat_intensity = self.app_config.get("max_heat_intensity")
-        self.calibration_heating_time = self.app_config.get("calibration_heating_time")
-        self.calibration_min_temp_rise = self.app_config.get("calibration_min_temp_rise")
+        self.heat_intensity = self.app_config.get("max_heat_intensity", 0)
+        self.calibration_heating_time = self.app_config.get("calibration_heating_time", 1)
+        self.calibration_min_temp_rise = self.app_config.get("calibration_min_temp_rise", 0.1)
 
         new_annealer = Annealer(
             serial_number=self.annealer.serial_number + 1,

@@ -22,6 +22,9 @@ class TemperatureOperator:
             self.logger.info("Annealer connected")
             serial_number = self.annealer_controller.get_serial_number()
             self.annealer_prarameters = self.db.get_annealer_by_serial_number(serial_number)
+            if not self.annealer_prarameters:
+                self.logger.error(f"No annealer parameters found for serial number {serial_number}")
+                return
             self.result_run.annealer_id = self.annealer_prarameters.id
         else:
             self.logger.error("Annealer not connected")
@@ -73,6 +76,10 @@ class TemperatureOperator:
                 current_time = datetime.now()
                 # can i get address for this row and well ?
                 current_temp = self.annealer_controller.get_temperature_celsius(sensor_address=sensor_address, calibration_factor=calibration_offset)
+
+                if current_temp is None:
+                    self.logger.error(f"Failed to read temperature for sample {sample.id} at well {well_row}{well_column}")
+                    continue
 
                 error = self.result_run.target_temperature[sample.id] - current_temp
                 if abs(error) > 0.2:  # TODO make config value

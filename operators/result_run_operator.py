@@ -102,16 +102,17 @@ class ResultRunOperator:
                                                                                                                  
                 for site_number in range(self.image_set.number_of_sites):
 
-                    filename = f"{self.movie_path}/{self.result_run.id}_{sample.well_row}_{sample.well_column}_{site_number}"
-                    self.camera_controller.set_filename(filename)
+                    movie_stub = f"{self.movie_path}/{self.result_run.id}_{sample.well_row}_{sample.well_column}_{site_number}"
+                    image_stub = f"{self.image_path}/{self.result_run.id}_{sample.well_row}_{sample.well_column}_{site_number}"
+                    self.camera_controller.set_filename(movie_stub)
 
                     self._move_stage_to_site(sample, site_number)
                     stored_z_height = self.plate.get_well_z_height(sample.well_row, sample.well_column)
                     self._readjust_focus(stored_z_height)
 
                     self._take_stack(sample, site_number)
-                    movie_filename = f"{filename}{self.app_config.get('movie_extension', '.movie')}"
-                    self._process_stack(movie_filename, sample, site_number)
+                    movie_filename = f"{movie_stub}{self.app_config.get('movie_extension', '.movie')}"
+                    self._process_stack(movie_filename, image_stub, sample, site_number)
                     self._readjust_focus(stored_z_height)
 
                 self.focus_controller.move_z(stored_z_height-100)  # Drop Z for next major move
@@ -178,19 +179,20 @@ class ResultRunOperator:
 
         self.focus_position = self.focus_controller.get_z()  # Get the current Z position as a reference for focus
 
-    def _process_stack(self, movie_filename, image_filename, sample, site_number):
+    def _process_stack(self, movie_filename, image_stub, sample, site_number):
 
         self.logger.info(f"Processing image stack {movie_filename} at site number {site_number} for sample {sample.id}")
-        filenames, focus_scores = self.converter.convert(movie_name = movie_filename, file_stub=image_filename )
-        for file, score in zip(filenames, focus_scores):
+        filenames, focus_scores = self.converter.convert(movie_name=movie_filename, file_stub=image_stub)
+
+        for idx, (file, score) in enumerate(zip(filenames, focus_scores)):
 
             new_image = Image(
                     sample_id=sample.id,
                     result_run_id=self.result_run.id,
                     site_number=site_number,
-                    stack_number=focus_scores.index(score),  # Use the index of the score as the stack ID
-                    dimension_x=self.camera_controller.image_dimension_x,
-                    dimension_y=self.camera_controller.image_dimension_y,
+                    stack_number=idx,  # Sequential stack index
+                    dimension_x=getattr(self.camera_controller, "image_dimension_x", 0),
+                    dimension_y=getattr(self.camera_controller, "image_dimension_y", 0),
                     file_path=str(file),
                     timestamp=datetime.now(),
                     focus_score=score,  # Focus score calculated from the Movie2Tiff conversion
@@ -198,7 +200,6 @@ class ResultRunOperator:
                     standard_deviation_droplet_size=0.0  # Placeholder, to be calculated later
                     )
 
-                # Save the image to the database
             self.db.add_result_run_image(new_image)
 
         self.logger.info(f"Image stack extracted for movie {movie_filename}")

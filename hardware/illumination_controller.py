@@ -16,6 +16,7 @@ class Illumination(ABC):
 class ThorLabsIlluminationController(Illumination):
 
     def __init__(self):
+        super().__init__()
 
         self.port = self.my_app_config.get("illumination_port")
         self.baudrate = self.my_app_config.get("illumination_baudrate")
@@ -63,10 +64,9 @@ class TemikaIlluminationController(Illumination):
 
 
     def __init__(self):
+        super().__init__()
         from hardware import TemikaComms
-        self.my_app_config = AppConfig()  # Singleton instance - may be opened multiple times from different classes
         self.temika_comms = TemikaComms()
-        self.logger = Logger()
         self.name = self.my_app_config.get("temika_name")
 
     def __bitmask_to_hex(self, bitmask_str):

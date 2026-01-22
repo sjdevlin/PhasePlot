@@ -7,8 +7,7 @@ from abc import ABC, abstractmethod
 class Stage(ABC):
     """Abstract base class defining the interface for all cameras."""
 
-    def __init__(self, port, parity, baudrate, stopbits, bytesize, timeout):
-        
+    def __init__(self):
         self.logger = Logger() # Singleton instance
         self.my_app_config = AppConfig()  # Singleton instance - may be opened multiple times from different classes
 
@@ -25,6 +24,7 @@ class Stage(ABC):
 class OlympusStageController(Stage):
 
     def __init__(self):
+        super().__init__()
 
         self.port = self.my_app_config.get("stage_port")
         self.baudrate = self.my_app_config.get("stage_baudrate")
@@ -72,10 +72,9 @@ class OlympusStageController(Stage):
 class TemikaStageController(Stage):
 
     def __init__(self):
+        super().__init__()
         from hardware import TemikaComms
         self.temika_comms = TemikaComms()
-        self.my_app_config = AppConfig()  # Singleton instance - may be opened multiple times from different classes
-        self.logger = Logger()
         self.name = self.my_app_config.get("temika_name")
         self.normal_stage_speed = self.my_app_config.get("normal_stage_speed", 1000)  # in microns/s
         self.max_stage_speed = self.my_app_config.get("max_stage_speed", 10000)
@@ -112,7 +111,7 @@ class TemikaStageController(Stage):
         command += f"</{self.name}>"
         reply = self.temika_comms.send_command(command,wait_for="status")
 
-        if "status" in reply:
+        if reply and "status" in reply:
             parts = reply.split("status ")
             if len(parts) > 1:
                 pos = float(parts[1].split()[0])

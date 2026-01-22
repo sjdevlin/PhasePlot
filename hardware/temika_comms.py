@@ -38,8 +38,13 @@ class TemikaComms(metaclass=Singleton):
             self.send_command("<temika>") # This opens the connection
             return True
 
-        except Exception as e:
+        except (socket.error, OSError) as e:
             self.logger.error(f"Error connecting to Temika server: {e}")
+            if self.socket:
+                try:
+                    self.socket.close()
+                except OSError:
+                    pass
             self.socket = None
             return False
 
@@ -96,7 +101,7 @@ class TemikaComms(metaclass=Singleton):
                         
                         readable, _, _ = select.select([self.socket], [], [], 1.0)
                         if not readable:
-                            print("No data available, continuing to wait for 'Done' response")
+                            self.logger.debug("No data available yet while waiting for response")
                             continue
                             
                         part = self.socket.recv(self.buffer_size)
@@ -110,8 +115,21 @@ class TemikaComms(metaclass=Singleton):
                             break
 
 
-            return data.decode().strip() if data else None
+            if not data:
+                return None
 
-        except socket.error as e:
+            try:
+                return data.decode(errors="replace").strip()
+            except UnicodeDecodeError as e:
+                self.logger.error(f"Failed to decode response: {e}")
+                return None
+
+        except (socket.error, OSError) as e:
             self.logger.error(f"Socket error during send_command: {e}")
+            if self.socket:
+                try:
+                    self.socket.close()
+                except OSError:
+                    pass
+            self.socket = None
             return None

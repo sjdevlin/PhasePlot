@@ -1,5 +1,6 @@
 from tokenize import String
 from serial import Serial
+from serial.serialutil import SerialException
 from time import sleep
 from services import Logger, AppConfig
 
@@ -36,22 +37,34 @@ class AnnealerController():
                 return True
             else:
                 return False
-        except Exception as e:
+        except SerialException as e:
             self.logger.error(f"Error connecting to plate: {e}")
+            self.ser = None
             return False
 
     def disconnect(self):
         """Close the serial port properly before closing the window."""
-        if self.ser and self.ser.is_open:
-            print("Closing Serial Port")
-            self.ser.close()
+        if getattr(self, "ser", None) and self.ser.is_open:
+            self.logger.info("Closing serial port")
+            try:
+                self.ser.close()
+            except SerialException as e:
+                self.logger.error(f"Error while closing serial port: {e}")
         
 
     def _send_command(self, command):
+        if not getattr(self, "ser", None):
+            raise SerialException("Serial connection not initialized")
         self.ser.write((command + '\n').encode())
 
     def _read_response(self):
-        return self.ser.readline().decode().strip()
+        if not getattr(self, "ser", None):
+            return None
+        try:
+            return self.ser.readline().decode(errors="replace").strip()
+        except SerialException as e:
+            self.logger.error(f"Serial read error: {e}")
+            return None
 
     def get_serial_number(self):
         retries = self.annealer_retries
@@ -59,6 +72,10 @@ class AnnealerController():
             self._send_command(self.annealer_get_serial_number)
             sleep(self.annealer_serial_delay)
             response = self._read_response()
+            if not response:
+                retries -= 1
+                self.logger.error("No response when requesting serial number")
+                continue
             try:
                 response_int = int(response)  # Try converting to an integer
                 self.logger.info(f"Serial number returned: {response}")
@@ -79,6 +96,10 @@ class AnnealerController():
             self._send_command(command)
             sleep(self.annealer_serial_delay)
             response = self._read_response()
+            if response is None:
+                retries -= 1
+                self.logger.error("No response from Plate to request to set Serial Number")
+                continue
             if response == str(serial_number):
                 self.logger.info(f"Serial number {response} saved to Plate")
                 return True
@@ -91,10 +112,15 @@ class AnnealerController():
 
     def get_sensors(self, num_wells):
         retries = self.annealer_retries
+        addresses = []
         while retries > 0:
             self._send_command(self.annealer_get_address)
             sleep(self.annealer_serial_delay)
             response = self._read_response()
+            if not response:
+                retries -= 1
+                self.logger.warning("No response when requesting sensor addresses; retrying")
+                continue
             addresses = response.split('*')
             addresses = [addr.strip() for addr in addresses if addr.strip()]
             if len(addresses) == num_wells:
