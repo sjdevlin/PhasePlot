@@ -28,7 +28,7 @@ led_bitmask: 0x03 # 0x03 = 3 = 00000011 (led 0 + 1)
 
 # Focus settings
 focus_type: Temika
-normal_focus_speed: 10 # in microns/s
+normal_focus_speed: 25 # in microns/s
 max_focus_speed: 100 # in microns/s
 
 # Stage settings
@@ -85,7 +85,7 @@ annealer_get_serial_number: "N"
 annealer_set_serial_number: "S"
 annealer_get_num_wells: "W"
 celsius_multiplier: 0.005
-max_heat_intensity: 200
+max_heat_intensity: 220
 calibration_min_temp_rise: 2.0 # rem to chnage this
 calibration_heating_time: 30.0 # rem to change this
 

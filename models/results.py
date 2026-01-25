@@ -51,6 +51,7 @@ class Image(Base):
     file_path = Column(String)
     timestamp = Column(DateTime)
     temperature = Column(Float)
+    time_at_temperature = Column(Float)
     focus_score = Column(Float)
     average_droplet_size = Column(Float)
     standard_deviation_droplet_size = Column(Float)

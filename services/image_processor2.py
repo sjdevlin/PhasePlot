@@ -107,7 +107,7 @@ class ImageProcessor:
         # Group by (sample_id, site_number)
         site_groups = defaultdict(list)
         for img in images:
-            site_groups[(img.sample_id, img.image_site_number)].append(img)
+            site_groups[(img.sample_id, img.site_number)].append(img)
 
         for (sample_id, site_no), img_list in site_groups.items():
             # ------------------------------------------------------------------
@@ -116,25 +116,25 @@ class ImageProcessor:
             prediction_cache = {}
             for img in img_list:
                 try:
-                    preds, anno = self._infer_image(img.image_file_path)
+                    preds, anno = self._infer_image(img.file_path)
                 except Exception as exc:
-                    print(f"Roboflow fail on {img.image_file_path}: {exc}")
+                    print(f"Roboflow fail on {img.file_path}: {exc}")
                     preds, anno = [], None
                 prediction_cache[img.id] = preds
                 if anno:
-                    self._save_annotated_image(img.image_file_path, anno)
+                    self._save_annotated_image(img.file_path, anno)
 
             # ------------------------------------------------------------------
             # 2) Use best‑focus image per z‑stack to seed droplet centres
             # ------------------------------------------------------------------
             stack_groups = defaultdict(list)
             for img in img_list:
-                stack_groups[img.image_stack_number].append(img)
+                stack_groups[img.stack_number].append(img)
 
             seed_droplets = []  # list[dict]: {x,y,max_width}
             for stack_imgs in stack_groups.values():
-                best_img = max(stack_imgs, key=lambda im: im.image_focus_score or 0)
-                w, h = best_img.image_dimension_x, best_img.image_dimension_y
+                best_img = max(stack_imgs, key=lambda im: im.focus_score or 0)
+                w, h = best_img.dimension_x, best_img.dimension_y
                 for p in prediction_cache[best_img.id]:
                     if self._is_touching_edge(p, w, h):
                         continue
@@ -165,7 +165,7 @@ class ImageProcessor:
                     session.query(Image)
                     .filter(Image.result_run_id == result_run_id,
                             Image.sample_id == sample_id,
-                            Image.image_site_number == site_no)
+                            Image.site_number == site_no)
                 )
                 for db_img in q:
                     db_img.average_droplet_size = avg_w
