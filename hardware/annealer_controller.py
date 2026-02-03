@@ -135,56 +135,63 @@ class AnnealerController():
 
     def get_temperature_celsius(self, sensor_address=None, calibration_factor=1.0):
 
-        retries = self.annealer_retries
+        try:
+            retries = self.annealer_retries
 
-        while retries > 0:
-            self._send_command(f"{self.annealer_get_temp} {sensor_address}")
-            sleep(self.annealer_serial_delay)
-            response = self._read_response()
+            while retries > 0:
+                self._send_command(f"{self.annealer_get_temp} {sensor_address}")
+                sleep(self.annealer_serial_delay)
+                response = self._read_response()
 
-            if response is None:  # If read_response() times out or returns nothing
-                self.logger.warning(f"Timeout from sensor {sensor_address}, retrying...")
-                retries -= 1
-                continue  # Retry
+                if response is None:  # If read_response() times out or returns nothing
+                    self.logger.warning(f"Timeout from sensor {sensor_address}, retrying...")
+                    retries -= 1
+                    continue  # Retry
 
-            try:
-                response_int = int(response)  # Try converting to an integer
-                float_temperature = (float(response_int) + calibration_factor) * self.celsius_multiplier 
-#                self.logger.info(f"Sensor {address} returned temperature: {float_temperture}")
-                self.ser.reset_output_buffer() # Clear output buffer
-                self.ser.reset_input_buffer() # Clear input buffer
-                return float_temperature
-            except ValueError:
-                retries -= 1
-                self.ser.reset_input_buffer() # Clear input buffer
-                self.ser.reset_output_buffer() # Clear output buffer
-                self.logger.warning(f"Temperature Sensor Error from Plate: {response}")
+                try:
+                    response_int = int(response)  # Try converting to an integer
+                    float_temperature = (float(response_int) + calibration_factor) * self.celsius_multiplier 
+    #                self.logger.info(f"Sensor {address} returned temperature: {float_temperture}")
+                    self.ser.reset_output_buffer() # Clear output buffer
+                    self.ser.reset_input_buffer() # Clear input buffer
+                    return float_temperature
+                except ValueError:
+                    retries -= 1
+                    self.ser.reset_input_buffer() # Clear input buffer
+                    self.ser.reset_output_buffer() # Clear output buffer
+                    self.logger.warning(f"Temperature Sensor Error from Plate: {response}")
 
 
-        else:
-            self.logger.error(f"Too many errors from sensor {sensor_address}.")
-            return None
+            else:
+                self.logger.error(f"Too many errors from sensor {sensor_address}.")
+                return None
+        except Exception as e:
+             self.logger.error(f"Error reading temperature: {e}")
+             return None
         
 
     def apply_heat(self, index=None, intensity=0):
-
-        command = self.annealer_heat + " " + str(index) + " " + str(intensity)
-        retries = self.annealer_retries
-        while retries > 0:
-            self._send_command(command)
-            sleep(self.annealer_serial_delay)
-            response = self._read_response()
-            if response == command:
-                self.logger.info(f"Applied {intensity} heat to well with index {index}")
+        try:
+            command = self.annealer_heat + " " + str(index) + " " + str(intensity)
+            retries = self.annealer_retries
+            while retries > 0:
+                self._send_command(command)
+                sleep(self.annealer_serial_delay)
+                response = self._read_response()
+                if response == command:
+                    self.logger.info(f"Applied {intensity} heat to well with index {index}")
+                    self.ser.reset_input_buffer() # Clear input buffer
+                    self.ser.reset_output_buffer() # Clear output buffer
+                    return True
                 self.ser.reset_input_buffer() # Clear input buffer
                 self.ser.reset_output_buffer() # Clear output buffer
-                return True
-            self.ser.reset_input_buffer() # Clear input buffer
-            self.ser.reset_output_buffer() # Clear output buffer
-            retries -= 1
-            self.logger.warning(f"Invalid Response from Annealer: {response}")
-        else:
-            self.logger.error(f"No response to heat command from well {index}.")
+                retries -= 1
+                self.logger.warning(f"Invalid Response from Annealer: {response}")
+            else:
+                self.logger.error(f"No response to heat command from well {index}.")
+                return None
+        except Exception as e:
+            self.logger.error(f"Exception calling apply heat: {e}")
             return None
 
 

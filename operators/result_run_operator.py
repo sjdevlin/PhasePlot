@@ -47,7 +47,7 @@ class ResultRunOperator:
             description= (f"{self.experiment.description}: Result Run: {number_prev_runs_of_exp_set + 1}"),
             notes=(f"Result Set: {self.image_set.description}"),
             start_date_time= datetime.now(),
-            status="Not Started",
+            status="Running",
             number_of_samples=len(self.experiment.sample),
             pid_kp = KP,
             pid_ki = KI,
@@ -56,6 +56,7 @@ class ResultRunOperator:
 
         self.result_run = self.db.get_result_run_by_id(self.result_run_id)
         self.result_run.time_at_temperature = {}
+        self.result_run.actual_temperature = {}
         self.result_run.target_temperature = {} # this needs to be in result run so it can be shared between threads
 
         for sample in self.experiment.sample:
@@ -92,9 +93,7 @@ class ResultRunOperator:
         self.move_position = self.focus_position - 100  # Move Z position for the next major move
         self.focus_controller.move_z(self.move_position)  #TODO change to config value
 
-        exp_complete = False
-
-        while not exp_complete:
+        while self.result_run.status == "Running":
 
             for sample in self.experiment.sample:
 
@@ -123,13 +122,12 @@ class ResultRunOperator:
                 self.result_run.target_temperature[sample.id] -= self.temperature_profile.step_size
                 self.result_run.time_at_temperature[sample.id] = 0  # Reset time at temperature for 
 
-            exp_complete = True
+            self.result_run.status = "Complete"
             for sample in self.experiment.sample:
                 if self.result_run.target_temperature[sample.id] >= self.temperature_profile.end_temp:
-                    exp_complete = False    
+                    self.result_run.status = "Running"  # Continue if any sample still needs imaging    
 
         self.finish_date_time = datetime.now()
-        self.status = "Complete"
         self.db.update_result_run(self.result_run)
         self.logger.info("Imaging complete")
 
@@ -151,9 +149,9 @@ class ResultRunOperator:
         col_index = sample.well_column - 1
 
         x = self.plate.centre_first_well_offset_x + (col_index * self.plate.well_spacing_x)
-        x = x + (self.plate.well_dimension * random.uniform(-0.15, 0.15))
+        x = x + (self.plate.well_dimension * random.uniform(-0.1, 0.1))
         y = self.plate.centre_first_well_offset_y + (row_index * self.plate.well_spacing_y)
-        y = y + (self.plate.well_dimension * random.uniform(-0.15, 0.15))
+        y = y + (self.plate.well_dimension * random.uniform(-0.1, 0.1))
 
         self.stage_controller.move(position = x, axis= "x", speed="normal")
         self.stage_controller.move(position = y, axis="y", speed="normal")
@@ -199,6 +197,8 @@ class ResultRunOperator:
                     dimension_y=getattr(self.camera_controller, "image_dimension_y", 0),
                     file_path=str(file),
                     timestamp=datetime.now(),
+                    temperature=self.result_run.actual_temperature.get(sample.id, 0.0),
+                    time_at_temperature=self.result_run.time_at_temperature.get(sample.id, 0),
                     focus_score=score,  # Focus score calculated from the Movie2Tiff conversion
                     average_droplet_size=0.0,  # Placeholder, to be calculated later
                     standard_deviation_droplet_size=0.0  # Placeholder, to be calculated later

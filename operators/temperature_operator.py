@@ -45,14 +45,13 @@ class TemperatureOperator:
             time_target_temperature_reached[sample.id] = datetime.now()
             #remember these are dictionaries keyed by sample.id
 
-        final_temperature_not_reached = True
         current_time = datetime.now()
         last_poll_time = current_time
         elapsed_seconds = 0
         elapsed_minutes = 0
         interval = 10.0  # Initial interval
 
-        while final_temperature_not_reached:
+        while self.result_run.status == "Running":
 
             for sample in self.experiment.sample:
 
@@ -81,12 +80,13 @@ class TemperatureOperator:
                     self.logger.error(f"Failed to read temperature for sample {sample.id} at well {well_row}{well_column}")
                     continue
 
+                self.result_run.actual_temperature[sample.id] = current_temp
                 error = self.result_run.target_temperature[sample.id] - current_temp
                 if abs(error) > 0.2:  # TODO make config value
                     time_target_temperature_reached[sample.id] = datetime.now()
                     self.result_run.time_at_temperature[sample.id] = 0
                 else:
-                    self.result_run.time_at_temperature[sample.id] = (datetime.now() - time_target_temperature_reached[sample.id]).total_seconds()
+                    self.result_run.time_at_temperature[sample.id] = int((datetime.now() - time_target_temperature_reached[sample.id]).total_seconds())
                     self.logger.info(f"Sample {sample.id} has been at target temperature for {self.result_run.time_at_temperature[sample.id]} seconds")
 
                 pid_proportion = 0
