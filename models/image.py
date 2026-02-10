@@ -15,7 +15,7 @@ class ImageSet(Base):
     number_of_sites = Column(Integer)
     stack_size = Column(Integer)
     stack_step_size = Column(Integer)
-    led_number = Column(Integer)
+    led_number = Column(Integer) #TODO: this all needs re writing - currently in the config.yaml and result_run_operator.py but should be in the database and read from there
     led_intensity = Column(Float)
     led_bitmask = Column(String)
 

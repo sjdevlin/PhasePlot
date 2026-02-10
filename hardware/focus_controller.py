@@ -9,7 +9,7 @@ class Focus(ABC):
 
     def __init__(self, port, parity, baudrate, stopbits, bytesize, timeout):
         
-        self.logger = Logger() # Singleton instanceself.
+        self.logger = Logger() # Singleton instance
         self.my_app_config = AppConfig()  # Singleton instance - may be opened multiple times from different classes
 
     @abstractmethod
@@ -24,12 +24,14 @@ class Focus(ABC):
 class OlympusX81FocusController(Focus):
 
     def __init__(self):
-
+        self.my_app_config = AppConfig()  # Initialize before use
+        self.logger = Logger()
+        
         self.port = self.my_app_config.get("focus_port")
         self.baudrate = self.my_app_config.get("focus_baudrate")
         self.parity = self.my_app_config.get("focus_parity")
         self.stopbits = self.my_app_config.get("focus_stopbits")
-        self.bytesize = self.my_app_config.get("focus_bytesizeself.")
+        self.bytesize = self.my_app_config.get("focus_bytesize")
         self.timeout = self.my_app_config.get("focus_timeout")
 
     def connect(self):
@@ -106,6 +108,10 @@ class TemikaFocusController(Focus):
         command += f"</{self.name}>"
         reply = self.temika_comms.send_command(command,wait_for="status")
 
+        if reply is None:
+            self.logger.error(f"No reply from Temika focus controller, returning 0.0 position.")
+            return 0.0
+        
         if "status" in reply:
             parts = reply.split("status ")
             if len(parts) > 1:
@@ -124,7 +130,7 @@ class FocusControllerFactory:
     @staticmethod
     def create_focus_controller():
         logger = Logger() # Singleton instance
-        my_app_config = AppConfig()  # Singleton instanceself. - may be opened multiple times from different classes
+        my_app_config = AppConfig()  # Singleton instance - may be opened multiple times from different classes
         focus_type = my_app_config.get("focus_type")
 
         if focus_type == "OlympusX81":

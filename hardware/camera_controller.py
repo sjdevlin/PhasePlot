@@ -96,7 +96,7 @@ class FlirCameraAdapter(BaseCamera):
         self.temika_comms.send_command(command)
 
 
-    def set_shutter_speed(self, speed):
+    def set_exposure_time(self, speed):
         command = f"<camera name=\"{self.camera_name}\">"
         command += "<genicam>"
         command += f"<float feature=\"ExposureTime\">{speed}</float>"

@@ -46,6 +46,7 @@ class Image(Base):
     result_run_id = Column(Integer, ForeignKey("ResultRun.id"))
     site_number = Column(Integer)
     stack_number = Column(Integer)
+    led_number = Column(Integer)
     dimension_x = Column(Integer)
     dimension_y = Column(Integer)
     file_path = Column(String)

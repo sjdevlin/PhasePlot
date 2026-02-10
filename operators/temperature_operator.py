@@ -6,29 +6,35 @@ from models import Experiment, Sample, ResultRun, ResultRunData
 from time import sleep
 
 class TemperatureOperator:
-    def __init__(self, temperature_profile, result_run, db):
+    def __init__(self, temperature_profile, result_run, db, time_at_temperature, actual_temperature, target_temperature, shared_lock):
         self.db = db
         self.logger = Logger()
         self.app_config = AppConfig()
         self.result_run = result_run
         self.temperature_profile = temperature_profile
+        
+        # Shared dictionaries from ResultRunOperator
+        self.time_at_temperature = time_at_temperature
+        self.actual_temperature = actual_temperature
+        self.target_temperature = target_temperature
+        self.shared_lock = shared_lock
 
         self.result_set = self.db.get_result_set_by_id(self.result_run.result_set_id)
         self.experiment = self.db.get_experiment_by_id(self.result_run.experiment_id)
 
         self.annealer_controller = AnnealerController() # all annealers same so no need for factory here
 
-        if self.annealer_controller.connect():
-            self.logger.info("Annealer connected")
-            serial_number = self.annealer_controller.get_serial_number()
-            self.annealer_prarameters = self.db.get_annealer_by_serial_number(serial_number)
-            if not self.annealer_prarameters:
-                self.logger.error(f"No annealer parameters found for serial number {serial_number}")
-                return
-            self.result_run.annealer_id = self.annealer_prarameters.id
-        else:
+        if not self.annealer_controller.connect():
             self.logger.error("Annealer not connected")
-            return
+            raise RuntimeError("Failed to connect to annealer; aborting temperature operator setup")
+            
+        self.logger.info("Annealer connected")
+        serial_number = self.annealer_controller.get_serial_number()
+        self.annealer_parameters = self.db.get_annealer_by_serial_number(serial_number)
+        if not self.annealer_parameters:
+            self.logger.error(f"No annealer parameters found for serial number {serial_number}")
+            raise RuntimeError(f"Annealer serial {serial_number} not found in database")
+        self.result_run.annealer_id = self.annealer_parameters.id
 
 
 
@@ -59,7 +65,7 @@ class TemperatureOperator:
                 well_column = sample.well_column
 
                 annealer_well = next(
-                    (well for well in self.annealer_prarameters.wells
+                    (well for well in self.annealer_parameters.wells
                      if well.well_row == well_row and well.well_column == well_column),
                     None
                 )
@@ -80,14 +86,18 @@ class TemperatureOperator:
                     self.logger.error(f"Failed to read temperature for sample {sample.id} at well {well_row}{well_column}")
                     continue
 
-                self.result_run.actual_temperature[sample.id] = current_temp
-                error = self.result_run.target_temperature[sample.id] - current_temp
+                with self.shared_lock:
+                    self.actual_temperature[sample.id] = current_temp
+                    error = self.target_temperature[sample.id] - current_temp
+                
                 if abs(error) > 0.2:  # TODO make config value
                     time_target_temperature_reached[sample.id] = datetime.now()
-                    self.result_run.time_at_temperature[sample.id] = 0
+                    with self.shared_lock:
+                        self.time_at_temperature[sample.id] = 0
                 else:
-                    self.result_run.time_at_temperature[sample.id] = int((datetime.now() - time_target_temperature_reached[sample.id]).total_seconds())
-                    self.logger.info(f"Sample {sample.id} has been at target temperature for {self.result_run.time_at_temperature[sample.id]} seconds")
+                    with self.shared_lock:
+                        self.time_at_temperature[sample.id] = int((datetime.now() - time_target_temperature_reached[sample.id]).total_seconds())
+                        self.logger.info(f"Sample {sample.id} has been at target temperature for {self.time_at_temperature[sample.id]} seconds")
 
                 pid_proportion = 0
                 pid_integral = 0
@@ -112,18 +122,21 @@ class TemperatureOperator:
                 elapsed_seconds = int((current_time - self.result_run.start_date_time).total_seconds())
                 elapsed_minutes = int(elapsed_seconds / 60)
 
+                with self.shared_lock:
+                    target_temp = self.target_temperature[sample.id]
+                
                 new_sample_data = ResultRunData(
                         sample_id=sample.id,
                         result_run_id=self.result_run.id,
                         reading_date_time=current_time,
-                        target_temperature=self.result_run.target_temperature[sample.id],
+                        target_temperature=target_temp,
                         elapsed_minutes=elapsed_minutes,
                         actual_temperature=current_temp,
                         heat_applied=intensity
                     )
 
                 self.db.add_result_run_data(new_sample_data)
-                self.logger.info(f"Sample {sample.id} - Target: {self.result_run.target_temperature[sample.id]}, Actual: {current_temp}, Intensity: {intensity} P({pid_proportion})I({pid_integral}) ")   
+                self.logger.info(f"Sample {sample.id} - Target: {target_temp}, Actual: {current_temp}, Intensity: {intensity} P({pid_proportion})I({pid_integral}) ")   
 #TODO: check logic of time here.  INterval based on whole cycle - but current time being updated each time OK?
             interval = (current_time - last_poll_time).total_seconds()
             last_poll_time = current_time

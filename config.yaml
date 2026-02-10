@@ -24,7 +24,12 @@ temika_name: microscopeone
 
 # Illuminator settings
 illumination_type: Temika
-led_bitmask: 0x03 # 0x03 = 3 = 00000011 (led 0 + 1)
+brightfield_led_hex: 0x04 # 0x04 = 4 = 00000100 (led 2)
+epifluorescence_led_hex: 0x40 # 0x40 = 64 = 01000000 (led 6)
+brightfield_led: 2
+epifluorescence_led: 6
+brightfield_intensity: 0.9 
+epifluorescence_intensity: 0.9 
 
 # Focus settings
 focus_type: Temika
@@ -80,7 +85,7 @@ annealer_serial_delay: 0.2
 annealer_heat: "H"
 annealer_get_temp: "T"
 annealer_get_address: "C"
-annealer_zero_all: "A"
+annealer_zero_all_wells: "A"
 annealer_get_serial_number: "N"
 annealer_set_serial_number: "S"
 annealer_get_num_wells: "W"

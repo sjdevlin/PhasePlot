@@ -79,16 +79,13 @@ class ExperimentListPresenter():
         new_experiment = Experiment(plate_id = old_experiment.plate_id)
         new_experiment.description = f"{old_experiment.description} (copy)"
         new_experiment.notes = f"**copied from experiment: {old_experiment.id} ** \n{old_experiment.notes}"
-        new_experiment.anneal_status = "Not Run"
+        new_experiment.status = "Not Run"
         new_experiment.creation_date_time = datetime.now()
+        new_experiment.liquid_protocol_id = old_experiment.liquid_protocol_id  # Copy the protocol reference
         new_experiment.sample = [Sample(experiment_id=new_experiment.id, 
                                         well_row = s.well_row, 
-                                        well_column = s.well_column, 
-                                        mix_cycles = s.mix_cycles,
-                                        mix_speed = s.mix_speed,
-                                        mix_volume = s.mix_volume,
-                                        mix_height = s.mix_height,
-                                        pipette = s.pipette  
+                                        well_column = s.well_column,
+                                        ns_concentration = s.ns_concentration
                                         ) for s in old_experiment.sample]
 
         self.db.add_experiment(new_experiment)
@@ -118,9 +115,23 @@ class ExperimentListPresenter():
         # Show user prompts on main thread before starting worker threads
         messagebox.showinfo("Important", "Have you reset the X and Y co-ords to the origin?")  
         messagebox.showinfo("Focus Check", "Please go to first well and ensure that the image is in focus and enable autofocus before starting the run.")  
+        
+        # Create shared lock for thread-safe dictionary access
+        shared_lock = threading.Lock()
+        
         #start camera with trigger off and then on when imaging starts
-        result_run_operator = ResultRunOperator(experiment, result_set, temperature_profile, self.db)        
-        temperature_operator = TemperatureOperator(temperature_profile, result_run_operator.result_run, self.db)
+        result_run_operator = ResultRunOperator(experiment, result_set, temperature_profile, self.db)
+        result_run_operator.shared_lock = shared_lock
+        
+        temperature_operator = TemperatureOperator(
+            temperature_profile, 
+            result_run_operator.result_run, 
+            self.db,
+            result_run_operator.time_at_temperature,
+            result_run_operator.actual_temperature,
+            result_run_operator.target_temperature,
+            shared_lock
+        )
         
         # Start threads as non-daemon so they complete their work
         result_thread = threading.Thread(target=result_run_operator.run, daemon=False)

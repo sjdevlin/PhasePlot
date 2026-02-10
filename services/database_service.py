@@ -113,7 +113,7 @@ class DatabaseService:
 
     def get_samples_by_experiment_id(self, experiment_id):
         with self.Session() as session: 
-            return session.query(Sample).options.filter_by(experiment_id=experiment_id).all()
+            return session.query(Sample).filter_by(experiment_id=experiment_id).all()
 
 
 #Results
@@ -203,5 +203,5 @@ class DatabaseService:
         with self.Session() as session:  # ✅ Automatically closes session
             experiment = session.query(Experiment).filter_by(id=experiment_id).first()
             if experiment:
-                experiment.anneal_status = new_status
+                experiment.status = new_status
                 session.commit() """

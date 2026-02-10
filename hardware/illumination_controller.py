@@ -76,8 +76,13 @@ class TemikaIlluminationController(Illumination):
         hex_str = f"0x{num:02x}"
         return hex_str
 
-    def illumination_enable(self, led_bitmask):
-        hex_str = self.__bitmask_to_hex(led_bitmask)
+    def illumination_enable(self, led_bitmask, hex_mode=False):
+
+        if hex_mode:
+            hex_str = led_bitmask
+        else:
+            hex_str = self.__bitmask_to_hex(led_bitmask)
+
         command = f"<{self.name}>"
         command += "<illumination>"
         command += f"<enable>{hex_str}</enable>"

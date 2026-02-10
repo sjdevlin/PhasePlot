@@ -25,9 +25,18 @@ class ResultRunOperator:
         self.illumination_controller = IlluminationControllerFactory.create_illumination_controller()
         self.focus_controller = FocusControllerFactory.create_focus_controller()
 
-        self.illumination_controller.illumination_setup(self.app_config.get("illumination_led_number", 1),
-                                                         self.app_config.get("illumination_intensity", 0.3))
-        self.camera_controller.set_shutter_speed(self.app_config.get("shutter_speed", 10000))
+        self.brightfield_led = self.app_config.get("brightfield_led", 2)
+        self.brightfield_led_hex = self.app_config.get("brightfield_led_hex", 0x04)
+        self.brightfield_intensity = self.app_config.get("brightfield_intensity", 0.9)
+        self.illumination_controller.illumination_setup(self.brightfield_led, self.brightfield_intensity)                                                         
+
+        self.epifluorescence_led = self.app_config.get("epifluorescence_led", 6)
+        self.epifluorescence_led_hex = self.app_config.get("epifluorescence_led_hex", 0x40)
+        self.epifluorescence_intensity = self.app_config.get("epifluorescence_intensity", 0.9)
+        self.illumination_controller.illumination_setup(self.epifluorescence_led, self.epifluorescence_intensity)                                                         
+
+
+        self.camera_controller.set_exposure_time(self.app_config.get("exposure_time", 50000))
         self.movie_path = self.app_config.get("movie_file_directory", "./")
         self.image_path = self.app_config.get("image_file_directory", "./")
 
@@ -54,14 +63,18 @@ class ResultRunOperator:
             pid_kd = KD
         ))
 
+        # Use local dictionaries to track state - these will be shared between threads
+        self.time_at_temperature = {}
+        self.actual_temperature = {}
+        self.target_temperature = {}
+        self.shared_lock = None  # Will be set by presenter before running threads
+        
+        # Re-fetch result_run for further operations
         self.result_run = self.db.get_result_run_by_id(self.result_run_id)
-        self.result_run.time_at_temperature = {}
-        self.result_run.actual_temperature = {}
-        self.result_run.target_temperature = {} # this needs to be in result run so it can be shared between threads
 
         for sample in self.experiment.sample:
-            self.result_run.time_at_temperature[sample.id] = 0
-            self.result_run.target_temperature[sample.id] = self.temperature_profile.start_temp
+            self.time_at_temperature[sample.id] = 0
+            self.target_temperature[sample.id] = self.temperature_profile.start_temp
 
 
     def run(self):
@@ -97,9 +110,15 @@ class ResultRunOperator:
 
             for sample in self.experiment.sample:
 
-                while (self.result_run.time_at_temperature[sample.id] < self.temperature_profile.soak_time_seconds):
+                # Check time_at_temperature with lock
+                with self.shared_lock:
+                    current_time_at_temp = self.time_at_temperature[sample.id]
+                
+                while (current_time_at_temp < self.temperature_profile.soak_time_seconds):
                     sleep (1)  #this blocks the imaging so we dont keep moving all over the place just samples are right temp
                     # Once soak time is reached, proceed to image
+                    with self.shared_lock:
+                        current_time_at_temp = self.time_at_temperature[sample.id]
 
                 self.logger.info(f"Soak time reached for sample {sample.id}. Proceeding to image.")
                                                                                                                  
@@ -119,15 +138,18 @@ class ResultRunOperator:
                     self._readjust_focus(stored_z_height)
 
                 self.focus_controller.move_z(stored_z_height-100)  # Drop Z for next major move
-                self.result_run.target_temperature[sample.id] -= self.temperature_profile.step_size
-                self.result_run.time_at_temperature[sample.id] = 0  # Reset time at temperature for 
+                with self.shared_lock:
+                    self.target_temperature[sample.id] -= self.temperature_profile.step_size
+                    self.time_at_temperature[sample.id] = 0  # Reset time at temperature for 
 
             self.result_run.status = "Complete"
             for sample in self.experiment.sample:
-                if self.result_run.target_temperature[sample.id] >= self.temperature_profile.end_temp:
+                with self.shared_lock:
+                    target_temp = self.target_temperature[sample.id]
+                if target_temp >= self.temperature_profile.end_temp:
                     self.result_run.status = "Running"  # Continue if any sample still needs imaging    
 
-        self.finish_date_time = datetime.now()
+        self.result_run.finish_date_time = datetime.now()
         self.db.update_result_run(self.result_run)
         self.logger.info("Imaging complete")
 
@@ -164,7 +186,10 @@ class ResultRunOperator:
         for stack_number in range(self.image_set.stack_size):
             new_z = self.focus_controller.get_z() + self.image_set.stack_step_size
             self.focus_controller.move_z(new_z, speed="normal")  # Move to the new Z position for the stack
-            self.camera_controller.capture_image()
+            self.illumination_controller.illumination_enable(self.brightfield_led_hex, hex_mode=True)  # Enable brightfield LED
+            self.camera_controller.capture_image()  # Capture brightfield image
+            self.illumination_controller.illumination_enable(self.epifluorescence_led_hex, hex_mode=True)  # Enable epifluorescence LED
+            self.camera_controller.capture_image()  # Capture epifluorescence image
         self.camera_controller.stop_recording()
 
     def _readjust_focus(self, stored_z_height=None):
@@ -193,6 +218,7 @@ class ResultRunOperator:
                     result_run_id=self.result_run.id,
                     site_number=site_number,
                     stack_number=idx,  # Sequential stack index
+                    led_number=self.brightfield_led if idx % 2 == 0 else self.epifluorescence_led,  # Alternate LED number based on stack index
                     dimension_x=getattr(self.camera_controller, "image_dimension_x", 0),
                     dimension_y=getattr(self.camera_controller, "image_dimension_y", 0),
                     file_path=str(file),
