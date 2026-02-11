@@ -136,7 +136,7 @@ class TemperatureOperator:
                     )
 
                 self.db.add_result_run_data(new_sample_data)
-                self.logger.info(f"Sample {sample.id} - Target: {target_temp}, Actual: {current_temp}, Intensity: {intensity} P({pid_proportion})I({pid_integral}) ")   
+                #self.logger.info(f"Sample {sample.id} - Target: {target_temp}, Actual: {current_temp}, Intensity: {intensity} P({pid_proportion})I({pid_integral}) ")   
 #TODO: check logic of time here.  INterval based on whole cycle - but current time being updated each time OK?
             interval = (current_time - last_poll_time).total_seconds()
             last_poll_time = current_time

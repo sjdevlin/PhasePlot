@@ -179,7 +179,7 @@ class AnnealerController():
                 sleep(self.annealer_serial_delay)
                 response = self._read_response()
                 if response == command:
-                    self.logger.info(f"Applied {intensity} heat to well with index {index}")
+                    #self.logger.info(f"Applied {intensity} heat to well with index {index}")
                     self.ser.reset_input_buffer() # Clear input buffer
                     self.ser.reset_output_buffer() # Clear output buffer
                     return True
@@ -196,7 +196,7 @@ class AnnealerController():
 
 
     def zero_all_wells(self):
-        command = "A"
+        command = "A" #TODO: put this command in the config file
         retries = self.annealer_retries
         while retries > 0:
             self._send_command(command)

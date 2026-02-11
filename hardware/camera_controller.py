@@ -12,7 +12,7 @@ class BaseCamera(ABC):
         self.app_config = AppConfig()  # Singleton instance - may be opened multiple times from different classes
 
     @abstractmethod
-    def set_shutter_speed(self, speed):
+    def set_exposure_time(self, exposure_time):
         pass
 
     @abstractmethod
@@ -96,10 +96,10 @@ class FlirCameraAdapter(BaseCamera):
         self.temika_comms.send_command(command)
 
 
-    def set_exposure_time(self, speed):
+    def set_exposure_time(self, exposure_time):
         command = f"<camera name=\"{self.camera_name}\">"
         command += "<genicam>"
-        command += f"<float feature=\"ExposureTime\">{speed}</float>"
+        command += f"<float feature=\"ExposureTime\">{exposure_time}</float>"
         command += "</genicam>"
         command += "</camera>"
         self.temika_comms.send_command(command)

@@ -121,11 +121,12 @@ class ResultRunOperator:
                         current_time_at_temp = self.time_at_temperature[sample.id]
 
                 self.logger.info(f"Soak time reached for sample {sample.id}. Proceeding to image.")
+                integer_temperature = int(self.target_temperature[sample.id])
                                                                                                                  
                 for site_number in range(self.image_set.number_of_sites):
 
-                    movie_stub = f"{self.movie_path}/{self.result_run.id}_{sample.well_row}_{sample.well_column}_{site_number}"
-                    image_stub = f"{self.image_path}/{self.result_run.id}_{sample.well_row}_{sample.well_column}_{site_number}"
+                    movie_stub = f"{self.movie_path}/{self.result_run.id}_{sample.well_row}_{sample.well_column}_{integer_temperature}_{site_number}"
+                    image_stub = f"{self.image_path}/{self.result_run.id}_{sample.well_row}_{sample.well_column}_{integer_temperature}_{site_number}"
                     self.camera_controller.set_filename(movie_stub)
 
                     self._move_stage_to_site(sample, site_number)
@@ -171,9 +172,9 @@ class ResultRunOperator:
         col_index = sample.well_column - 1
 
         x = self.plate.centre_first_well_offset_x + (col_index * self.plate.well_spacing_x)
-        x = x + (self.plate.well_dimension * random.uniform(-0.1, 0.1))
+        x = x + (self.plate.well_dimension * random.uniform(-0.02, 0.02))
         y = self.plate.centre_first_well_offset_y + (row_index * self.plate.well_spacing_y)
-        y = y + (self.plate.well_dimension * random.uniform(-0.1, 0.1))
+        y = y + (self.plate.well_dimension * random.uniform(-0.02, 0.02)) #TODO: remove random offset and replace with config value for stage repeatability buffer
 
         self.stage_controller.move(position = x, axis= "x", speed="normal")
         self.stage_controller.move(position = y, axis="y", speed="normal")
@@ -223,8 +224,8 @@ class ResultRunOperator:
                     dimension_y=getattr(self.camera_controller, "image_dimension_y", 0),
                     file_path=str(file),
                     timestamp=datetime.now(),
-                    temperature=self.result_run.actual_temperature.get(sample.id, 0.0),
-                    time_at_temperature=self.result_run.time_at_temperature.get(sample.id, 0),
+                    temperature=self.actual_temperature.get(sample.id, 0.0),
+                    time_at_temperature=self.time_at_temperature.get(sample.id, 0),
                     focus_score=score,  # Focus score calculated from the Movie2Tiff conversion
                     average_droplet_size=0.0,  # Placeholder, to be calculated later
                     standard_deviation_droplet_size=0.0  # Placeholder, to be calculated later

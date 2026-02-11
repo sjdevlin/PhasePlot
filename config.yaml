@@ -11,7 +11,7 @@ robot_ip:
 camera_type: FLIR
 #camera_name: "Genicam FLIR Blackfly S BFS-U3-70S7M 0159F411" # left camera
 camera_name: "Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410" # right camera
-exposure_time: 50000 # in microseconds
+exposure_time: 100000 # in microseconds
 image_dimension_x: 1920 # in pixels
 image_dimension_y: 1080 # in pixels
 
@@ -50,8 +50,8 @@ normal_stage_speed: 3000 # in microns/s
 #origin_offset_y: 3300 # in microns - for 384 ibidi well
 #origin_offset_x: 4700 # in microns - for 36 well
 #origin_offset_y: 3300 # in microns - for 36 well 
-origin_offset_x: 4700 # in microns - for 36 well
-origin_offset_y: 3300 # in microns - for 36 well 
+origin_offset_x: 4700 # in microns - for 24 well
+origin_offset_y: 3300 # in microns - for 24 well 
 
 
 

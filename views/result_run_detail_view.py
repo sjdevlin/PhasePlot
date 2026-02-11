@@ -74,14 +74,14 @@ class ResultRunDetailView():
 
         self.prev_temp_button = customtkinter.CTkButton(
             master=self.home_frame,
-            text="Down in Temp",
+            text="Up in Temp",
             state=customtkinter.NORMAL
         )
         self.prev_temp_button.grid(sticky="n",row=1, column=2, padx=5, pady=80)
 
         self.next_temp_button = customtkinter.CTkButton(
             master=self.home_frame,
-            text="Up in Temp",
+            text="Down in Temp",
             state=customtkinter.NORMAL
         )
         self.next_temp_button.grid(sticky="s",row=1, column=2, padx=5, pady=80)
@@ -98,8 +98,8 @@ class ResultRunDetailView():
         )
         self.button_frame.grid(row=2, column=0, sticky="ew")
         
-        # Configure a 3-column grid in the button frame.
-        for col in range(3):
+        # Configure a 5-column grid in the button frame.
+        for col in range(5):
             self.button_frame.grid_columnconfigure(col, weight=1)
                 
         self.prev_sample_button = customtkinter.CTkButton(
@@ -128,6 +128,16 @@ class ResultRunDetailView():
             state=customtkinter.NORMAL
         )
         self.next_site_button.grid(sticky="",row=0, column=3, padx=5, pady=10)
+
+        self.toggle_led_button = customtkinter.CTkButton(
+            master=self.button_frame,
+            text="LED: --",
+            state=customtkinter.NORMAL
+        )
+        self.toggle_led_button.grid(sticky="",row=0, column=4, padx=5, pady=10)
+
+    def update_led_button(self, led_number: int):
+        self.toggle_led_button.configure(text=f"LED: {led_number}")
 
     def show_image(self, path_to_tiff, meta_data=None):
         """

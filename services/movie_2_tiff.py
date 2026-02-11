@@ -271,8 +271,18 @@ class Movie2Tiff:
             # Average 2x2 blocks - good anti-aliasing, preserves intensity
             # Ensure even dimensions
             arr_crop = arr[:new_h*2, :new_w*2]
-            return (arr_crop[0::2, 0::2] + arr_crop[1::2, 0::2] + 
-                   arr_crop[0::2, 1::2] + arr_crop[1::2, 1::2]) // 4
+            # Use wider dtype to avoid overflow when summing 4 pixels
+            if np.issubdtype(arr_crop.dtype, np.integer):
+                acc_dtype = np.uint32 if arr_crop.dtype.itemsize <= 2 else np.uint64
+                acc = arr_crop.astype(acc_dtype, copy=False)
+            else:
+                acc = arr_crop.astype(np.float64, copy=False)
+            return (
+                acc[0::2, 0::2]
+                + acc[1::2, 0::2]
+                + acc[0::2, 1::2]
+                + acc[1::2, 1::2]
+            ) // 4
         
         elif method == "bilinear":
             # Bilinear interpolation - good quality, smooth
@@ -303,13 +313,18 @@ class Movie2Tiff:
         if method == "linear":
             # Simple linear scaling from full range
             arr_float = arr.astype(np.float64)
-            return ((arr_float / arr_float.max()) * 255).astype(np.uint8)
+            max_val = arr_float.max()
+            if max_val == 0:
+                return np.zeros_like(arr, dtype=np.uint8)
+            return ((arr_float / max_val) * 255).astype(np.uint8)
         
         elif method == "percentile":
             # Percentile-based normalization (like your image viewer)
             p2, p98 = np.percentile(arr, (2, 98))
             arr_clipped = np.clip(arr, p2, p98)
             arr_float = arr_clipped.astype(np.float64)
+            if p98 == p2:
+                return np.zeros_like(arr, dtype=np.uint8)
             return ((arr_float - p2) * 255 / (p98 - p2)).astype(np.uint8)
         
         elif method == "histogram_equalization":

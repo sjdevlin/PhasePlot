@@ -34,6 +34,9 @@ class AnnealerSandboxPresenter():
             self.selected_well_index = None
             self.display_plate()
             self.view.apply_button.configure(command=self.apply_heat)
+        else:
+            self.logger.error("Failed to connect to annealer")
+            self.view.display_error("Failed to connect to annealer")
 
     def on_view_close(self):
         """Callback invoked when the sandbox view window is closed.
