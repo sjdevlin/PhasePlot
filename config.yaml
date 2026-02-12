@@ -9,9 +9,9 @@ robot_ip:
 
 #Camera settings
 camera_type: FLIR
-#camera_name: "Genicam FLIR Blackfly S BFS-U3-70S7M 0159F411" # left camera
-camera_name: "Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410" # right camera
-exposure_time: 100000 # in microseconds
+camera_name: "Genicam FLIR Blackfly S BFS-U3-70S7M 0159F411" # left camera
+#camera_name: "Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410" # right camera
+exposure_time: 300000 # in microseconds
 image_dimension_x: 1920 # in pixels
 image_dimension_y: 1080 # in pixels
 
@@ -28,8 +28,8 @@ brightfield_led_hex: 0x04 # 0x04 = 4 = 00000100 (led 2)
 epifluorescence_led_hex: 0x40 # 0x40 = 64 = 01000000 (led 6)
 brightfield_led: 2
 epifluorescence_led: 6
-brightfield_intensity: 0.9 
-epifluorescence_intensity: 0.9 
+brightfield_intensity: 1.0 
+epifluorescence_intensity: 1.0
 
 # Focus settings
 focus_type: Temika
@@ -45,12 +45,12 @@ stage_type: Temika
 stage_force_to_origin: 130 # in mm
 stage_scale: 1000.0 # convert mm to microns
 max_stage_speed: 10000 # in microns/s
-normal_stage_speed: 3000 # in microns/s
+normal_stage_speed: 5000 # in microns/s
 #origin_offset_x: 4300 # in microns - for 384 ibidi well
 #origin_offset_y: 3300 # in microns - for 384 ibidi well
 #origin_offset_x: 4700 # in microns - for 36 well
 #origin_offset_y: 3300 # in microns - for 36 well 
-origin_offset_x: 4700 # in microns - for 24 well
+origin_offset_x: 4500 # in microns - for 24 well
 origin_offset_y: 3300 # in microns - for 24 well 
 
 
@@ -90,7 +90,7 @@ annealer_get_serial_number: "N"
 annealer_set_serial_number: "S"
 annealer_get_num_wells: "W"
 celsius_multiplier: 0.005
-max_heat_intensity: 220
+max_heat_intensity: 250
 calibration_min_temp_rise: 2.0 # rem to chnage this
 calibration_heating_time: 30.0 # rem to change this
 

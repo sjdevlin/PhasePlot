@@ -97,7 +97,8 @@ class TemperatureOperator:
                 else:
                     with self.shared_lock:
                         self.time_at_temperature[sample.id] = int((datetime.now() - time_target_temperature_reached[sample.id]).total_seconds())
-                        self.logger.info(f"Sample {sample.id} has been at target temperature for {self.time_at_temperature[sample.id]} seconds")
+                        if self.time_at_temperature[sample.id] % 10 == 0:  # Log every 30 seconds at target temperature
+                            self.logger.info(f"Sample {sample.id} has been at target temperature for {self.time_at_temperature[sample.id]} seconds")
 
                 pid_proportion = 0
                 pid_integral = 0
@@ -140,6 +141,10 @@ class TemperatureOperator:
 #TODO: check logic of time here.  INterval based on whole cycle - but current time being updated each time OK?
             interval = (current_time - last_poll_time).total_seconds()
             last_poll_time = current_time
+
+        self.annealer_controller.zero_all_wells()
+        self.logger.info(f"Completed temperature run for experiment {self.experiment.id} with result set {self.result_set.id}")
+        self.logger.info("All wells set to zero heat")
 
 
 

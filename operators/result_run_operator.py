@@ -27,16 +27,16 @@ class ResultRunOperator:
 
         self.brightfield_led = self.app_config.get("brightfield_led", 2)
         self.brightfield_led_hex = self.app_config.get("brightfield_led_hex", 0x04)
-        self.brightfield_intensity = self.app_config.get("brightfield_intensity", 0.9)
+        self.brightfield_intensity = self.app_config.get("brightfield_intensity", 1.0)
         self.illumination_controller.illumination_setup(self.brightfield_led, self.brightfield_intensity)                                                         
 
         self.epifluorescence_led = self.app_config.get("epifluorescence_led", 6)
         self.epifluorescence_led_hex = self.app_config.get("epifluorescence_led_hex", 0x40)
-        self.epifluorescence_intensity = self.app_config.get("epifluorescence_intensity", 0.9)
+        self.epifluorescence_intensity = self.app_config.get("epifluorescence_intensity", 1.0)
         self.illumination_controller.illumination_setup(self.epifluorescence_led, self.epifluorescence_intensity)                                                         
 
 
-        self.camera_controller.set_exposure_time(self.app_config.get("exposure_time", 50000))
+        self.camera_controller.set_exposure_time(self.app_config.get("exposure_time", 200000))
         self.movie_path = self.app_config.get("movie_file_directory", "./")
         self.image_path = self.app_config.get("image_file_directory", "./")
 
@@ -140,18 +140,21 @@ class ResultRunOperator:
 
                 self.focus_controller.move_z(stored_z_height-100)  # Drop Z for next major move
                 with self.shared_lock:
-                    self.target_temperature[sample.id] -= self.temperature_profile.step_size
+                    self.target_temperature[sample.id] += self.temperature_profile.step_size
                     self.time_at_temperature[sample.id] = 0  # Reset time at temperature for 
 
             self.result_run.status = "Complete"
             for sample in self.experiment.sample:
                 with self.shared_lock:
                     target_temp = self.target_temperature[sample.id]
-                if target_temp >= self.temperature_profile.end_temp:
+                if self.temperature_profile.step_size > 0 and target_temp <= self.temperature_profile.end_temp:
                     self.result_run.status = "Running"  # Continue if any sample still needs imaging    
+                elif self.temperature_profile.step_size < 0 and target_temp >= self.temperature_profile.end_temp:
+                    self.result_run.status = "Running"  # Continue if any sample still needs imaging
 
         self.result_run.finish_date_time = datetime.now()
         self.db.update_result_run(self.result_run)
+        self.illumination_controller.illumination_enable(0x00, hex_mode=True)  # Turn off all LEDs
         self.logger.info("Imaging complete")
 
     def _home_stage(self):
@@ -172,9 +175,9 @@ class ResultRunOperator:
         col_index = sample.well_column - 1
 
         x = self.plate.centre_first_well_offset_x + (col_index * self.plate.well_spacing_x)
-        x = x + (self.plate.well_dimension * random.uniform(-0.02, 0.02))
+        x = x + (self.plate.well_dimension * random.uniform(-0.01, 0.01))
         y = self.plate.centre_first_well_offset_y + (row_index * self.plate.well_spacing_y)
-        y = y + (self.plate.well_dimension * random.uniform(-0.02, 0.02)) #TODO: remove random offset and replace with config value for stage repeatability buffer
+        y = y + (self.plate.well_dimension * random.uniform(-0.01, 0.01)) #TODO: remove random offset and replace with config value for stage repeatability buffer
 
         self.stage_controller.move(position = x, axis= "x", speed="normal")
         self.stage_controller.move(position = y, axis="y", speed="normal")
