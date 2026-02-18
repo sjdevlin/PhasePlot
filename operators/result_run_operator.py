@@ -131,6 +131,9 @@ class ResultRunOperator:
 
                     self._move_stage_to_site(sample, site_number)
                     stored_z_height = self.plate.get_well_z_height(sample.well_row, sample.well_column)
+                    #adjust for temperature
+                    stored_z_height += (self.actual_temperature.get(sample.id, 0.0)-25) * 5
+    
                     self._readjust_focus(stored_z_height)
 
                     self._take_stack(sample, site_number)
@@ -173,11 +176,12 @@ class ResultRunOperator:
         # Convert well row (letter) and column (1-based index) to zero-based indexes
         row_index = ord(sample.well_row.upper()) - ord('A')
         col_index = sample.well_column - 1
-
         x = self.plate.centre_first_well_offset_x + (col_index * self.plate.well_spacing_x)
-        x = x + (self.plate.well_dimension * random.uniform(-0.01, 0.01))
         y = self.plate.centre_first_well_offset_y + (row_index * self.plate.well_spacing_y)
-        y = y + (self.plate.well_dimension * random.uniform(-0.01, 0.01)) #TODO: remove random offset and replace with config value for stage repeatability buffer
+        random_offset_x = self.plate.well_dimension * random.uniform(-0.03, 0.03) #TODO: remove random offset and replace with config value for stage repeatability buffer
+        random_offset_y = self.plate.well_dimension * random.uniform(-0.03, 0.03) #TODO: remove random offset and replace with config value for stage repeatability buffer
+        x = x + (random_offset_x if site_number > 0 else 0)
+        y = y + (random_offset_y if site_number > 0 else 0)
 
         self.stage_controller.move(position = x, axis= "x", speed="normal")
         self.stage_controller.move(position = y, axis="y", speed="normal")
