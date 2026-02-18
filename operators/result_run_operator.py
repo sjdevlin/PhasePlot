@@ -221,6 +221,12 @@ class ResultRunOperator:
 
         for idx, (file, score) in enumerate(zip(filenames, focus_scores)):
 
+            file_path = str(file).replace(image_stub, "", 1)
+            if file_path.startswith("/"):
+                file_path = file_path[1:]
+            if file_path.startswith("_"):
+                file_path = file_path[1:]
+
             new_image = Image(
                     sample_id=sample.id,
                     result_run_id=self.result_run.id,
@@ -229,7 +235,7 @@ class ResultRunOperator:
                     led_number=self.brightfield_led if idx % 2 == 0 else self.epifluorescence_led,  # Alternate LED number based on stack index
                     dimension_x=getattr(self.camera_controller, "image_dimension_x", 0),
                     dimension_y=getattr(self.camera_controller, "image_dimension_y", 0),
-                    file_path=str(file),
+                    file_path=file_path,
                     timestamp=datetime.now(),
                     temperature=self.actual_temperature.get(sample.id, 0.0),
                     time_at_temperature=self.time_at_temperature.get(sample.id, 0),

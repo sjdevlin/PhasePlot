@@ -9,9 +9,9 @@ robot_ip:
 
 #Camera settings
 camera_type: FLIR
-camera_name: "Genicam FLIR Blackfly S BFS-U3-70S7M 0159F411" # left camera
-#camera_name: "Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410" # right camera
-exposure_time: 300000 # in microseconds
+#camera_name: "Genicam FLIR Blackfly S BFS-U3-70S7M 0159F411" # left camera
+camera_name: "Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410" # right camera
+exposure_time: 200000 # in microseconds
 image_dimension_x: 1920 # in pixels
 image_dimension_y: 1080 # in pixels
 
@@ -28,8 +28,8 @@ brightfield_led_hex: 0x04 # 0x04 = 4 = 00000100 (led 2)
 epifluorescence_led_hex: 0x40 # 0x40 = 64 = 01000000 (led 6)
 brightfield_led: 2
 epifluorescence_led: 6
-brightfield_intensity: 1.0 
-epifluorescence_intensity: 1.0
+brightfield_intensity: 0.9
+epifluorescence_intensity: 0.25
 
 # Focus settings
 focus_type: Temika
@@ -60,10 +60,10 @@ script_template: ./opentrons_protocols/template.json
 script_output_path: ./opentrons_protocols/script
 
 #Image file settings
-movie_file_directory: /Volumes/T7/Temika/Movies # Macos 
-image_file_directory: /Volumes/T7/Temika/Images # Macos 
-#movie_file_directory: /run/media/sd2030/T7/Temika/Movies # linux
-#image_file_directory: /run/media/sd2030/T7/Temika/Images # linux
+#movie_file_directory: /Volumes/T7/Temika/Movies # Macos 
+#image_file_directory: /Volumes/T7/Temika/Images # Macos 
+movie_file_directory: /run/media/sd2030/T7/Temika/Movies # linux
+image_file_directory: /run/media/sd2030/T7/Temika/Images # linux
 movie_extension: .movie
 
 
@@ -74,6 +74,7 @@ roboflow_api_key: TMlSASZ8SV6bioL6KYD3
 # Annealer Settings
 #annealer_port: /dev/cu.usbmodem2101 # macOS
 #annealer_port: COM5 # windows PC
+#annealer_port: /dev/ttyACM1 # linux
 annealer_port: /dev/ttyACM1 # linux
 
 #can use following script to find correct port on linux

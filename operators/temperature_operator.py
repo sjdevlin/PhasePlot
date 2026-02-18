@@ -97,8 +97,6 @@ class TemperatureOperator:
                 else:
                     with self.shared_lock:
                         self.time_at_temperature[sample.id] = int((datetime.now() - time_target_temperature_reached[sample.id]).total_seconds())
-                        if self.time_at_temperature[sample.id] % 10 == 0:  # Log every 30 seconds at target temperature
-                            self.logger.info(f"Sample {sample.id} has been at target temperature for {self.time_at_temperature[sample.id]} seconds")
 
                 pid_proportion = 0
                 pid_integral = 0
