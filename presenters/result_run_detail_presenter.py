@@ -23,15 +23,17 @@ class ResultRunDetailPresenter():
             self.logger.error(f"No images found for result run {result_run_id}.")
             return
 
-        # Sort images by sample number, site number, then stack index and pick the first image as a reference
-        first_reference = sorted(self.images, key=lambda img: (img.sample_id, img.site_number))[0]
-        self.sample_id = first_reference.sample_id
-        self.site_number = first_reference.site_number
-        self.led_offset = first_reference.stack_number % 2
+        # Select last sample at lowest temperature
+        last_sample_id = max(img.sample_id for img in self.images)
+        self.sample_id = last_sample_id
+        self.site_number = 0
         self._update_available_temperatures()
-        self.temperature = self.available_temperatures[0]
+        # Select lowest temperature (last in reversed list)
+        self.temperature = self.available_temperatures[-1] if self.available_temperatures else 0
+        # Determine LED offset from first available image
+        sample_images = [img for img in self.images if img.sample_id == self.sample_id and img.site_number == self.site_number and img.temperature == self.temperature]
+        self.led_offset = sample_images[0].stack_number % 2 if sample_images else 0
         self.stack_number = self._get_index_of_sharpest_image()
-        # Filter images from the first stack that have the same sample and site number as the reference
         self.refresh_view()
 
     def _update_available_temperatures(self):
@@ -49,11 +51,18 @@ class ResultRunDetailPresenter():
             self.logger.error(f"No sample found with ID {self.sample_id}.")
             return
         
+        # Get experiment to access max_ns_concentration
+        experiment = self.db.get_experiment_by_id(sample.experiment_id)
+        
         self.view.update_led_button(self.led_offset)
 
         actual_stack = self.stack_number + self.led_offset
 
+        # Calculate concentration (fraction stored as percentage)
+        concentration = (sample.ns_concentration * experiment.max_ns_concentration / 100) if experiment and experiment.max_ns_concentration else 0
+        
         meta_data = f"Sample: {self.sample_id} Row: {sample.well_row}, Column: {sample.well_column}"
+        meta_data += f"\nConcentration: {concentration:.2f} µM"
         meta_data += f"\nSite: {self.site_number}, Stack: {self.stack_number}"
         meta_data += f"\nLED Offset: {self.led_offset}"
 
@@ -77,15 +86,16 @@ class ResultRunDetailPresenter():
         # Ideally we'd have this in the Image model, but for now we can maybe omit or placeholders
 
         try:
-            # Get the image file path - no need to prepend /Users/dev
+            # Get the image file path from database
             image_file_path = next((img.file_path for img in candidates), None)
             if image_file_path is None:
                 raise StopIteration
             
-            # Check if path is already absolute, if not make it relative to current directory
-            image_file_path = f"{self.app_config.get('local_file_path', '')}{image_file_path}"
+            # Prepend the base directory from config
+            base_path = self.app_config.get('image_file_directory', '')
+            full_image_path = f"{base_path}/{image_file_path}" if base_path else image_file_path
 
-            self.view.show_image(image_file_path, meta_data)
+            self.view.show_image(full_image_path, meta_data)
         except StopIteration:
             self.logger.warning(f"No image found for sample {self.sample_id}, site {self.site_number}, stack {self.stack_number}, temp {self.temperature}.")
         except Exception as e:
@@ -99,26 +109,27 @@ class ResultRunDetailPresenter():
                           img.temperature == self.temperature and
                           (img.stack_number % 2) == self.led_offset]
 
-        # Select the first stack index matching the LED offset
+        # Select the image with best (highest) focus score
         if not stack:
             self.logger.warning(f"No stack found for sample {self.sample_id}, site {self.site_number}.")
             return 0
 
-        first_image = min(stack, key=lambda img: img.stack_number)
-        first_stack_number = first_image.stack_number
-        return first_stack_number - self.led_offset
+        sharpest_image = max(stack, key=lambda img: img.focus_score if img.focus_score is not None else -1)
+        return sharpest_image.stack_number - self.led_offset
 
     def next_sample(self):
-        #Navigate to the sharpest image in the first site of the next sample
+        #Navigate to the next sample at same temperature (rounded to integer)
         sorted_images = sorted({img.sample_id for img in self.images})
+        current_temp_rounded = round(self.temperature)
 
         try:
             next_sample_id = next(s for s in sorted_images if s > self.sample_id)
             self.sample_id = next_sample_id
             self.site_number = 0
             self._update_available_temperatures()
-            self.temperature = self.available_temperatures[0]
-            self.stack_number = self._get_index_of_sharpest_image()
+            # Find closest temperature to current (rounded to integer)
+            closest_temp = min(self.available_temperatures, key=lambda t: abs(round(t) - current_temp_rounded))
+            self.temperature = closest_temp
             self.refresh_view()
         except StopIteration:
             self.logger.info("No next sample available.")
@@ -126,6 +137,7 @@ class ResultRunDetailPresenter():
 
     def prev_sample(self):
         sorted_images = sorted({img.sample_id for img in self.images})
+        current_temp_rounded = round(self.temperature)
 
         try:
             prev_candidates = [s for s in sorted_images if s < self.sample_id]
@@ -133,8 +145,9 @@ class ResultRunDetailPresenter():
             self.sample_id = prev_sample
             self.site_number = 0
             self._update_available_temperatures()
-            self.temperature = self.available_temperatures[0]
-            self.stack_number = self._get_index_of_sharpest_image()
+            # Find closest temperature to current (rounded to integer)
+            closest_temp = min(self.available_temperatures, key=lambda t: abs(round(t) - current_temp_rounded))
+            self.temperature = closest_temp
             self.refresh_view()
         except IndexError:
             self.logger.info("No previous sample available.")
@@ -174,7 +187,6 @@ class ResultRunDetailPresenter():
             current_index = self.available_temperatures.index(self.temperature)
             if current_index < len(self.available_temperatures) - 1:
                 self.temperature = self.available_temperatures[current_index + 1]
-                self.stack_number = self._get_index_of_sharpest_image()
                 self.refresh_view()
         except ValueError:
             pass
@@ -218,7 +230,6 @@ class ResultRunDetailPresenter():
             current_index = self.available_temperatures.index(self.temperature)
             if current_index > 0:
                 self.temperature = self.available_temperatures[current_index - 1]
-                self.stack_number = self._get_index_of_sharpest_image()
                 self.refresh_view()
         except ValueError:
             pass

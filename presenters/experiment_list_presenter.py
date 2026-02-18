@@ -79,7 +79,7 @@ class ExperimentListPresenter():
         new_experiment = Experiment(plate_id = old_experiment.plate_id)
         new_experiment.description = f"{old_experiment.description} (copy)"
         new_experiment.notes = f"**copied from experiment: {old_experiment.id} ** \n{old_experiment.notes}"
-        new_experiment.status = "Not Run"
+        new_experiment.anneal_status = "Not Run"
         new_experiment.creation_date_time = datetime.now()
         new_experiment.liquid_protocol_id = old_experiment.liquid_protocol_id  # Copy the protocol reference
         new_experiment.sample = [Sample(experiment_id=new_experiment.id, 
