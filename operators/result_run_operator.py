@@ -132,8 +132,8 @@ class ResultRunOperator:
                     self._move_stage_to_site(sample, site_number)
                     stored_z_height = self.plate.get_well_z_height(sample.well_row, sample.well_column)
                     #adjust for temperature
-                    stored_z_height += (self.actual_temperature.get(sample.id, 0.0)-25) * 5
-    
+                    stored_z_height += int(self.actual_temperature.get(sample.id, 0.0)-27) * 5
+
                     self._readjust_focus(stored_z_height)
 
                     self._take_stack(sample, site_number)
