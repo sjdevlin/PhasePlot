@@ -129,15 +129,15 @@ class ResultRunDetailView():
         )
         self.next_site_button.grid(sticky="",row=0, column=3, padx=5, pady=10)
 
-        self.toggle_led_button = customtkinter.CTkButton(
+        self.toggle_channel_button = customtkinter.CTkButton(
             master=self.button_frame,
-            text="LED: --",
+            text="Channel: --",
             state=customtkinter.NORMAL
         )
-        self.toggle_led_button.grid(sticky="",row=0, column=4, padx=5, pady=10)
+        self.toggle_channel_button.grid(sticky="",row=0, column=4, padx=5, pady=10)
 
-    def update_led_button(self, led_number: int):
-        self.toggle_led_button.configure(text=f"LED: {led_number}")
+    def update_channel_button(self, channel_label: str):
+        self.toggle_channel_button.configure(text=f"Channel: {channel_label}")
 
     def show_image(self, path_to_tiff, meta_data=None):
         """
@@ -230,4 +230,3 @@ class ResultRunDetailView():
             traceback.print_exc()
             # Show error message in label
             self.image_label.configure(image=None, text=f"Error loading image:\n{str(e)}")
-

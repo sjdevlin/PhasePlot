@@ -58,12 +58,18 @@ class ExperimentListPresenter():
         for rss in result_sets:
             temp_profile = self.db.get_temperature_profile_by_id(rss.temperature_profile_id)
             image_set = self.db.get_image_set_by_id(rss.image_set_id)
+            if temp_profile is None:
+                temp_range = "N/A"
+                temp_step = "N/A"
+            else:
+                temp_range = str(temp_profile.start_temp) + " - " + str(temp_profile.end_temp)
+                temp_step = temp_profile.step_size
             data.append((
                 rss.id,
                 rss.description,
                 image_set.lens,
-                str(temp_profile.start_temp) + " - " + str(temp_profile.end_temp),
-                temp_profile.step_size,
+                temp_range,
+                temp_step,
                 image_set.stack_size
             ))
 
@@ -104,7 +110,6 @@ class ExperimentListPresenter():
         self.refresh_view()
 
     def run_experiment(self):
-        from views import LogView
         import threading
         from tkinter import messagebox
 
@@ -118,27 +123,62 @@ class ExperimentListPresenter():
         
         # Create shared lock for thread-safe dictionary access
         shared_lock = threading.Lock()
+        stop_event = threading.Event()
+        error_state = {"shown": False}
+
+        def handle_operator_error(source, error_message):
+            if stop_event is not None:
+                stop_event.set()
+            if error_state["shown"]:
+                return
+            error_state["shown"] = True
+            self.view.root_window.after(
+                0,
+                lambda: messagebox.showerror(
+                    "Run Error",
+                    f"{source.capitalize()} thread failed:\n{error_message}",
+                ),
+            )
         
-        #start camera with trigger off and then on when imaging starts
-        result_run_operator = ResultRunOperator(experiment, result_set, temperature_profile, self.db)
-        result_run_operator.shared_lock = shared_lock
-        
-        temperature_operator = TemperatureOperator(
-            temperature_profile, 
-            result_run_operator.result_run, 
+        # start camera with trigger off and then on when imaging starts
+        result_run_operator = ResultRunOperator(
+            experiment,
+            result_set,
+            temperature_profile,
             self.db,
-            result_run_operator.time_at_temperature,
-            result_run_operator.actual_temperature,
-            result_run_operator.target_temperature,
-            shared_lock
+            stop_event=stop_event,
+            error_callback=handle_operator_error,
         )
-        
-        # Start threads as non-daemon so they complete their work
+        result_run_operator.shared_lock = shared_lock
+
+        temperature_operator = None
+        if temperature_profile is not None:
+            try:
+                temperature_operator = TemperatureOperator(
+                    temperature_profile,
+                    result_run_operator.result_run,
+                    self.db,
+                    result_run_operator.time_at_temperature,
+                    result_run_operator.actual_temperature,
+                    result_run_operator.target_temperature,
+                    shared_lock,
+                    stop_event=stop_event,
+                    error_callback=handle_operator_error,
+                )
+            except Exception as exc:
+                result_run_operator.result_run.status = "Failed"
+                self.db.update_result_run(result_run_operator.result_run)
+                messagebox.showerror("Run Error", f"Temperature controller setup failed:\n{exc}")
+                return
+
+        # Start imaging thread (always required)
         result_thread = threading.Thread(target=result_run_operator.run, daemon=False)
         result_thread.start()
 
-        temperature_thread = threading.Thread(target=temperature_operator.run, daemon=False)
-        temperature_thread.start()
+        # Temperature thread is optional when no profile is attached to the ResultSet.
+        if temperature_operator is not None:
+            temperature_thread = threading.Thread(target=temperature_operator.run, daemon=False)
+            temperature_thread.start()
 
 
     def generate_script(self):

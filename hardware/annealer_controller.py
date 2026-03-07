@@ -196,7 +196,7 @@ class AnnealerController():
 
 
     def zero_all_wells(self):
-        command = "A" #TODO: put this command in the config file
+        command = self.annealer_zero_all_wells
         retries = self.annealer_retries
         while retries > 0:
             self._send_command(command)
@@ -212,5 +212,4 @@ class AnnealerController():
         else:
             self.logger.error(f"No response to zero command.")
             return None
-
 

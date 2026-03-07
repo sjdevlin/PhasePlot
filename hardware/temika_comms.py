@@ -14,6 +14,7 @@ class TemikaComms(metaclass=Singleton):
         self.port = self.my_app_config.get("temika_port")
         self.timeout = self.my_app_config.get("temika_timeout")
         self.buffer_size = self.my_app_config.get("temika_buffer_size")
+        self.number_of_retries = max(1, int(self.my_app_config.get("temika_retries", 3)))
         self.socket = None
         self.connect()
 
@@ -56,13 +57,13 @@ class TemikaComms(metaclass=Singleton):
                 self.socket.close()
                 self.socket = None
 
-            for attempt in range(3):#TODO: make this a config option
+            for attempt in range(self.number_of_retries):
                 if self.connect():
                     self.logger.info(f"Reconnected successfully on attempt {attempt + 1}.")
                     break
                 self.logger.warning(f"Reconnect attempt {attempt + 1} failed.")
             else:
-                self.logger.error("Failed to reconnect after 3 attempts.")
+                self.logger.error(f"Failed to reconnect after {self.number_of_retries} attempts.")
                 return None
 
 
@@ -108,9 +109,9 @@ class TemikaComms(metaclass=Singleton):
                         if not part:
                             break
                         data += part
-                        if b'ERROR' in data: #TODO: Improve this
-                            self.logger.error("Encountered 'ERROR' in data. Halting process for manual intervention.")
-                            input("Manual intervention required: press Enter to continue...")
+                        if b'ERROR' in data:
+                            self.logger.error("Encountered 'ERROR' in Temika response.")
+                            return None
                         if wait_for.encode() in data:
                             break
 

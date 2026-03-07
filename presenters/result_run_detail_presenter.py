@@ -15,7 +15,15 @@ class ResultRunDetailPresenter():
         self.view.prev_site_button.configure(command=self.prev_site)
         self.view.next_temp_button.configure(command=self.next_temp)
         self.view.prev_temp_button.configure(command=self.prev_temp)
-        self.view.toggle_led_button.configure(command=self.toggle_led)
+        self.view.toggle_channel_button.configure(command=self.toggle_channel)
+
+        result_run = self.db.get_result_run_by_id(result_run_id)
+        result_set = self.db.get_result_set_by_id(result_run.result_set_id) if result_run else None
+        self.image_set = self.db.get_image_set_by_id(result_set.image_set_id) if result_set else None
+        self.channel_numbers = {
+            0: self.image_set.channel_1_number if self.image_set else None,
+            1: self.image_set.channel_2_number if self.image_set else None,
+        }
 
         self.images = self.db.get_images_by_result_run_id(result_run_id)
 
@@ -30,9 +38,9 @@ class ResultRunDetailPresenter():
         self._update_available_temperatures()
         # Select lowest temperature (last in reversed list)
         self.temperature = self.available_temperatures[-1] if self.available_temperatures else 0
-        # Determine LED offset from first available image
+        # Determine channel offset from first available image
         sample_images = [img for img in self.images if img.sample_id == self.sample_id and img.site_number == self.site_number and img.temperature == self.temperature]
-        self.led_offset = sample_images[0].stack_number % 2 if sample_images else 0
+        self.channel_offset = sample_images[0].stack_number % 2 if sample_images else 0
         self.stack_number = self._get_index_of_sharpest_image()
         self.refresh_view()
 
@@ -54,9 +62,13 @@ class ResultRunDetailPresenter():
         # Get experiment to access max_ns_concentration
         experiment = self.db.get_experiment_by_id(sample.experiment_id)
         
-        self.view.update_led_button(self.led_offset)
+        channel_number = self.channel_numbers.get(self.channel_offset)
+        channel_label = str(self.channel_offset + 1)
+        if channel_number is not None:
+            channel_label = f"{channel_label} (#{channel_number})"
+        self.view.update_channel_button(channel_label)
 
-        actual_stack = self.stack_number + self.led_offset
+        actual_stack = self.stack_number + self.channel_offset
 
         # Calculate concentration (fraction stored as percentage)
         concentration = (sample.ns_concentration * experiment.max_ns_concentration / 100) if experiment and experiment.max_ns_concentration else 0
@@ -64,7 +76,7 @@ class ResultRunDetailPresenter():
         meta_data = f"Sample: {self.sample_id} Row: {sample.well_row}, Column: {sample.well_column}"
         meta_data += f"\nConcentration: {concentration:.2f} µM"
         meta_data += f"\nSite: {self.site_number}, Stack: {self.stack_number}"
-        meta_data += f"\nLED Offset: {self.led_offset}"
+        meta_data += f"\nChannel: {channel_label}"
 
         candidates = [img for img in self.images
                       if img.sample_id == self.sample_id and
@@ -104,10 +116,10 @@ class ResultRunDetailPresenter():
     def _get_index_of_sharpest_image(self):
 
         stack = [img for img in self.images
-                      if img.sample_id == self.sample_id and
-                          img.site_number == self.site_number and
-                          img.temperature == self.temperature and
-                          (img.stack_number % 2) == self.led_offset]
+                          if img.sample_id == self.sample_id and
+                              img.site_number == self.site_number and
+                              img.temperature == self.temperature and
+                              (img.stack_number % 2) == self.channel_offset]
 
         # Select the image with best (highest) focus score
         if not stack:
@@ -115,7 +127,7 @@ class ResultRunDetailPresenter():
             return 0
 
         sharpest_image = max(stack, key=lambda img: img.focus_score if img.focus_score is not None else -1)
-        return sharpest_image.stack_number - self.led_offset
+        return sharpest_image.stack_number - self.channel_offset
 
     def next_sample(self):
         #Navigate to the next sample at same temperature (rounded to integer)
@@ -170,14 +182,14 @@ class ResultRunDetailPresenter():
 
     def next_stack(self):
         next_stack = self.stack_number + 2
-        actual_next = next_stack + self.led_offset
+        actual_next = next_stack + self.channel_offset
         if any(img for img in self.images if img.sample_id == self.sample_id and img.site_number == self.site_number and img.stack_number == actual_next  and img.temperature == self.temperature):
             self.stack_number = next_stack
         self.refresh_view()
 
     def prev_stack(self):
         prev_stack = self.stack_number - 2
-        actual_prev = prev_stack + self.led_offset
+        actual_prev = prev_stack + self.channel_offset
         if any(img for img in self.images if img.sample_id == self.sample_id and img.site_number == self.site_number and img.stack_number == actual_prev and img.temperature == self.temperature):
             self.stack_number = prev_stack
         self.refresh_view()
@@ -208,8 +220,8 @@ class ResultRunDetailPresenter():
         # Stack navigation (offset-aware)
         next_stack = self.stack_number + 2
         prev_stack = self.stack_number - 2
-        actual_next = next_stack + self.led_offset
-        actual_prev = prev_stack + self.led_offset
+        actual_next = next_stack + self.channel_offset
+        actual_prev = prev_stack + self.channel_offset
         has_next_stack = any(img for img in self.images if img.sample_id == self.sample_id and img.site_number == self.site_number and img.stack_number == actual_next and img.temperature == self.temperature)
         has_prev_stack = any(img for img in self.images if img.sample_id == self.sample_id and img.site_number == self.site_number and img.stack_number == actual_prev and img.temperature == self.temperature)
         self.view.next_stack_button.configure(state="normal" if has_next_stack else "disabled")
@@ -234,11 +246,11 @@ class ResultRunDetailPresenter():
         except ValueError:
             pass
 
-    def toggle_led(self):
-        next_offset = 1 - self.led_offset
+    def toggle_channel(self):
+        next_offset = 1 - self.channel_offset
         actual_stack = self.stack_number + next_offset
         if not any(img for img in self.images if img.sample_id == self.sample_id and img.site_number == self.site_number and img.stack_number == actual_stack and img.temperature == self.temperature):
-            self.logger.info("No LED variant available for current selection.")
+            self.logger.info("No channel variant available for current selection.")
             return
-        self.led_offset = next_offset
+        self.channel_offset = next_offset
         self.refresh_view()

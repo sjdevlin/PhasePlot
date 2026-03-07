@@ -47,7 +47,7 @@ class AnnealerConfigPresenter():
         def run_and_refresh():
             self.operator.configure_annealer(self.annealer)
             # After completion, schedule a refresh of the view in the main thread.
-            self.view.after(0, self.view.update_terminal("Configure thread complete."))
+            self.view.root_window.after(0, lambda: self.view.update_terminal("Configure thread complete."))
 
         # Since Logger is a singleton, simply create it here.
         log_file_path = Logger().log_file
@@ -61,7 +61,12 @@ class AnnealerConfigPresenter():
         thread.start()
     
     def update_progress(self, addresses, calibration_factors, temperature, message):
+        self.view.root_window.after(
+            0,
+            lambda: self._apply_progress(addresses, calibration_factors, temperature, message),
+        )
 
+    def _apply_progress(self, addresses, calibration_factors, temperature, message):
         self.view.update_terminal(message)
 
         if addresses is not None:

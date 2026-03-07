@@ -127,6 +127,8 @@ class ImageProcessor:
             print(f"No images for run {result_run_id}")
             return
 
+        base_image_dir = Path(self.image_directory or ".")
+
         # Group by (sample_id, site_number)
         site_groups = defaultdict(list)
         for img in images:
@@ -139,13 +141,14 @@ class ImageProcessor:
             prediction_cache = {}
             for img in img_list:
                 try:
-                    preds, anno = self._infer_image(f"{self.image_directory}{img.file_path}")
+                    raw_path = str((base_image_dir / img.file_path).resolve())
+                    preds, anno = self._infer_image(raw_path)
                 except Exception as exc:
                     print(f"Roboflow fail on {img.file_path}: {exc}")
                     preds, anno = [], None
                 prediction_cache[img.id] = preds
                 if anno:
-                    self._save_annotated_image(img.file_path, anno)
+                    self._save_annotated_image(raw_path, anno)
 
             # ------------------------------------------------------------------
             # 2) Pick **one** best‑focus slice for the whole site to seed droplet centres
@@ -177,11 +180,9 @@ class ImageProcessor:
             avg_w = statistics.mean(widths)
             std_w = statistics.pstdev(widths) if len(widths) > 1 else 0.0
 
-
-            img.average_droplet_size = avg_w
-            img.standard_deviation_droplet_size = std_w
-            # Persist results back to DB
-
-            self.db.update_image(img)
+            for img in img_list:
+                img.average_droplet_size = avg_w
+                img.standard_deviation_droplet_size = std_w
+                self.db.update_image(img)
 
             print(f"Sample {sample_id} site {site_no}: n={len(widths)} avg={avg_w:.2f} stdev={std_w:.2f}")

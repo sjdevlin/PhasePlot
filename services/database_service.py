@@ -2,7 +2,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, joinedload
 from models import *
 from models.results import ResultRun
-from services import Logger, AppConfig
 
 class DatabaseService:
     def __init__(self, db_url):
@@ -39,6 +38,8 @@ class DatabaseService:
            return session.query(Plate).options(joinedload(Plate.well)).filter_by(id=plate_id).first()
         
     def get_plate_by_serial_number(self, ser_number):
+        if not hasattr(Plate, "serial_number"):
+            return None
         with self.Session() as session: 
            return session.query(Plate).options(joinedload(Plate.well)).filter_by(serial_number=ser_number).first()
 
@@ -57,7 +58,7 @@ class DatabaseService:
 #Annealer
     def get_annealer_by_id(self, annealer_id):
         with self.Session() as session: 
-           return session.query(Annealer).options(joinedload(Annealer.well)).filter_by(id=annealer_id).first()
+           return session.query(Annealer).options(joinedload(Annealer.wells)).filter_by(id=annealer_id).first()
 
 ##Experiments
 
@@ -145,6 +146,14 @@ class DatabaseService:
             session.add(result_run_data)
             session.commit()
             return result_run_data.id
+
+    def add_result_run_data_batch(self, result_run_data_list):
+        if not result_run_data_list:
+            return 0
+        with self.Session() as session:
+            session.add_all(result_run_data_list)
+            session.commit()
+            return len(result_run_data_list)
         
     def add_result_run_image(self, image):
         with self.Session() as session:
@@ -168,6 +177,12 @@ class DatabaseService:
     def get_images_by_result_run_id(self, result_run_id):
         with self.Session() as session: 
             return session.query(Image).filter_by(result_run_id=result_run_id).order_by(Image.id).all()
+
+    def update_image(self, image):
+        with self.Session() as session:
+            session.merge(image)
+            session.commit()
+            return True
 
     def update_result_run(self, result_run):
         with self.Session() as session:

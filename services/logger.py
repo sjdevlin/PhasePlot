@@ -1,6 +1,7 @@
 import logging
 import sys
 import os
+from datetime import datetime
 from .singleton import Singleton
 
 class Logger(metaclass=Singleton):
@@ -9,8 +10,9 @@ class Logger(metaclass=Singleton):
         """Initialize the logger configuration (called only once)."""
 
         self.log_dir = log_dir
-        self.log_file = os.path.join(log_dir, log_file)
-        self.error_file = os.path.join(log_dir, error_file)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.log_file = os.path.join(log_dir, self._with_timestamp(log_file, timestamp))
+        self.error_file = os.path.join(log_dir, self._with_timestamp(error_file, timestamp))
         self.console_output = console_output
 
         # Ensure log directory exists
@@ -21,7 +23,9 @@ class Logger(metaclass=Singleton):
         self.logger.setLevel(logging.DEBUG if debug else logging.INFO)
 
         # Prevent duplicate handlers (important in Python logging)
-        self.logger.handlers.clear()
+        for handler in list(self.logger.handlers):
+            handler.close()
+            self.logger.removeHandler(handler)
 
         # Create formatters
         log_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s", "%Y-%m-%d %H:%M:%S")
@@ -66,3 +70,10 @@ class Logger(metaclass=Singleton):
     def critical(self, message):
         """Log a critical error message."""
         self.logger.critical(message)
+
+    @staticmethod
+    def _with_timestamp(filename, timestamp):
+        stem, ext = os.path.splitext(filename)
+        if ext:
+            return f"{stem}_{timestamp}{ext}"
+        return f"{filename}_{timestamp}.log"
