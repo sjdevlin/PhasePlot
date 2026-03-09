@@ -116,10 +116,16 @@ class ExperimentListPresenter():
         result_set = self.db.get_result_set_by_id(self.selected_rs_row)
         experiment = self.db.get_experiment_by_id(self.selected_exp_row)
         temperature_profile = self.db.get_temperature_profile_by_id(result_set.temperature_profile_id)
+        image_set = self.db.get_image_set_by_id(result_set.image_set_id) if result_set else None
+        use_autofocus = bool(getattr(image_set, "autofocus", False))
 
         # Show user prompts on main thread before starting worker threads
         messagebox.showinfo("Important", "Have you reset the X and Y co-ords to the origin?")  
-        messagebox.showinfo("Focus Check", "Please go to first well and ensure that the image is in focus and enable autofocus before starting the run.")  
+        if use_autofocus:
+            messagebox.showinfo(
+                "Focus Check",
+                "Please go to first well, ensure the image is in focus, and enable autofocus before starting the run.",
+            )
         
         # Create shared lock for thread-safe dictionary access
         shared_lock = threading.Lock()
@@ -127,6 +133,16 @@ class ExperimentListPresenter():
         error_state = {"shown": False}
 
         def handle_operator_error(source, error_message):
+            if source == "autofocus_pause":
+                self.view.root_window.after(
+                    0,
+                    lambda: messagebox.showwarning(
+                        "Autofocus Paused",
+                        f"{error_message}\n\nAdjust focus, then press OK. The run will retry autofocus automatically.",
+                    ),
+                )
+                return
+
             if stop_event is not None:
                 stop_event.set()
             if error_state["shown"]:

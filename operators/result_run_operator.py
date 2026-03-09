@@ -31,6 +31,9 @@ class ResultRunOperator:
         self.number_of_sites = self.image_set.number_of_sites or 1
         self.stack_size = self.image_set.stack_size or 1
         self.stack_step_size = self.image_set.stack_step_size or 0
+        self.focus_clearance = float(self.app_config.get("focus_clearance_um", 100))
+        self.autofocus_retry_interval = float(self.app_config.get("autofocus_retry_interval_seconds", 2))
+        self.use_autofocus = bool(getattr(self.image_set, "autofocus", False))
 
         camera_type = self.app_config.get("camera_type", "default_camera")
         self.camera_controller = CameraControllerFactory.create_camera_controller(camera_type)
@@ -38,16 +41,32 @@ class ResultRunOperator:
         self.illumination_controller = IlluminationControllerFactory.create_illumination_controller()
         self.focus_controller = FocusControllerFactory.create_focus_controller()
 
-        self.channel_1_number = self.image_set.channel_1_number or 2
+        self.channel_1_number = self.image_set.channel_1_number if self.image_set.channel_1_number is not None else 2
         self.channel_1_intensity = self.image_set.channel_1_intensity or 1.0
         self.channel_1_bitmask = self._as_hex_bitmask(self.image_set.channel_1_bitmask, "0x04")
 
-        self.channel_2_number = self.image_set.channel_2_number or 6
+        self.channel_2_number = self.image_set.channel_2_number
         self.channel_2_intensity = self.image_set.channel_2_intensity or 1.0
         self.channel_2_bitmask = self._as_hex_bitmask(self.image_set.channel_2_bitmask, "0x40")
 
-        self.illumination_controller.illumination_setup(self.channel_1_number, self.channel_1_intensity)
-        self.illumination_controller.illumination_setup(self.channel_2_number, self.channel_2_intensity)
+        self.active_channels = [
+            {
+                "number": self.channel_1_number,
+                "intensity": self.channel_1_intensity,
+                "bitmask": self.channel_1_bitmask,
+            }
+        ]
+        if self.channel_2_number is not None:
+            self.active_channels.append(
+                {
+                    "number": self.channel_2_number,
+                    "intensity": self.channel_2_intensity,
+                    "bitmask": self.channel_2_bitmask,
+                }
+            )
+
+        for channel in self.active_channels:
+            self.illumination_controller.illumination_setup(channel["number"], channel["intensity"])
 
         self.camera_controller.set_exposure_time(self.app_config.get("exposure_time", 200000))
         self.movie_path = self.app_config.get("movie_file_directory", "./")
@@ -81,6 +100,7 @@ class ResultRunOperator:
         self.shared_lock = None
 
         self.result_run = self.db.get_result_run_by_id(self.result_run_id)
+        self.focus_position = None
 
         for sample in self.experiment.sample:
             sample_target = (
@@ -105,9 +125,12 @@ class ResultRunOperator:
             self.logger.info("Camera trigger enabled")
             self.camera_controller.set_trigger()
 
-            self.focus_controller.autofocus(False)
             self.focus_position = self.focus_controller.get_z()
-            self.focus_controller.move_z(self.focus_position - 100)
+            if self.use_autofocus:
+                self.logger.info("Autofocus mode enabled for this run.")
+            else:
+                self.focus_controller.autofocus(False)
+                self.focus_controller.move_z(self.focus_position - self.focus_clearance)
 
             if self.temperature_profile is None:
                 self.logger.info(
@@ -139,7 +162,7 @@ class ResultRunOperator:
                 self.result_run.status = "Running" if self._has_remaining_temperature_steps() else "Complete"
 
         except RunStopped:
-            if self.result_run.status == "Running":
+            if self.result_run.status in {"Running", "Paused"}:
                 self.result_run.status = "Aborted"
             self.logger.warning("Imaging run stopped.")
 
@@ -206,23 +229,30 @@ class ResultRunOperator:
             self.camera_controller.set_filename(movie_stub)
 
             self._move_stage_to_site(sample, site_number)
-            stored_z_height = self.plate.get_well_z_height(sample.well_row, sample.well_column)
-            if stored_z_height is None:
-                stored_z_height = self.focus_controller.get_z()
 
-            temp_c, _ = self._read_sample_runtime(sample.id)
-            stored_z_height += int(temp_c - 27) * 5
-            last_site_z_height = stored_z_height
+            site_focus_z = self.focus_position
+            if not self.use_autofocus:
+                site_focus_z = self.plate.get_well_z_height(sample.well_row, sample.well_column)
+                if site_focus_z is None:
+                    site_focus_z = self.focus_controller.get_z()
 
-            self._readjust_focus(stored_z_height)
+                temp_c, _ = self._read_sample_runtime(sample.id)
+                site_focus_z += int(temp_c - 27) * 5
+                self._readjust_focus(site_focus_z)
+
+            if site_focus_z is not None:
+                last_site_z_height = site_focus_z
+
             self._take_stack(sample, site_number)
 
             movie_filename = f"{movie_stub}{self.app_config.get('movie_extension', '.movie')}"
             self._process_stack(movie_filename, image_stub, sample, site_number)
-            self._readjust_focus(stored_z_height)
+
+            if site_focus_z is not None:
+                self.focus_controller.move_z(site_focus_z)
 
         if last_site_z_height is not None:
-            self.focus_controller.move_z(last_site_z_height - 100)
+            self.focus_controller.move_z(last_site_z_height - self.focus_clearance)
 
     def _move_stage_to_site(self, sample, site_number):
         row_index = ord(sample.well_row.upper()) - ord('A')
@@ -235,9 +265,15 @@ class ResultRunOperator:
         x = x + (random_offset_x if site_number > 0 else 0)
         y = y + (random_offset_y if site_number > 0 else 0)
 
+        if self.use_autofocus:
+            self._prepare_for_stage_move()
+
         self.stage_controller.move(position=x, axis="x", speed="normal")
         self.stage_controller.move(position=y, axis="y", speed="normal")
         sleep(1)
+
+        if self.use_autofocus:
+            self._reacquire_focus_after_stage_move(sample, site_number)
 
     def _take_stack(self, sample, site_number):
         self.logger.info(
@@ -248,24 +284,25 @@ class ResultRunOperator:
             self._raise_if_stopped()
             new_z = self.focus_controller.get_z() + self.stack_step_size
             self.focus_controller.move_z(new_z, speed="normal")
-            self.illumination_controller.illumination_enable(self.channel_1_bitmask, hex_mode=True)
-            self.camera_controller.capture_image()
-            self.illumination_controller.illumination_enable(self.channel_2_bitmask, hex_mode=True)
-            self.camera_controller.capture_image()
+            for channel in self.active_channels:
+                self.illumination_controller.illumination_enable(channel["bitmask"], hex_mode=True)
+                self.camera_controller.capture_image()
         self.camera_controller.stop_recording()
 
     def _readjust_focus(self, stored_z_height=None):
         if stored_z_height is not None:
             self.focus_controller.move_z(stored_z_height)
-        else:
-            self.focus_controller.autofocus(True)
-            self.focus_controller.autofocus(False)
+            self.focus_position = stored_z_height
+            return
 
-        self.focus_position = self.focus_controller.get_z()
+        if self.focus_controller.autofocus(True):
+            self.focus_controller.autofocus(False)
+            self.focus_position = self.focus_controller.get_z()
 
     def _process_stack(self, movie_filename, image_stub, sample, site_number):
         self.logger.info(f"Processing image stack {movie_filename} at site number {site_number} for sample {sample.id}")
         filenames, focus_scores = self.converter.convert(movie_name=movie_filename, file_stub=image_stub)
+        channel_count = max(1, len(self.active_channels))
 
         for idx, (file, score) in enumerate(zip(filenames, focus_scores)):
             file_path = str(file).replace(image_stub, "", 1)
@@ -275,13 +312,14 @@ class ResultRunOperator:
                 file_path = file_path[1:]
 
             sample_temp, sample_time = self._read_sample_runtime(sample.id)
+            channel = self.active_channels[idx % channel_count]
 
             new_image = Image(
                 sample_id=sample.id,
                 result_run_id=self.result_run.id,
                 site_number=site_number,
                 stack_number=idx,
-                led_number=self.channel_1_number if idx % 2 == 0 else self.channel_2_number,
+                led_number=channel["number"],
                 dimension_x=getattr(self.camera_controller, "image_dimension_x", 0),
                 dimension_y=getattr(self.camera_controller, "image_dimension_y", 0),
                 file_path=file_path,
@@ -337,6 +375,65 @@ class ResultRunOperator:
                 self.error_callback(source, str(exc))
             except Exception:
                 pass
+
+    def _notify_pause(self, source, message):
+        if callable(self.error_callback):
+            try:
+                self.error_callback(source, str(message))
+            except Exception:
+                pass
+
+    def _set_result_run_status(self, status):
+        if self.result_run.status == status:
+            return
+        self.result_run.status = status
+        try:
+            self.db.update_result_run(self.result_run)
+        except Exception as exc:
+            self.logger.error(f"Failed to persist run status '{status}': {exc}")
+
+    def _prepare_for_stage_move(self):
+        if self.focus_position is None:
+            self.focus_position = self.focus_controller.get_z()
+        self.focus_controller.autofocus(False)
+        self.focus_controller.move_z(self.focus_position - self.focus_clearance)
+
+    def _reacquire_focus_after_stage_move(self, sample, site_number):
+        if self.focus_position is None:
+            self.focus_position = self.focus_controller.get_z()
+
+        self.focus_controller.move_z(self.focus_position)
+        autofocus_locked = self.focus_controller.autofocus(True)
+        if autofocus_locked:
+            self.focus_position = self.focus_controller.get_z()
+            self.focus_controller.autofocus(False)
+            self.focus_controller.move_z(self.focus_position)
+            return
+
+        self._pause_for_autofocus_recovery(
+            f"Autofocus timed out at sample {sample.id}, site {site_number}. Run paused for manual intervention."
+        )
+
+    def _pause_for_autofocus_recovery(self, reason):
+        self.logger.error(reason)
+        self._set_result_run_status("Paused")
+        self._notify_pause("autofocus_pause", reason)
+
+        while True:
+            self._raise_if_stopped()
+            sleep(self.autofocus_retry_interval)
+
+            if self.focus_position is not None:
+                self.focus_controller.move_z(self.focus_position)
+            if self.focus_controller.autofocus(True):
+                self.focus_position = self.focus_controller.get_z()
+                self.focus_controller.autofocus(False)
+                self.focus_controller.move_z(self.focus_position)
+                self._set_result_run_status("Running")
+                self.logger.info("Autofocus recovered. Resuming run.")
+                return
+
+            self.logger.warning("Autofocus still not locked. Waiting for user intervention.")
 
     @staticmethod
     def _as_hex_bitmask(bitmask_value, fallback):

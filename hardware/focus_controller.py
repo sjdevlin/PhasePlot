@@ -87,8 +87,12 @@ class TemikaFocusController(Focus):
         command += "\t<wait_lock>0.2 10.3</wait_lock>\n" if status else ""
         command += "</afocus>\n"
         command += f"</{self.name}>"
-        self.temika_comms.send_command(command, wait_for=("Done" if status else None))# add a time out here so that we can process what happens when perfect focus is lost
+        reply = self.temika_comms.send_command(command, wait_for=("Done" if status else None))
+        if status and reply is None:
+            self.logger.error("Autofocus ON request timed out or failed.")
+            return False
         self.logger.info(f"Autofocus set to {afocus_status}")
+        return True
 
     def move_z(self, distance="0", speed="normal"):
         focus_speed = self.max_focus_speed if speed == "max" else self.normal_focus_speed

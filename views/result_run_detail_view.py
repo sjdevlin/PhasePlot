@@ -139,6 +139,10 @@ class ResultRunDetailView():
     def update_channel_button(self, channel_label: str):
         self.toggle_channel_button.configure(text=f"Channel: {channel_label}")
 
+    def set_channel_button_enabled(self, enabled: bool):
+        state = customtkinter.NORMAL if enabled else customtkinter.DISABLED
+        self.toggle_channel_button.configure(state=state)
+
     def show_image(self, path_to_tiff, meta_data=None):
         """
         Load the TIFF from disk, resize it to fit the placeholder,

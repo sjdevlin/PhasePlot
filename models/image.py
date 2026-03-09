@@ -21,7 +21,7 @@ class ImageSet(Base):
     channel_2_number = Column(Integer)
     channel_2_intensity = Column(Float)
     channel_2_bitmask = Column(String)
-
+    autofocus = Column(Boolean, default=False)
 
 
 
