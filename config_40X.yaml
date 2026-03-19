@@ -10,7 +10,7 @@ robot_ip:
 #Camera settings
 camera_type: FLIR
 camera_name: "Genicam FLIR Blackfly S BFS-U3-70S7M 0159F411" # camera name stub
-exposure_time: 200000 # in microseconds
+exposure_time: 300000 # in microseconds
 image_dimension_x: 1920 # in pixels
 image_dimension_y: 1080 # in pixels
 
