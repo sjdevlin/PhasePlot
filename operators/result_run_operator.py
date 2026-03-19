@@ -1,6 +1,6 @@
 from datetime import datetime
 from pathlib import Path
-from time import sleep
+from time import sleep, monotonic
 import random
 
 from hardware import *
@@ -37,6 +37,10 @@ class ResultRunOperator:
         self.autofocus_margin = float(self.app_config.get("autofocus_margin", 40))
         self.autofocus_step = float(self.app_config.get("autofocus_step", 20))
         self.autofocus_tries = max(1, int(self.app_config.get("autofocus_tries", 5)))
+        self.autofocus_recovery_max_attempts = max(1, int(self.app_config.get("autofocus_recovery_max_attempts", 20)))
+        self.soak_wait_log_interval = float(self.app_config.get("soak_wait_log_interval_seconds", 60))
+        self.soak_wait_timeout_factor = float(self.app_config.get("soak_wait_timeout_factor", 3.0))
+        self.soak_wait_timeout_min_seconds = float(self.app_config.get("soak_wait_timeout_min_seconds", 900))
 
         camera_type = self.app_config.get("camera_type", "default_camera")
         self.camera_controller = CameraControllerFactory.create_camera_controller(camera_type)
@@ -152,7 +156,10 @@ class ResultRunOperator:
                 for sample in self.experiment.sample:
                     self._raise_if_stopped()
                     self._wait_for_soak(sample.id)
-                    self.logger.info(f"Soak time reached for sample {sample.id}. Proceeding to image.")
+                    target_temp = self.target_temperature.get(sample.id, self.assumed_temperature)
+                    self.logger.info(
+                        f"Soak time reached for sample {sample.id} at target {target_temp:.2f} C. Proceeding to image."
+                    )
                     self._capture_sample(sample)
 
                     if self.shared_lock is None:
@@ -198,11 +205,36 @@ class ResultRunOperator:
         if self.shared_lock is None:
             return
 
+        soak_target_seconds = float(self.temperature_profile.soak_time_seconds)
+        wait_started = monotonic()
+        wait_timeout = max(
+            self.soak_wait_timeout_min_seconds,
+            soak_target_seconds * self.soak_wait_timeout_factor,
+        )
+        next_progress_log = self.soak_wait_log_interval
+
         with self.shared_lock:
             current_time_at_temp = self.time_at_temperature.get(sample_id, 0)
 
-        while current_time_at_temp < self.temperature_profile.soak_time_seconds:
+        while current_time_at_temp < soak_target_seconds:
             self._raise_if_stopped()
+            elapsed = monotonic() - wait_started
+            if elapsed >= wait_timeout:
+                raise RuntimeError(
+                    f"Soak wait timed out for sample {sample_id}: "
+                    f"elapsed {elapsed:.0f}s, at temperature {current_time_at_temp}s/{soak_target_seconds:.0f}s."
+                )
+
+            if elapsed >= next_progress_log:
+                with self.shared_lock:
+                    target_temp = self.target_temperature.get(sample_id, self.assumed_temperature)
+                    actual_temp = self.actual_temperature.get(sample_id, self.assumed_temperature)
+                self.logger.info(
+                    f"Waiting for soak on sample {sample_id}: {current_time_at_temp}/{soak_target_seconds:.0f}s, "
+                    f"elapsed {elapsed:.0f}s, target {target_temp:.2f} C, actual {actual_temp:.2f} C."
+                )
+                next_progress_log += self.soak_wait_log_interval
+
             sleep(1)
             with self.shared_lock:
                 current_time_at_temp = self.time_at_temperature.get(sample_id, 0)
@@ -311,11 +343,7 @@ class ResultRunOperator:
         channel_count = max(1, len(self.active_channels))
 
         for idx, (file, score) in enumerate(zip(filenames, focus_scores)):
-            file_path = str(file).replace(image_stub, "", 1)
-            if file_path.startswith("/"):
-                file_path = file_path[1:]
-            if file_path.startswith("_"):
-                file_path = file_path[1:]
+            file_path = Path(str(file)).name
 
             sample_temp, sample_time = self._read_sample_runtime(sample.id)
             channel = self.active_channels[idx % channel_count]
@@ -465,6 +493,8 @@ class ResultRunOperator:
         self._set_result_run_status("Paused")
         self._notify_pause("autofocus_pause", reason)
 
+        recovery_attempts = 0
+        recovery_started = monotonic()
         while True:
             self._raise_if_stopped()
             if callable(self.error_callback):
@@ -472,12 +502,23 @@ class ResultRunOperator:
             else:
                 input("Autofocus timed out. Adjust focus and press Enter to retry autofocus search.")
 
+            recovery_attempts += 1
             if self._attempt_autofocus_lock(sample, site_number):
                 self._set_result_run_status("Running")
                 self.logger.info("Autofocus recovered. Resuming run.")
                 return
 
-            self.logger.warning("Autofocus still not locked. Waiting for user intervention.")
+            elapsed = monotonic() - recovery_started
+            if recovery_attempts >= self.autofocus_recovery_max_attempts:
+                raise RuntimeError(
+                    f"Autofocus recovery exceeded {self.autofocus_recovery_max_attempts} attempts "
+                    f"for sample {sample.id}, site {site_number} after {elapsed:.0f}s."
+                )
+
+            self.logger.warning(
+                f"Autofocus still not locked after recovery attempt {recovery_attempts} "
+                f"for sample {sample.id}, site {site_number} (elapsed {elapsed:.0f}s)."
+            )
 
     @staticmethod
     def _as_hex_bitmask(bitmask_value, fallback):
