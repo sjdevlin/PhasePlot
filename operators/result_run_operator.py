@@ -34,6 +34,9 @@ class ResultRunOperator:
         self.focus_clearance = float(self.app_config.get("focus_clearance_um", 100))
         self.autofocus_retry_interval = float(self.app_config.get("autofocus_retry_interval_seconds", 2))
         self.use_autofocus = bool(getattr(self.image_set, "autofocus", False))
+        self.autofocus_margin = float(self.app_config.get("autofocus_margin", 40))
+        self.autofocus_step = float(self.app_config.get("autofocus_step", 20))
+        self.autofocus_tries = max(1, int(self.app_config.get("autofocus_tries", 5)))
 
         camera_type = self.app_config.get("camera_type", "default_camera")
         self.camera_controller = CameraControllerFactory.create_camera_controller(camera_type)
@@ -101,6 +104,7 @@ class ResultRunOperator:
 
         self.result_run = self.db.get_result_run_by_id(self.result_run_id)
         self.focus_position = None
+        self.sample_focus_positions = {}
 
         for sample in self.experiment.sample:
             sample_target = (
@@ -231,7 +235,9 @@ class ResultRunOperator:
             self._move_stage_to_site(sample, site_number)
 
             site_focus_z = self.focus_position
-            if not self.use_autofocus:
+            if self.use_autofocus:
+                site_focus_z = self.sample_focus_positions.get(sample.id, self.focus_position)
+            else:
                 site_focus_z = self.plate.get_well_z_height(sample.well_row, sample.well_column)
                 if site_focus_z is None:
                     site_focus_z = self.focus_controller.get_z()
@@ -399,36 +405,74 @@ class ResultRunOperator:
         self.focus_controller.move_z(self.focus_position - self.focus_clearance)
 
     def _reacquire_focus_after_stage_move(self, sample, site_number):
-        if self.focus_position is None:
-            self.focus_position = self.focus_controller.get_z()
-
-        self.focus_controller.move_z(self.focus_position)
-        autofocus_locked = self.focus_controller.autofocus(True)
-        if autofocus_locked:
-            self.focus_position = self.focus_controller.get_z()
-            self.focus_controller.autofocus(False)
-            self.focus_controller.move_z(self.focus_position)
+        if self._attempt_autofocus_lock(sample, site_number):
             return
 
         self._pause_for_autofocus_recovery(
-            f"Autofocus timed out at sample {sample.id}, site {site_number}. Run paused for manual intervention."
+            f"Autofocus timed out after {self.autofocus_tries} tries at sample {sample.id}, site {site_number}. "
+            "Run paused for manual intervention.",
+            sample,
+            site_number,
         )
 
-    def _pause_for_autofocus_recovery(self, reason):
+    def _get_autofocus_baseline(self, sample):
+        sample_focus = self.sample_focus_positions.get(sample.id)
+        if sample_focus is not None:
+            return sample_focus
+
+        plate_focus = self.plate.get_well_z_height(sample.well_row, sample.well_column)
+        if plate_focus is not None:
+            return plate_focus
+
+        if self.focus_position is not None:
+            return self.focus_position
+
+        return self.focus_controller.get_z()
+
+    def _attempt_autofocus_lock(self, sample, site_number):
+        baseline_z = self._get_autofocus_baseline(sample)
+        start_z = baseline_z - self.autofocus_margin
+
+        for attempt in range(self.autofocus_tries):
+            self._raise_if_stopped()
+            target_z = start_z + (attempt * self.autofocus_step)
+            self.focus_controller.autofocus(False)
+            self.focus_controller.move_z(target_z)
+
+            if self.focus_controller.autofocus(True):
+                locked_z = self.focus_controller.get_z()
+                self.focus_controller.autofocus(False)
+                self.focus_controller.move_z(locked_z)
+                self.focus_position = locked_z
+                self.sample_focus_positions[sample.id] = locked_z
+                sample.autofocus_z = locked_z
+                self.logger.info(
+                    f"Autofocus locked at sample {sample.id}, site {site_number}, z={locked_z:.2f}, "
+                    f"try {attempt + 1}/{self.autofocus_tries}."
+                )
+                return True
+
+            self.focus_controller.autofocus(False)
+            self.logger.warning(
+                f"Autofocus try {attempt + 1}/{self.autofocus_tries} failed for sample {sample.id}, "
+                f"site {site_number}, target z={target_z:.2f}."
+            )
+
+        return False
+
+    def _pause_for_autofocus_recovery(self, reason, sample, site_number):
         self.logger.error(reason)
         self._set_result_run_status("Paused")
         self._notify_pause("autofocus_pause", reason)
 
         while True:
             self._raise_if_stopped()
-            sleep(self.autofocus_retry_interval)
+            if callable(self.error_callback):
+                sleep(self.autofocus_retry_interval)
+            else:
+                input("Autofocus timed out. Adjust focus and press Enter to retry autofocus search.")
 
-            if self.focus_position is not None:
-                self.focus_controller.move_z(self.focus_position)
-            if self.focus_controller.autofocus(True):
-                self.focus_position = self.focus_controller.get_z()
-                self.focus_controller.autofocus(False)
-                self.focus_controller.move_z(self.focus_position)
+            if self._attempt_autofocus_lock(sample, site_number):
                 self._set_result_run_status("Running")
                 self.logger.info("Autofocus recovered. Resuming run.")
                 return
