@@ -57,8 +57,11 @@ script_template: ./opentrons_protocols/template.json
 script_output_path: ./opentrons_protocols/script
 
 #Image file settings
-movie_file_directory: /run/media/sd2030/T7/Temika/Movies # linux
-image_file_directory: /run/media/sd2030/T7/Temika/Images # linux
+#movie_file_directory: /run/media/sd2030/T7/Temika/Movies # linux
+#image_file_directory: /run/media/sd2030/T7/Temika/Images # linux
+movie_file_directory: /home/sd2030/data/temika/movies # linux
+image_file_directory: /home/sd2030/data/temika/images # linux
+
 movie_extension: .movie
 
 
