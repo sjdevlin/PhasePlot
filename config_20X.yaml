@@ -30,7 +30,7 @@ focus_type: Temika
 normal_focus_speed: 25 # in microns/s
 max_focus_speed: 100 # in microns/s
 autofocus_margin: 20 # in microns
-autofocus_step: 15 # in microns
+autofocus_step: 20 # in microns
 autofocus_tries: 7
 
 # Stage settings
