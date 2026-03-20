@@ -41,6 +41,9 @@ class ResultRunOperator:
         self.soak_wait_log_interval = float(self.app_config.get("soak_wait_log_interval_seconds", 60))
         self.soak_wait_timeout_factor = float(self.app_config.get("soak_wait_timeout_factor", 3.0))
         self.soak_wait_timeout_min_seconds = float(self.app_config.get("soak_wait_timeout_min_seconds", 900))
+        self.temperature_stall_timeout_seconds = float(
+            self.app_config.get("temperature_stall_timeout_seconds", 60)
+        )
 
         camera_type = self.app_config.get("camera_type", "default_camera")
         self.camera_controller = CameraControllerFactory.create_camera_controller(camera_type)
@@ -104,6 +107,7 @@ class ResultRunOperator:
         self.time_at_temperature = {}
         self.actual_temperature = {}
         self.target_temperature = {}
+        self.temperature_last_update = {}
         self.shared_lock = None
 
         self.result_run = self.db.get_result_run_by_id(self.result_run_id)
@@ -119,6 +123,7 @@ class ResultRunOperator:
             self.time_at_temperature[sample.id] = 0
             self.target_temperature[sample.id] = sample_target
             self.actual_temperature[sample.id] = sample_target
+            self.temperature_last_update[sample.id] = monotonic()
 
     def request_stop(self, reason="Run stop requested"):
         self.logger.warning(reason)
@@ -212,32 +217,47 @@ class ResultRunOperator:
             soak_target_seconds * self.soak_wait_timeout_factor,
         )
         next_progress_log = self.soak_wait_log_interval
-
-        with self.shared_lock:
-            current_time_at_temp = self.time_at_temperature.get(sample_id, 0)
-
-        while current_time_at_temp < soak_target_seconds:
+        while True:
             self._raise_if_stopped()
+
+            with self.shared_lock:
+                current_time_at_temp = self.time_at_temperature.get(sample_id, 0)
+                target_temp = self.target_temperature.get(sample_id, self.assumed_temperature)
+                actual_temp = self.actual_temperature.get(sample_id, self.assumed_temperature)
+                last_temp_update = self.temperature_last_update.get(sample_id)
+
+            if current_time_at_temp >= soak_target_seconds:
+                return
+
             elapsed = monotonic() - wait_started
-            if elapsed >= wait_timeout:
+            if last_temp_update is not None:
+                stalled_for = max(0.0, monotonic() - float(last_temp_update))
+                if stalled_for >= self.temperature_stall_timeout_seconds:
+                    raise RuntimeError(
+                        f"Temperature updates stalled for sample {sample_id}: "
+                        f"no update for {stalled_for:.0f}s while waiting for soak "
+                        f"({current_time_at_temp}s/{soak_target_seconds:.0f}s)."
+                    )
+
+            # Timeout is based on time spent not soaking, not total wait wall time.
+            non_soak_elapsed = max(0.0, elapsed - float(current_time_at_temp))
+
+            if non_soak_elapsed >= wait_timeout:
                 raise RuntimeError(
                     f"Soak wait timed out for sample {sample_id}: "
-                    f"elapsed {elapsed:.0f}s, at temperature {current_time_at_temp}s/{soak_target_seconds:.0f}s."
+                    f"elapsed {elapsed:.0f}s, at temperature {current_time_at_temp}s/{soak_target_seconds:.0f}s, "
+                    f"non-soak elapsed {non_soak_elapsed:.0f}s."
                 )
 
             if elapsed >= next_progress_log:
-                with self.shared_lock:
-                    target_temp = self.target_temperature.get(sample_id, self.assumed_temperature)
-                    actual_temp = self.actual_temperature.get(sample_id, self.assumed_temperature)
                 self.logger.info(
                     f"Waiting for soak on sample {sample_id}: {current_time_at_temp}/{soak_target_seconds:.0f}s, "
-                    f"elapsed {elapsed:.0f}s, target {target_temp:.2f} C, actual {actual_temp:.2f} C."
+                    f"elapsed {elapsed:.0f}s, non-soak elapsed {non_soak_elapsed:.0f}s, "
+                    f"target {target_temp:.2f} C, actual {actual_temp:.2f} C."
                 )
                 next_progress_log += self.soak_wait_log_interval
 
             sleep(1)
-            with self.shared_lock:
-                current_time_at_temp = self.time_at_temperature.get(sample_id, 0)
 
     def _has_remaining_temperature_steps(self):
         for sample in self.experiment.sample:

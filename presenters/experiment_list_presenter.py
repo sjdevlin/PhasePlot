@@ -177,6 +177,7 @@ class ExperimentListPresenter():
                     result_run_operator.time_at_temperature,
                     result_run_operator.actual_temperature,
                     result_run_operator.target_temperature,
+                    result_run_operator.temperature_last_update,
                     shared_lock,
                     stop_event=stop_event,
                     error_callback=handle_operator_error,

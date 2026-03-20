@@ -1,5 +1,5 @@
 from datetime import datetime
-from time import sleep
+from time import sleep, monotonic
 
 from hardware import AnnealerController
 from models import ResultRunData
@@ -19,6 +19,7 @@ class TemperatureOperator:
         time_at_temperature,
         actual_temperature,
         target_temperature,
+        temperature_last_update,
         shared_lock,
         stop_event=None,
         error_callback=None,
@@ -32,6 +33,7 @@ class TemperatureOperator:
         self.time_at_temperature = time_at_temperature
         self.actual_temperature = actual_temperature
         self.target_temperature = target_temperature
+        self.temperature_last_update = temperature_last_update
         self.shared_lock = shared_lock
         self.stop_event = stop_event
         self.error_callback = error_callback
@@ -60,6 +62,8 @@ class TemperatureOperator:
     def run(self):
         max_intensity = int(self.app_config.get("max_heat_intensity"))
         tolerance_c = float(self.app_config.get("temperature_target_tolerance", 0.2))
+        tolerance_hysteresis_c = float(self.app_config.get("temperature_target_hysteresis", 0.1))
+        reset_grace_s = float(self.app_config.get("temperature_target_reset_grace_seconds", 5.0))
         loop_period_s = float(self.app_config.get("temperature_poll_interval_seconds", 1.0))
 
         self.logger.info(
@@ -68,6 +72,8 @@ class TemperatureOperator:
 
         pid_calculators = {}
         time_target_temperature_reached = {}
+        out_of_band_started = {}
+        last_target_temperature = {}
         last_update_time = {}
 
         for sample in self.experiment.sample:
@@ -76,13 +82,24 @@ class TemperatureOperator:
                 self.result_run.pid_ki,
                 self.result_run.pid_kd,
             )
-            now = datetime.now()
-            time_target_temperature_reached[sample.id] = now
-            last_update_time[sample.id] = now
+            now_dt = datetime.now()
+            last_update_time[sample.id] = now_dt
+            time_target_temperature_reached[sample.id] = None
+            out_of_band_started[sample.id] = None
 
         try:
-            while self.result_run.status == "Running":
+            terminal_statuses = {"Complete", "Failed", "Aborted"}
+            active_statuses = {"Running", "Paused"}
+
+            while True:
                 self._raise_if_stopped()
+                current_status = self.result_run.status
+                if current_status in terminal_statuses:
+                    break
+                if current_status not in active_statuses:
+                    sleep(loop_period_s)
+                    continue
+
                 cycle_started = datetime.now()
                 result_rows = []
 
@@ -129,30 +146,73 @@ class TemperatureOperator:
                         )
                         continue
 
+                    sample_update_mono = monotonic()
                     if self.shared_lock is None:
                         self.actual_temperature[sample.id] = current_temp
+                        self.temperature_last_update[sample.id] = sample_update_mono
                         target_temp = self.target_temperature[sample.id]
                     else:
                         with self.shared_lock:
                             self.actual_temperature[sample.id] = current_temp
+                            self.temperature_last_update[sample.id] = sample_update_mono
                             target_temp = self.target_temperature[sample.id]
 
-                    error = target_temp - current_temp
-
-                    if abs(error) > tolerance_c:
-                        time_target_temperature_reached[sample.id] = current_time
+                    previous_target = last_target_temperature.get(sample.id)
+                    if previous_target is None or abs(target_temp - previous_target) > 1e-9:
+                        time_target_temperature_reached[sample.id] = None
+                        out_of_band_started[sample.id] = None
                         if self.shared_lock is None:
                             self.time_at_temperature[sample.id] = 0
                         else:
                             with self.shared_lock:
                                 self.time_at_temperature[sample.id] = 0
-                    else:
-                        seconds_at_target = int((current_time - time_target_temperature_reached[sample.id]).total_seconds())
-                        if self.shared_lock is None:
-                            self.time_at_temperature[sample.id] = seconds_at_target
+                    last_target_temperature[sample.id] = target_temp
+
+                    error = target_temp - current_temp
+                    abs_error = abs(error)
+                    now_mono = monotonic()
+                    enter_band_tol = tolerance_c
+                    exit_band_tol = tolerance_c + max(0.0, tolerance_hysteresis_c)
+                    start_time = time_target_temperature_reached[sample.id]
+                    out_since = out_of_band_started[sample.id]
+
+                    if start_time is None:
+                        if abs_error <= enter_band_tol:
+                            time_target_temperature_reached[sample.id] = now_mono
+                            out_of_band_started[sample.id] = None
+                            seconds_at_target = 0
                         else:
-                            with self.shared_lock:
-                                self.time_at_temperature[sample.id] = seconds_at_target
+                            seconds_at_target = 0
+                    else:
+                        if abs_error <= exit_band_tol:
+                            if out_since is not None:
+                                # Exclude brief out-of-band excursions from soak timing.
+                                time_target_temperature_reached[sample.id] += max(0.0, now_mono - out_since)
+                                out_of_band_started[sample.id] = None
+                                start_time = time_target_temperature_reached[sample.id]
+                            seconds_at_target = int(max(0.0, now_mono - start_time))
+                        else:
+                            if out_since is None:
+                                out_of_band_started[sample.id] = now_mono
+                                out_since = now_mono
+                            if now_mono - out_since >= reset_grace_s:
+                                time_target_temperature_reached[sample.id] = None
+                                out_of_band_started[sample.id] = None
+                                seconds_at_target = 0
+                                self.logger.warning(
+                                    f"Soak timer reset for sample {sample.id}: "
+                                    f"out of tolerance for {reset_grace_s:.1f}s "
+                                    f"(target {target_temp:.2f} C, actual {current_temp:.2f} C)."
+                                )
+                            else:
+                                # Hold timer during short excursions; only sustained drift resets.
+                                seconds_at_target = int(max(0.0, out_since - start_time))
+
+                    if self.shared_lock is None:
+                        self.time_at_temperature[sample.id] = seconds_at_target
+                    else:
+                        with self.shared_lock:
+                            self.time_at_temperature[sample.id] = seconds_at_target
 
                     if error > 1.0:
                         intensity = max_intensity
