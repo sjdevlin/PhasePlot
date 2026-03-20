@@ -247,7 +247,7 @@ class TemperatureOperator:
                 sleep(max(0.0, loop_period_s - elapsed))
 
         except RunStopped:
-            if self.result_run.status == "Running":
+            if self.result_run.status in {"Running", "Paused"}:
                 self.result_run.status = "Aborted"
             self.logger.warning("Temperature control stopped.")
 
@@ -277,6 +277,7 @@ class TemperatureOperator:
 
     def _raise_if_stopped(self):
         if self._stop_requested():
+            self.logger.warning("Temperature control stop event detected.")
             raise RunStopped()
 
     def _notify_error(self, source, exc):

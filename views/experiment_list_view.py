@@ -195,6 +195,8 @@ class ExperimentListView():
             fg_color='transparent'
         )
         self.button_frame.grid(row=4, column=0, sticky="", pady=(5, 10))
+        for col in range(3):
+            self.button_frame.grid_columnconfigure(col, weight=1)
         
         self.run_button = customtkinter.CTkButton(
             master=self.button_frame,
@@ -203,6 +205,22 @@ class ExperimentListView():
             fg_color='#992200'
         )
         self.run_button.grid(sticky="",row=0, column=0, padx=5, pady=10)
+
+        self.pause_button = customtkinter.CTkButton(
+            master=self.button_frame,
+            text="Pause",
+            state=customtkinter.DISABLED,
+            fg_color="#995c00",
+        )
+        self.pause_button.grid(sticky="", row=0, column=1, padx=5, pady=10)
+
+        self.stop_button = customtkinter.CTkButton(
+            master=self.button_frame,
+            text="Stop",
+            state=customtkinter.DISABLED,
+            fg_color="#8b1a1a",
+        )
+        self.stop_button.grid(sticky="", row=0, column=2, padx=5, pady=10)
 
 
     def show_experiments(self, data):
@@ -255,6 +273,12 @@ class ExperimentListView():
     def enable_run_button(self):
             self.run_button.configure(state=customtkinter.NORMAL)
 
+    def enable_pause_button(self):
+            self.pause_button.configure(state=customtkinter.NORMAL)
+
+    def enable_stop_button(self):
+            self.stop_button.configure(state=customtkinter.NORMAL)
+
     def enable_delete_button(self):
             self.delete_button.configure(state=customtkinter.NORMAL)
 
@@ -271,9 +295,17 @@ class ExperimentListView():
     def disable_run_button(self):
             self.run_button.configure(state=customtkinter.DISABLED)
 
+    def disable_pause_button(self):
+            self.pause_button.configure(state=customtkinter.DISABLED)
+
+    def disable_stop_button(self):
+            self.stop_button.configure(state=customtkinter.DISABLED)
+
     def disable_delete_button(self):
             self.delete_button.configure(state=customtkinter.DISABLED)
 
     def disable_script_button(self):
             self.script_button.configure(state=customtkinter.DISABLED)
 
+    def set_pause_button_text(self, text):
+            self.pause_button.configure(text=text)

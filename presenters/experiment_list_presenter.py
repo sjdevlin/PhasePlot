@@ -2,6 +2,7 @@ from models import Experiment, Sample, ResultSet, ImageSet, TemperatureProfile
 from datetime import datetime
 from operators import ExperimentOperator, ResultRunOperator, TemperatureOperator
 import copy
+import threading
 
 
 
@@ -15,8 +16,17 @@ class ExperimentListPresenter():
         self.view.delete_button.configure(command=self.delete_experiment)
         self.view.copy_button.configure(command=self.copy_experiment)
         self.view.run_button.configure(command=self.run_experiment)
+        self.view.pause_button.configure(command=self.toggle_pause_run)
+        self.view.stop_button.configure(command=self.stop_run)
         self.selected_exp_row = None
         self.selected_rs_row = None
+        self.run_active = False
+        self.run_paused = False
+        self.current_result_run_operator = None
+        self.current_temperature_operator = None
+        self.current_result_thread = None
+        self.current_temperature_thread = None
+        self.current_stop_event = None
         self.refresh_view()
 
 
@@ -27,14 +37,21 @@ class ExperimentListPresenter():
             self.view.enable_copy_button()
             self.view.enable_delete_button()
             self.view.enable_script_button()
-            if self.selected_rs_row:
-                self.view.enable_run_button()
+            self._update_run_button_state()
 
     def on_rs_row_selected(self, event):
         """This method handles the row selection logic."""
         self.selected_rs_row = self.view.get_id_of_selected_rs_row()
-        if self.selected_exp_row:
+        self._update_run_button_state()
+
+    def _update_run_button_state(self):
+        if self.run_active:
+            self.view.disable_run_button()
+            return
+        if self.selected_exp_row and self.selected_rs_row:
             self.view.enable_run_button()
+        else:
+            self.view.disable_run_button()
 
 
     def refresh_view(self):
@@ -79,6 +96,9 @@ class ExperimentListPresenter():
         self.view.disable_copy_button()
         self.view.disable_delete_button()
         self.view.disable_script_button()
+        self.view.disable_pause_button()
+        self.view.disable_stop_button()
+        self.view.set_pause_button_text("Pause")
 
     def copy_experiment(self):
         old_experiment = self.db.get_experiment_by_id(self.selected_exp_row)
@@ -110,11 +130,17 @@ class ExperimentListPresenter():
         self.refresh_view()
 
     def run_experiment(self):
-        import threading
         from tkinter import messagebox
+        if self.run_active:
+            messagebox.showinfo("Run Active", "A run is already in progress.")
+            return
 
         result_set = self.db.get_result_set_by_id(self.selected_rs_row)
         experiment = self.db.get_experiment_by_id(self.selected_exp_row)
+        if result_set is None or experiment is None:
+            messagebox.showerror("Run Error", "Please select a valid experiment and result set.")
+            return
+
         temperature_profile = self.db.get_temperature_profile_by_id(result_set.temperature_profile_id)
         image_set = self.db.get_image_set_by_id(result_set.image_set_id) if result_set else None
         use_autofocus = bool(getattr(image_set, "autofocus", False))
@@ -188,14 +214,93 @@ class ExperimentListPresenter():
                 messagebox.showerror("Run Error", f"Temperature controller setup failed:\n{exc}")
                 return
 
-        # Start imaging thread (always required)
+        # Prepare worker threads.
         result_thread = threading.Thread(target=result_run_operator.run, daemon=False)
+        temperature_thread = None
+        if temperature_operator is not None:
+            temperature_thread = threading.Thread(target=temperature_operator.run, daemon=False)
+
+        self.run_active = True
+        self.run_paused = False
+        self.current_result_run_operator = result_run_operator
+        self.current_temperature_operator = temperature_operator
+        self.current_result_thread = result_thread
+        self.current_temperature_thread = temperature_thread
+        self.current_stop_event = stop_event
+
+        self.view.disable_run_button()
+        self.view.enable_pause_button()
+        self.view.enable_stop_button()
+        self.view.set_pause_button_text("Pause")
+
+        # Start imaging thread (always required)
         result_thread.start()
 
         # Temperature thread is optional when no profile is attached to the ResultSet.
-        if temperature_operator is not None:
-            temperature_thread = threading.Thread(target=temperature_operator.run, daemon=False)
+        if temperature_thread is not None:
             temperature_thread.start()
+
+        monitor_thread = threading.Thread(
+            target=self._monitor_run_completion,
+            args=(result_thread, temperature_thread),
+            daemon=True,
+        )
+        monitor_thread.start()
+
+    def toggle_pause_run(self):
+        from tkinter import messagebox
+        if not self.run_active or self.current_result_run_operator is None:
+            return
+
+        try:
+            if self.run_paused:
+                self.current_result_run_operator.request_resume("Manual resume requested from UI")
+                self.run_paused = False
+                self.view.set_pause_button_text("Pause")
+            else:
+                self.current_result_run_operator.request_pause("Manual pause requested from UI")
+                self.run_paused = True
+                self.view.set_pause_button_text("Resume")
+        except Exception as exc:
+            messagebox.showerror("Run Error", f"Failed to toggle pause:\n{exc}")
+
+    def stop_run(self):
+        from tkinter import messagebox
+        if not self.run_active:
+            return
+        if not messagebox.askyesno("Stop Run", "Stop the current run safely?"):
+            return
+
+        if self.current_temperature_operator is not None:
+            self.current_temperature_operator.request_stop("Run stop requested from UI")
+        if self.current_result_run_operator is not None:
+            self.current_result_run_operator.request_stop("Run stop requested from UI")
+        if self.current_stop_event is not None:
+            self.current_stop_event.set()
+
+        self.run_paused = False
+        self.view.set_pause_button_text("Pause")
+        self.view.disable_pause_button()
+        self.view.disable_stop_button()
+
+    def _monitor_run_completion(self, result_thread, temperature_thread):
+        result_thread.join()
+        if temperature_thread is not None:
+            temperature_thread.join()
+        self.view.root_window.after(0, self._on_run_finished)
+
+    def _on_run_finished(self):
+        self.run_active = False
+        self.run_paused = False
+        self.current_result_run_operator = None
+        self.current_temperature_operator = None
+        self.current_result_thread = None
+        self.current_temperature_thread = None
+        self.current_stop_event = None
+        self.view.set_pause_button_text("Pause")
+        self.view.disable_pause_button()
+        self.view.disable_stop_button()
+        self._update_run_button_state()
 
 
     def generate_script(self):

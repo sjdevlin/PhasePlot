@@ -1,5 +1,6 @@
 from datetime import datetime
 from pathlib import Path
+from threading import Event
 from time import sleep, monotonic
 import random
 
@@ -113,6 +114,9 @@ class ResultRunOperator:
         self.result_run = self.db.get_result_run_by_id(self.result_run_id)
         self.focus_position = None
         self.sample_focus_positions = {}
+        self.manual_pause_event = Event()
+        self.manual_pause_active = False
+        self.autofocus_pause_active = False
 
         for sample in self.experiment.sample:
             sample_target = (
@@ -129,6 +133,16 @@ class ResultRunOperator:
         self.logger.warning(reason)
         if self.stop_event is not None:
             self.stop_event.set()
+
+    def request_pause(self, reason="Run pause requested"):
+        self.logger.warning(reason)
+        self.manual_pause_active = True
+        self.manual_pause_event.set()
+        self._set_result_run_status("Paused")
+
+    def request_resume(self, reason="Run resume requested"):
+        self.logger.warning(reason)
+        self.manual_pause_event.clear()
 
     def run(self):
         try:
@@ -155,11 +169,16 @@ class ResultRunOperator:
                 self.result_run.status = "Complete"
                 return
 
-            while self.result_run.status == "Running":
+            while self.result_run.status in {"Running", "Paused"}:
                 self._raise_if_stopped()
+                self._wait_if_paused()
+                if self.result_run.status != "Running":
+                    sleep(0.2)
+                    continue
 
                 for sample in self.experiment.sample:
                     self._raise_if_stopped()
+                    self._wait_if_paused()
                     self._wait_for_soak(sample.id)
                     target_temp = self.target_temperature.get(sample.id, self.assumed_temperature)
                     self.logger.info(
@@ -219,6 +238,7 @@ class ResultRunOperator:
         next_progress_log = self.soak_wait_log_interval
         while True:
             self._raise_if_stopped()
+            self._wait_if_paused()
 
             with self.shared_lock:
                 current_time_at_temp = self.time_at_temperature.get(sample_id, 0)
@@ -279,6 +299,7 @@ class ResultRunOperator:
 
         for site_number in range(self.number_of_sites):
             self._raise_if_stopped()
+            self._wait_if_paused()
 
             movie_stub = f"{self.movie_path}/{self.result_run.id}_{sample.well_row}_{sample.well_column}_{integer_temperature}_{site_number}"
             image_stub = f"{self.image_path}/{self.result_run.id}_{sample.well_row}_{sample.well_column}_{integer_temperature}_{site_number}"
@@ -340,6 +361,7 @@ class ResultRunOperator:
         self.camera_controller.start_recording()
         for _ in range(self.stack_size):
             self._raise_if_stopped()
+            self._wait_if_paused()
             new_z = self.focus_controller.get_z() + self.stack_step_size
             self.focus_controller.move_z(new_z, speed="normal")
             for channel in self.active_channels:
@@ -421,6 +443,18 @@ class ResultRunOperator:
         if self._stop_requested():
             raise RunStopped()
 
+    def _wait_if_paused(self):
+        if not self.manual_pause_event.is_set():
+            return
+        self.logger.info("Run paused by user. Waiting for resume.")
+        while self.manual_pause_event.is_set():
+            self._raise_if_stopped()
+            sleep(0.2)
+        if self.manual_pause_active and not self.autofocus_pause_active and self.result_run.status == "Paused":
+            self._set_result_run_status("Running")
+        self.manual_pause_active = False
+        self.logger.info("Run resumed by user.")
+
     def _notify_error(self, source, exc):
         if self.stop_event is not None:
             self.stop_event.set()
@@ -483,6 +517,7 @@ class ResultRunOperator:
 
         for attempt in range(self.autofocus_tries):
             self._raise_if_stopped()
+            self._wait_if_paused()
             target_z = start_z + (attempt * self.autofocus_step)
             self.focus_controller.autofocus(False)
             self.focus_controller.move_z(target_z)
@@ -510,6 +545,7 @@ class ResultRunOperator:
 
     def _pause_for_autofocus_recovery(self, reason, sample, site_number):
         self.logger.error(reason)
+        self.autofocus_pause_active = True
         self._set_result_run_status("Paused")
         self._notify_pause("autofocus_pause", reason)
 
@@ -517,6 +553,7 @@ class ResultRunOperator:
         recovery_started = monotonic()
         while True:
             self._raise_if_stopped()
+            self._wait_if_paused()
             if callable(self.error_callback):
                 sleep(self.autofocus_retry_interval)
             else:
@@ -524,12 +561,14 @@ class ResultRunOperator:
 
             recovery_attempts += 1
             if self._attempt_autofocus_lock(sample, site_number):
+                self.autofocus_pause_active = False
                 self._set_result_run_status("Running")
                 self.logger.info("Autofocus recovered. Resuming run.")
                 return
 
             elapsed = monotonic() - recovery_started
             if recovery_attempts >= self.autofocus_recovery_max_attempts:
+                self.autofocus_pause_active = False
                 raise RuntimeError(
                     f"Autofocus recovery exceeded {self.autofocus_recovery_max_attempts} attempts "
                     f"for sample {sample.id}, site {site_number} after {elapsed:.0f}s."
