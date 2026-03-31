@@ -21,8 +21,12 @@ class ResultRunOperator:
         self.result_set = result_set
         self.experiment = experiment
         self.temperature_profile = temperature_profile
+        self.temperature_step = 0.0
         self.stop_event = stop_event
         self.error_callback = error_callback
+
+        if self.temperature_profile is not None:
+            self.temperature_step = self._resolve_temperature_step()
 
         self.plate = self.db.get_plate_by_id(self.experiment.plate_id)
         self.image_set = self.db.get_image_set_by_id(self.result_set.image_set_id)
@@ -187,11 +191,11 @@ class ResultRunOperator:
                     self._capture_sample(sample)
 
                     if self.shared_lock is None:
-                        self.target_temperature[sample.id] += self.temperature_profile.step_size
+                        self.target_temperature[sample.id] += self.temperature_step
                         self.time_at_temperature[sample.id] = 0
                     else:
                         with self.shared_lock:
-                            self.target_temperature[sample.id] += self.temperature_profile.step_size
+                            self.target_temperature[sample.id] += self.temperature_step
                             self.time_at_temperature[sample.id] = 0
 
                 self.result_run.status = "Running" if self._has_remaining_temperature_steps() else "Complete"
@@ -287,9 +291,10 @@ class ResultRunOperator:
                 with self.shared_lock:
                     target_temp = self.target_temperature[sample.id]
 
-            if self.temperature_profile.step_size > 0 and target_temp <= self.temperature_profile.end_temp:
+            epsilon = 1e-6
+            if self.temperature_step > 0 and target_temp <= (self.temperature_profile.end_temp + epsilon):
                 return True
-            if self.temperature_profile.step_size < 0 and target_temp >= self.temperature_profile.end_temp:
+            if self.temperature_step < 0 and target_temp >= (self.temperature_profile.end_temp - epsilon):
                 return True
         return False
 
@@ -593,3 +598,32 @@ class ResultRunOperator:
         if all(ch in "01" for ch in candidate):
             return hex(int(candidate, 2))
         return candidate
+
+    def _resolve_temperature_step(self):
+        start_temp = float(self.temperature_profile.start_temp)
+        end_temp = float(self.temperature_profile.end_temp)
+        raw_step = float(self.temperature_profile.step_size)
+        epsilon = 1e-9
+
+        if abs(raw_step) <= epsilon and abs(end_temp - start_temp) > epsilon:
+            raise RuntimeError(
+                "Temperature profile step_size cannot be zero when start_temp and end_temp differ."
+            )
+
+        if start_temp > end_temp and raw_step > 0:
+            corrected_step = -abs(raw_step)
+            self.logger.warning(
+                f"Temperature profile step direction mismatch detected ({raw_step:+.3f} C). "
+                f"Using {corrected_step:+.3f} C to ramp from {start_temp:.2f} to {end_temp:.2f}."
+            )
+            return corrected_step
+
+        if start_temp < end_temp and raw_step < 0:
+            corrected_step = abs(raw_step)
+            self.logger.warning(
+                f"Temperature profile step direction mismatch detected ({raw_step:+.3f} C). "
+                f"Using {corrected_step:+.3f} C to ramp from {start_temp:.2f} to {end_temp:.2f}."
+            )
+            return corrected_step
+
+        return raw_step
