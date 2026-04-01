@@ -40,6 +40,7 @@ class ResultRunDetailPresenter():
 
         self.channel_number = None
         self.stack_index = 0
+        self.stack_number = 0
         self._ensure_valid_selection(reset_stack=True)
         self.refresh_view()
 
@@ -82,12 +83,36 @@ class ResultRunDetailPresenter():
         current_channel_images = self._channel_images(self.channel_number)
         if not current_channel_images:
             self.stack_index = 0
+            self.stack_number = 0
             return
 
         if reset_stack:
             self.stack_index = self._get_index_of_sharpest_image(current_channel_images)
+            self.stack_number = current_channel_images[self.stack_index].stack_number
         else:
-            self.stack_index = max(0, min(self.stack_index, len(current_channel_images) - 1))
+            target_stack_number = self.stack_number
+            if target_stack_number is None:
+                if 0 <= self.stack_index < len(current_channel_images):
+                    target_stack_number = current_channel_images[self.stack_index].stack_number
+                else:
+                    target_stack_number = current_channel_images[0].stack_number
+
+            matching_index = next(
+                (
+                    idx for idx, img in enumerate(current_channel_images)
+                    if img.stack_number == target_stack_number
+                ),
+                None,
+            )
+            if matching_index is None:
+                matching_index = min(
+                    range(len(current_channel_images)),
+                    key=lambda idx: abs(
+                        (current_channel_images[idx].stack_number or 0) - (target_stack_number or 0)
+                    ),
+                )
+            self.stack_index = matching_index
+            self.stack_number = current_channel_images[self.stack_index].stack_number
 
     def _update_available_temperatures(self):
         self.available_temperatures = sorted(
@@ -135,6 +160,8 @@ class ResultRunDetailPresenter():
         self._ensure_valid_selection()
         current_channel_images = self._channel_images(self.channel_number)
         selected_image = current_channel_images[self.stack_index] if current_channel_images else None
+        if selected_image is not None:
+            self.stack_number = selected_image.stack_number
 
         channel_index = self.channel_numbers.index(self.channel_number) if self.channel_number in self.channel_numbers else 0
         channel_label = str(channel_index + 1)
@@ -152,7 +179,8 @@ class ResultRunDetailPresenter():
 
         meta_data = f"Sample: {self.sample_id} Row: {sample.well_row}, Column: {sample.well_column}"
         meta_data += f"\nConcentration: {concentration:.2f} µM"
-        meta_data += f"\nSite: {self.site_number}, Stack: {self.stack_index}"
+        stack_label = selected_image.stack_number if selected_image is not None else self.stack_number
+        meta_data += f"\nSite: {self.site_number}, Stack: {stack_label}"
         meta_data += f"\nChannel: {channel_label}"
 
         self._update_nav_buttons(current_channel_images)
@@ -236,11 +264,15 @@ class ResultRunDetailPresenter():
         channel_images = self._channel_images(self.channel_number)
         if self.stack_index < len(channel_images) - 1:
             self.stack_index += 1
+            self.stack_number = channel_images[self.stack_index].stack_number
         self.refresh_view()
 
     def prev_stack(self):
         if self.stack_index > 0:
             self.stack_index -= 1
+            channel_images = self._channel_images(self.channel_number)
+            if channel_images:
+                self.stack_number = channel_images[self.stack_index].stack_number
         self.refresh_view()
 
     def next_temp(self):
@@ -269,6 +301,10 @@ class ResultRunDetailPresenter():
         if len(self.channel_numbers) <= 1:
             self.logger.info("No channel variant available for current selection.")
             return
+
+        current_channel_images = self._channel_images(self.channel_number)
+        if current_channel_images:
+            self.stack_number = current_channel_images[self.stack_index].stack_number
 
         current_index = self.channel_numbers.index(self.channel_number)
         self.channel_number = self.channel_numbers[(current_index + 1) % len(self.channel_numbers)]

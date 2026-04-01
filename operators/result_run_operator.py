@@ -63,6 +63,7 @@ class ResultRunOperator:
         self.channel_2_number = self.image_set.channel_2_number
         self.channel_2_intensity = self.image_set.channel_2_intensity or 1.0
         self.channel_2_bitmask = self._as_hex_bitmask(self.image_set.channel_2_bitmask, "0x40")
+        self.has_second_channel = self.channel_2_number is not None
 
         self.active_channels = [
             {
@@ -71,7 +72,7 @@ class ResultRunOperator:
                 "bitmask": self.channel_1_bitmask,
             }
         ]
-        if self.channel_2_number is not None:
+        if self.has_second_channel:
             self.active_channels.append(
                 {
                     "number": self.channel_2_number,
@@ -121,6 +122,7 @@ class ResultRunOperator:
         self.manual_pause_event = Event()
         self.manual_pause_active = False
         self.autofocus_pause_active = False
+        self.site_offsets = self._build_site_offsets()
 
         for sample in self.experiment.sample:
             sample_target = (
@@ -344,10 +346,12 @@ class ResultRunOperator:
         x = self.plate.centre_first_well_offset_x + (col_index * self.plate.well_spacing_x)
         y = self.plate.centre_first_well_offset_y + (row_index * self.plate.well_spacing_y)
 
-        random_offset_x = self.plate.well_dimension * random.uniform(-0.03, 0.03)
-        random_offset_y = self.plate.well_dimension * random.uniform(-0.03, 0.03)
-        x = x + (random_offset_x if site_number > 0 else 0)
-        y = y + (random_offset_y if site_number > 0 else 0)
+        if site_number < len(self.site_offsets):
+            offset_x, offset_y = self.site_offsets[site_number]
+        else:
+            offset_x, offset_y = (0.0, 0.0)
+        x += offset_x
+        y += offset_y
 
         if self.use_autofocus:
             self._prepare_for_stage_move()
@@ -394,12 +398,13 @@ class ResultRunOperator:
 
             sample_temp, sample_time = self._read_sample_runtime(sample.id)
             channel = self.active_channels[idx % channel_count]
+            z_stack_number = idx // channel_count
 
             new_image = Image(
                 sample_id=sample.id,
                 result_run_id=self.result_run.id,
                 site_number=site_number,
-                stack_number=idx,
+                stack_number=z_stack_number,
                 led_number=channel["number"],
                 dimension_x=getattr(self.camera_controller, "image_dimension_x", 0),
                 dimension_y=getattr(self.camera_controller, "image_dimension_y", 0),
@@ -627,3 +632,26 @@ class ResultRunOperator:
             return corrected_step
 
         return raw_step
+
+    def _build_site_offsets(self):
+        if self.number_of_sites <= 0:
+            return [(0.0, 0.0)]
+
+        well_diameter = float(self.plate.well_dimension or 0.0)
+        offset_limit = well_diameter * 0.10
+        offsets = [(0.0, 0.0)]
+
+        for _ in range(1, self.number_of_sites):
+            offsets.append(
+                (
+                    random.uniform(-offset_limit, offset_limit),
+                    random.uniform(-offset_limit, offset_limit),
+                )
+            )
+
+        for idx, (offset_x, offset_y) in enumerate(offsets):
+            self.logger.info(
+                f"Site {idx} offset set for this run: dx={offset_x:.2f}, dy={offset_y:.2f}."
+            )
+
+        return offsets
