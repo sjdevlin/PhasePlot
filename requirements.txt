@@ -10,4 +10,4 @@ scikit-image
 scipy
 opencv-python
 requests
-opentrons
+inference_sdk

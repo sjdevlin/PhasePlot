@@ -66,7 +66,12 @@ movie_extension: .movie
 
 
 # Roboflow settings
+roboflow_inference_host: http://localhost:9001
+image_processing_mode: workflow # workflow | model | auto
 image_processing_workflow_name: test-validation-set/detect-count-and-visualize-3
+# image_processing_model_id: phaseplotv2/5
+image_processing_task: object_detection
+image_processing_confidence_threshold: 0.8
 roboflow_api_key: TMlSASZ8SV6bioL6KYD3
 
 # Annealer Settings

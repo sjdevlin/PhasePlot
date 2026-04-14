@@ -5,6 +5,7 @@ import statistics
 from collections import defaultdict
 from math import hypot
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 # SQLAlchemy Image model is imported for type hinting / ORM updates
 from models import Image
@@ -30,11 +31,44 @@ class ImageProcessor:
         self.db = db_service
         self.match_tolerance = match_tolerance
         self.app_config = AppConfig()
-        self.image_directory = self.app_config.get("local_file_path")
+        # Backward compatible: prefer current key, keep legacy fallback.
+        self.image_directory = (
+            self.app_config.get("image_file_directory")
+            or self.app_config.get("local_file_path")
+        )
         self.api_key = self.app_config.get("roboflow_api_key")
+        self.inference_host = str(self.app_config.get("roboflow_inference_host", "http://localhost:9001")).rstrip("/")
+        self.confidence_threshold = float(self.app_config.get("image_processing_confidence_threshold", 0.8))
 
-        workflow_name = self.app_config.get("image_processing_workflow_name") #TODO: need consistency on when to pass parameters and when to use app_config
-        self.url = f"http://localhost:9001/infer/workflows/{workflow_name}"
+        self.inference_mode = str(self.app_config.get("image_processing_mode", "workflow")).strip().lower()
+        if self.inference_mode not in {"workflow", "model", "auto"}:
+            raise ValueError(
+                f"Invalid image_processing_mode='{self.inference_mode}'. "
+                "Use one of: workflow, model, auto."
+            )
+
+        self.workflow_name = self.app_config.get("image_processing_workflow_name")
+        self.model_id = self.app_config.get("image_processing_model_id")
+        self.model_task = str(self.app_config.get("image_processing_task", "object_detection")).strip()
+        self.model_confidence = self.app_config.get("image_processing_model_confidence")
+        self.model_iou_threshold = self.app_config.get("image_processing_model_iou_threshold")
+
+        if self.inference_mode == "auto":
+            self.inference_mode = "model" if self.model_id else "workflow"
+
+        if self.inference_mode == "workflow":
+            if not self.workflow_name:
+                raise ValueError("image_processing_workflow_name is required when image_processing_mode=workflow")
+            self.url = f"{self.inference_host}/infer/workflows/{self.workflow_name}"
+        else:
+            if not self.model_id:
+                # Small compatibility bridge: if user set phaseplotv2/5 in workflow field
+                # while intending direct model inference.
+                if self.workflow_name and self.workflow_name.count("/") == 1:
+                    self.model_id = self.workflow_name
+                else:
+                    raise ValueError("image_processing_model_id is required when image_processing_mode=model")
+            self.url = f"{self.inference_host}/infer/{self.model_task}"
 
     # ------------------------------------------------------------------
     # Private helpers
@@ -56,45 +90,101 @@ class ImageProcessor:
     # Roboflow interaction
     # ------------------------------------------------------------------
 
-    def _parse_workflow_response(self, raw: str):
-        """Return ``(predictions, annotated_image_bytes)`` from raw response text."""
-        # Find the start of the JSON object
-        # This is a workaround for the Roboflow server response which may contain extra text before the JSON
-        start_index = raw.find('{"outputs"')
+    @staticmethod
+    def _coerce_predictions(pred_list: Any) -> List[Dict]:
+        if pred_list is None:
+            return []
+        if isinstance(pred_list, dict):
+            pred_list = pred_list.get("predictions", [])
+        if not isinstance(pred_list, list):
+            return []
+
+        parsed: List[Dict] = []
+        for p in pred_list:
+            if isinstance(p, dict):
+                parsed.append(p)
+            elif isinstance(p, str):
+                try:
+                    parsed_obj = json.loads(p.replace("'", '"'))
+                    if isinstance(parsed_obj, dict):
+                        parsed.append(parsed_obj)
+                except json.JSONDecodeError:
+                    continue
+        return parsed
+
+    @staticmethod
+    def _decode_base64_image(image_obj: Any) -> Optional[bytes]:
+        if not image_obj:
+            return None
+        if isinstance(image_obj, dict):
+            b64_value = image_obj.get("value")
+        elif isinstance(image_obj, str):
+            b64_value = image_obj
+        else:
+            return None
+        if not b64_value:
+            return None
+        try:
+            return base64.b64decode(b64_value)
+        except Exception:
+            return None
+
+    def _parse_inference_response(self, raw: str) -> Tuple[List[Dict], Optional[bytes]]:
+        """Return ``(predictions, annotated_image_bytes)`` from workflow or model response."""
+        # Some inference server responses may contain extra prefix text; be defensive.
+        start_index = raw.find("{")
         if start_index == -1:
             return [], None
- 
-        data       = json.loads(raw[start_index:])          # already OK
-        output     = data.get("outputs", [{}])[0]           # first output item
+        data = json.loads(raw[start_index:])
 
-        pred_block = output.get("predictions", {})          # <-- dict, **not** list
-        pred_list  = pred_block.get("predictions", [])      # <-- the real list
+        # Workflow route response shape:
+        # {"outputs":[{"predictions":{"predictions":[...]}, "output_image":{"value":"..."}}]}
+        if isinstance(data, dict) and "outputs" in data:
+            outputs = data.get("outputs", [])
+            output = outputs[0] if outputs else {}
+            pred_block = output.get("predictions", {})
+            parsed = self._coerce_predictions(pred_block)
+            img_bytes = self._decode_base64_image(output.get("output_image")) or self._decode_base64_image(
+                output.get("image")
+            )
+            return parsed, img_bytes
 
-        parsed = []
-        for p in pred_list:
-            parsed.append(p)                                # now p is the dict you expect
+        # Direct model route response shape:
+        # {"predictions":[...], "image":{"type":"base64","value":"..."}}
+        if isinstance(data, dict):
+            parsed = self._coerce_predictions(data.get("predictions", []))
+            img_bytes = self._decode_base64_image(data.get("image"))
+            return parsed, img_bytes
 
-
-        img_b64 = output.get("output_image", {}).get("value")
-        img_bytes = base64.b64decode(img_b64) if img_b64 else None
-        return parsed, img_bytes
+        return [], None
 
     def _infer_image(self, image_path: str):
         """Send *one* image to Roboflow and return predictions list (filtered by confidence)."""
         with open(image_path, "rb") as image_file:
             image_base64 = base64.b64encode(image_file.read()).decode('utf-8')
 
-        payload = {
-            "api_key": self.api_key,
-            "inputs": {"image": {"type": "base64", "value": image_base64}}
-        }
+        if self.inference_mode == "workflow":
+            payload = {
+                "api_key": self.api_key,
+                "inputs": {"image": {"type": "base64", "value": image_base64}},
+            }
+        else:
+            payload = {
+                "api_key": self.api_key,
+                "model_id": self.model_id,
+                "image": {"type": "base64", "value": image_base64},
+            }
+            if self.model_confidence is not None:
+                payload["confidence"] = float(self.model_confidence)
+            if self.model_iou_threshold is not None:
+                payload["iou_threshold"] = float(self.model_iou_threshold)
 
         response = requests.post(self.url, json=payload, timeout=60)
 
         response.raise_for_status()
-        preds, anno = self._parse_workflow_response(response.text)
+        preds, anno = self._parse_inference_response(response.text)
 
-        preds = [p for p in preds if p.get("confidence", 0) > 0.8]
+        preds = [p for p in preds if p.get("confidence", 0) > self.confidence_threshold]
         return preds, anno
 
     # ------------------------------------------------------------------

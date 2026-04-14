@@ -6,6 +6,7 @@ __pycache__/
 #Temika movie files and tiffs
 *.movie
 *.tiff
+*.png
 
 # Log Files
 logs/

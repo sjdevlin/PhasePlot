@@ -1,0 +1,2623 @@
+{
+  "experiment_id": 6,
+  "result_run_id": 74,
+  "target_temperature_c": 28.0,
+  "temperature_tolerance_c": 0.15,
+  "led_channel": 6,
+  "selected_image_count": 240,
+  "valid_site_count": 16,
+  "dropped_site_count": 0,
+  "fit": {
+    "success": true,
+    "n_points": 8,
+    "slope": -0.0017227610789708277,
+    "intercept": 0.22242969624750258,
+    "r_squared": 0.1377574066189854,
+    "dense_concentration_uM": -451.3512136093855,
+    "dilute_concentration_uM": 129.11232959847305
+  },
+  "site_measurements": [
+    {
+      "sample_id": 35,
+      "site_number": 0,
+      "ns_concentration_uM": 100.0,
+      "stack_image_count": 15,
+      "missing_stack_image_count": 0,
+      "crop_count": 5,
+      "valid_crop_count": 4,
+      "event_mean_temperature_c": 28.020874999999997,
+      "per_crop_measurements": [
+        {
+          "crop_index": 1,
+          "droplet": {
+            "diameter_px": 136.32000732421875,
+            "radius_px": 68.16000366210938,
+            "center_x": 66.55000305175781,
+            "center_y": 69.8499984741211,
+            "crop_index": 1,
+            "image_id": 21701,
+            "stack_number": 10,
+            "image_file_name": "74_B_1_28_0_11.png",
+            "crop_box": [
+              316,
+              534,
+              452,
+              670
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_1_28_0_11.png"
+          },
+          "condensate": {
+            "diameter_px": 29.056135177612305,
+            "radius_px": 14.528067588806152,
+            "center_x": 81.69779968261719,
+            "center_y": 103.84066009521484,
+            "crop_index": 1,
+            "image_id": 21717,
+            "stack_number": 26,
+            "image_file_name": "74_B_1_28_0_27.png",
+            "crop_box": [
+              316,
+              534,
+              452,
+              670
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_1_28_0_27.png"
+          },
+          "dense_phase_fraction": 0.009683553128986722,
+          "droplet_to_condensate_volume_ratio": 103.26787974205487
+        },
+        {
+          "crop_index": 2,
+          "droplet": {
+            "diameter_px": 114.04000091552734,
+            "radius_px": 57.02000045776367,
+            "center_x": 62.150001525878906,
+            "center_y": 64.3499984741211,
+            "crop_index": 2,
+            "image_id": 21701,
+            "stack_number": 10,
+            "image_file_name": "74_B_1_28_0_11.png",
+            "crop_box": [
+              417,
+              647,
+              543,
+              774
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_1_28_0_11.png"
+          },
+          "condensate": {
+            "diameter_px": 38.4189453125,
+            "radius_px": 19.20947265625,
+            "center_x": 96.0,
+            "center_y": 40.0,
+            "crop_index": 2,
+            "image_id": 21701,
+            "stack_number": 10,
+            "image_file_name": "74_B_1_28_0_11.png",
+            "crop_box": [
+              417,
+              647,
+              543,
+              774
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_1_28_0_11.png"
+          },
+          "dense_phase_fraction": 0.038235315539121156,
+          "droplet_to_condensate_volume_ratio": 26.153831501059063
+        },
+        {
+          "crop_index": 3,
+          "droplet": {
+            "diameter_px": 101.15999603271484,
+            "radius_px": 50.57999801635742,
+            "center_x": 51.150001525878906,
+            "center_y": 50.04999923706055,
+            "crop_index": 3,
+            "image_id": 21697,
+            "stack_number": 6,
+            "image_file_name": "74_B_1_28_0_07.png",
+            "crop_box": [
+              804,
+              432,
+              910,
+              538
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_1_28_0_07.png"
+          },
+          "condensate": {
+            "diameter_px": 35.44028854370117,
+            "radius_px": 17.720144271850586,
+            "center_x": 27.0,
+            "center_y": 55.0,
+            "crop_index": 3,
+            "image_id": 21703,
+            "stack_number": 12,
+            "image_file_name": "74_B_1_28_0_13.png",
+            "crop_box": [
+              804,
+              432,
+              910,
+              538
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_1_28_0_13.png"
+          },
+          "dense_phase_fraction": 0.04299969117102982,
+          "droplet_to_condensate_volume_ratio": 23.25598097955015
+        },
+        {
+          "crop_index": 4,
+          "droplet": {
+            "diameter_px": 91.44000244140625,
+            "radius_px": 45.720001220703125,
+            "center_x": 50.04999923706055,
+            "center_y": 44.54999923706055,
+            "crop_index": 4,
+            "image_id": 21701,
+            "stack_number": 10,
+            "image_file_name": "74_B_1_28_0_11.png",
+            "crop_box": [
+              753,
+              688,
+              850,
+              785
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_1_28_0_11.png"
+          },
+          "condensate": {
+            "diameter_px": 23.792383193969727,
+            "radius_px": 11.896191596984863,
+            "center_x": 22.369565963745117,
+            "center_y": 14.5,
+            "crop_index": 4,
+            "image_id": 21719,
+            "stack_number": 28,
+            "image_file_name": "74_B_1_28_0_29.png",
+            "crop_box": [
+              753,
+              688,
+              850,
+              785
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_1_28_0_29.png"
+          },
+          "dense_phase_fraction": 0.017615912751868308,
+          "droplet_to_condensate_volume_ratio": 56.76685699376787
+        }
+      ],
+      "dense_phase_fraction": 0.027133618147751504,
+      "droplet_to_condensate_volume_ratio": 52.36113730410799,
+      "droplet_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_35/site_0/droplet_max_overlay.png",
+      "condensate_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_35/site_0/condensate_max_overlay.png",
+      "temp_crop_directory": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_35/site_0/crops"
+    },
+    {
+      "sample_id": 35,
+      "site_number": 1,
+      "ns_concentration_uM": 100.0,
+      "stack_image_count": 15,
+      "missing_stack_image_count": 0,
+      "crop_count": 5,
+      "valid_crop_count": 4,
+      "event_mean_temperature_c": 28.020874999999997,
+      "per_crop_measurements": [
+        {
+          "crop_index": 0,
+          "droplet": {
+            "diameter_px": 120.54000091552734,
+            "radius_px": 60.27000045776367,
+            "center_x": 63.25,
+            "center_y": 70.95000457763672,
+            "crop_index": 0,
+            "image_id": 21731,
+            "stack_number": 10,
+            "image_file_name": "74_B_1_28_1_11.png",
+            "crop_box": [
+              530,
+              647,
+              675,
+              793
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_1_28_1_11.png"
+          },
+          "condensate": {
+            "diameter_px": 49.24448776245117,
+            "radius_px": 24.622243881225586,
+            "center_x": 102.5,
+            "center_y": 58.0,
+            "crop_index": 0,
+            "image_id": 21741,
+            "stack_number": 20,
+            "image_file_name": "74_B_1_28_1_21.png",
+            "crop_box": [
+              530,
+              647,
+              675,
+              793
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_1_28_1_21.png"
+          },
+          "dense_phase_fraction": 0.06818350171718472,
+          "droplet_to_condensate_volume_ratio": 14.666304528445238
+        },
+        {
+          "crop_index": 2,
+          "droplet": {
+            "diameter_px": 136.74000549316406,
+            "radius_px": 68.37000274658203,
+            "center_x": 73.1500015258789,
+            "center_y": 65.45000457763672,
+            "crop_index": 2,
+            "image_id": 21731,
+            "stack_number": 10,
+            "image_file_name": "74_B_1_28_1_11.png",
+            "crop_box": [
+              233,
+              586,
+              366,
+              719
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_1_28_1_11.png"
+          },
+          "condensate": {
+            "diameter_px": 29.52509880065918,
+            "radius_px": 14.76254940032959,
+            "center_x": 83.52739715576172,
+            "center_y": 101.91095733642578,
+            "crop_index": 2,
+            "image_id": 21749,
+            "stack_number": 28,
+            "image_file_name": "74_B_1_28_1_29.png",
+            "crop_box": [
+              233,
+              586,
+              366,
+              719
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_1_28_1_29.png"
+          },
+          "dense_phase_fraction": 0.01006670401956571,
+          "droplet_to_condensate_volume_ratio": 99.33737974776984
+        },
+        {
+          "crop_index": 3,
+          "droplet": {
+            "diameter_px": 120.68000030517578,
+            "radius_px": 60.34000015258789,
+            "center_x": 66.55000305175781,
+            "center_y": 66.55000305175781,
+            "crop_index": 3,
+            "image_id": 21731,
+            "stack_number": 10,
+            "image_file_name": "74_B_1_28_1_11.png",
+            "crop_box": [
+              136,
+              490,
+              267,
+              620
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_1_28_1_11.png"
+          },
+          "condensate": {
+            "diameter_px": 31.145023345947266,
+            "radius_px": 15.572511672973633,
+            "center_x": 84.5,
+            "center_y": 63.5,
+            "crop_index": 3,
+            "image_id": 21745,
+            "stack_number": 24,
+            "image_file_name": "74_B_1_28_1_25.png",
+            "crop_box": [
+              136,
+              490,
+              267,
+              620
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_1_28_1_25.png"
+          },
+          "dense_phase_fraction": 0.017189374536256935,
+          "droplet_to_condensate_volume_ratio": 58.17547333620171
+        },
+        {
+          "crop_index": 4,
+          "droplet": {
+            "diameter_px": 124.15999603271484,
+            "radius_px": 62.07999801635742,
+            "center_x": 63.25,
+            "center_y": 62.150001525878906,
+            "crop_index": 4,
+            "image_id": 21731,
+            "stack_number": 10,
+            "image_file_name": "74_B_1_28_1_11.png",
+            "crop_box": [
+              337,
+              697,
+              461,
+              822
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_1_28_1_11.png"
+          },
+          "condensate": {
+            "diameter_px": 38.60071563720703,
+            "radius_px": 19.300357818603516,
+            "center_x": 95.5,
+            "center_y": 46.5,
+            "crop_index": 4,
+            "image_id": 21735,
+            "stack_number": 14,
+            "image_file_name": "74_B_1_28_1_15.png",
+            "crop_box": [
+              337,
+              697,
+              461,
+              822
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_1_28_1_15.png"
+          },
+          "dense_phase_fraction": 0.03004975938833057,
+          "droplet_to_condensate_volume_ratio": 33.27813667580769
+        }
+      ],
+      "dense_phase_fraction": 0.031372334915334484,
+      "droplet_to_condensate_volume_ratio": 51.36432357205612,
+      "droplet_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_35/site_1/droplet_max_overlay.png",
+      "condensate_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_35/site_1/condensate_max_overlay.png",
+      "temp_crop_directory": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_35/site_1/crops"
+    },
+    {
+      "sample_id": 36,
+      "site_number": 0,
+      "ns_concentration_uM": 87.5,
+      "stack_image_count": 15,
+      "missing_stack_image_count": 0,
+      "crop_count": 5,
+      "valid_crop_count": 2,
+      "event_mean_temperature_c": 28.00582500000001,
+      "per_crop_measurements": [
+        {
+          "crop_index": 3,
+          "droplet": {
+            "diameter_px": 178.36000061035156,
+            "radius_px": 89.18000030517578,
+            "center_x": 90.75,
+            "center_y": 96.25,
+            "crop_index": 3,
+            "image_id": 21765,
+            "stack_number": 14,
+            "image_file_name": "74_C_1_28_0_15.png",
+            "crop_box": [
+              778,
+              120,
+              954,
+              295
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_1_28_0_15.png"
+          },
+          "condensate": {
+            "diameter_px": 54.70851516723633,
+            "radius_px": 27.354257583618164,
+            "center_x": 85.5,
+            "center_y": 92.0,
+            "crop_index": 3,
+            "image_id": 21771,
+            "stack_number": 20,
+            "image_file_name": "74_C_1_28_0_21.png",
+            "crop_box": [
+              778,
+              120,
+              954,
+              295
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_1_28_0_21.png"
+          },
+          "dense_phase_fraction": 0.02885840925265914,
+          "droplet_to_condensate_volume_ratio": 34.65194464618162
+        },
+        {
+          "crop_index": 4,
+          "droplet": {
+            "diameter_px": 10.097023010253906,
+            "radius_px": 5.048511505126953,
+            "center_x": 47.98387145996094,
+            "center_y": 109.95161437988281,
+            "crop_index": 4,
+            "image_id": 21751,
+            "stack_number": 0,
+            "image_file_name": "74_C_1_28_0_01.png",
+            "crop_box": [
+              1171,
+              225,
+              1336,
+              389
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_1_28_0_01.png"
+          },
+          "condensate": {
+            "diameter_px": 10.097023010253906,
+            "radius_px": 5.048511505126953,
+            "center_x": 157.0,
+            "center_y": 88.0,
+            "crop_index": 4,
+            "image_id": 21771,
+            "stack_number": 20,
+            "image_file_name": "74_C_1_28_0_21.png",
+            "crop_box": [
+              1171,
+              225,
+              1336,
+              389
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_1_28_0_21.png"
+          },
+          "dense_phase_fraction": 1.0,
+          "droplet_to_condensate_volume_ratio": 1.0
+        }
+      ],
+      "dense_phase_fraction": 0.5144292046263296,
+      "droplet_to_condensate_volume_ratio": 17.82597232309081,
+      "droplet_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_36/site_0/droplet_max_overlay.png",
+      "condensate_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_36/site_0/condensate_max_overlay.png",
+      "temp_crop_directory": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_36/site_0/crops"
+    },
+    {
+      "sample_id": 36,
+      "site_number": 1,
+      "ns_concentration_uM": 87.5,
+      "stack_image_count": 15,
+      "missing_stack_image_count": 0,
+      "crop_count": 5,
+      "valid_crop_count": 2,
+      "event_mean_temperature_c": 28.020825000000002,
+      "per_crop_measurements": [
+        {
+          "crop_index": 1,
+          "droplet": {
+            "diameter_px": 174.60000610351562,
+            "radius_px": 87.30000305175781,
+            "center_x": 78.6500015258789,
+            "center_y": 83.05000305175781,
+            "crop_index": 1,
+            "image_id": 21789,
+            "stack_number": 8,
+            "image_file_name": "74_C_1_28_1_09.png",
+            "crop_box": [
+              742,
+              98,
+              913,
+              268
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_1_28_1_09.png"
+          },
+          "condensate": {
+            "diameter_px": 50.69536590576172,
+            "radius_px": 25.34768295288086,
+            "center_x": 76.5,
+            "center_y": 86.5,
+            "crop_index": 1,
+            "image_id": 21799,
+            "stack_number": 18,
+            "image_file_name": "74_C_1_28_1_19.png",
+            "crop_box": [
+              742,
+              98,
+              913,
+              268
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_1_28_1_19.png"
+          },
+          "dense_phase_fraction": 0.024477779734080586,
+          "droplet_to_condensate_volume_ratio": 40.85337848708937
+        },
+        {
+          "crop_index": 3,
+          "droplet": {
+            "diameter_px": 155.8000030517578,
+            "radius_px": 77.9000015258789,
+            "center_x": 80.8499984741211,
+            "center_y": 73.1500015258789,
+            "crop_index": 3,
+            "image_id": 21787,
+            "stack_number": 6,
+            "image_file_name": "74_C_1_28_1_07.png",
+            "crop_box": [
+              1235,
+              459,
+              1391,
+              615
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_1_28_1_07.png"
+          },
+          "condensate": {
+            "diameter_px": 49.93014907836914,
+            "radius_px": 24.96507453918457,
+            "center_x": 59.5,
+            "center_y": 60.0,
+            "crop_index": 3,
+            "image_id": 21807,
+            "stack_number": 26,
+            "image_file_name": "74_C_1_28_1_27.png",
+            "crop_box": [
+              1235,
+              459,
+              1391,
+              615
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_1_28_1_27.png"
+          },
+          "dense_phase_fraction": 0.032914419705628715,
+          "droplet_to_condensate_volume_ratio": 30.38182076255743
+        }
+      ],
+      "dense_phase_fraction": 0.02869609971985465,
+      "droplet_to_condensate_volume_ratio": 35.6175996248234,
+      "droplet_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_36/site_1/droplet_max_overlay.png",
+      "condensate_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_36/site_1/condensate_max_overlay.png",
+      "temp_crop_directory": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_36/site_1/crops"
+    },
+    {
+      "sample_id": 37,
+      "site_number": 0,
+      "ns_concentration_uM": 75.0,
+      "stack_image_count": 15,
+      "missing_stack_image_count": 0,
+      "crop_count": 5,
+      "valid_crop_count": 2,
+      "event_mean_temperature_c": 27.880875000000003,
+      "per_crop_measurements": [
+        {
+          "crop_index": 2,
+          "droplet": {
+            "diameter_px": 134.5399932861328,
+            "radius_px": 67.2699966430664,
+            "center_x": 84.1500015258789,
+            "center_y": 86.3499984741211,
+            "crop_index": 2,
+            "image_id": 21823,
+            "stack_number": 12,
+            "image_file_name": "74_A_2_28_0_13.png",
+            "crop_box": [
+              1101,
+              576,
+              1268,
+              744
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_2_28_0_13.png"
+          },
+          "condensate": {
+            "diameter_px": 40.329673767089844,
+            "radius_px": 20.164836883544922,
+            "center_x": 88.70465850830078,
+            "center_y": 88.98252868652344,
+            "crop_index": 2,
+            "image_id": 21829,
+            "stack_number": 18,
+            "image_file_name": "74_A_2_28_0_19.png",
+            "crop_box": [
+              1101,
+              576,
+              1268,
+              744
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_2_28_0_19.png"
+          },
+          "dense_phase_fraction": 0.026935182459890888,
+          "droplet_to_condensate_volume_ratio": 37.12616394892061
+        },
+        {
+          "crop_index": 3,
+          "droplet": {
+            "diameter_px": 105.81999969482422,
+            "radius_px": 52.90999984741211,
+            "center_x": 70.95000457763672,
+            "center_y": 75.3499984741211,
+            "crop_index": 3,
+            "image_id": 21817,
+            "stack_number": 6,
+            "image_file_name": "74_A_2_28_0_07.png",
+            "crop_box": [
+              471,
+              590,
+              618,
+              737
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_2_28_0_07.png"
+          },
+          "condensate": {
+            "diameter_px": 38.288578033447266,
+            "radius_px": 19.144289016723633,
+            "center_x": 82.5,
+            "center_y": 74.5,
+            "crop_index": 3,
+            "image_id": 21839,
+            "stack_number": 28,
+            "image_file_name": "74_A_2_28_0_29.png",
+            "crop_box": [
+              471,
+              590,
+              618,
+              737
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_2_28_0_29.png"
+          },
+          "dense_phase_fraction": 0.04737011569606772,
+          "droplet_to_condensate_volume_ratio": 21.110355871117534
+        }
+      ],
+      "dense_phase_fraction": 0.037152649077979306,
+      "droplet_to_condensate_volume_ratio": 29.118259910019074,
+      "droplet_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_37/site_0/droplet_max_overlay.png",
+      "condensate_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_37/site_0/condensate_max_overlay.png",
+      "temp_crop_directory": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_37/site_0/crops"
+    },
+    {
+      "sample_id": 37,
+      "site_number": 1,
+      "ns_concentration_uM": 75.0,
+      "stack_image_count": 15,
+      "missing_stack_image_count": 0,
+      "crop_count": 5,
+      "valid_crop_count": 4,
+      "event_mean_temperature_c": 27.885875000000002,
+      "per_crop_measurements": [
+        {
+          "crop_index": 1,
+          "droplet": {
+            "diameter_px": 127.73999786376953,
+            "radius_px": 63.869998931884766,
+            "center_x": 88.55000305175781,
+            "center_y": 79.75,
+            "crop_index": 1,
+            "image_id": 21853,
+            "stack_number": 12,
+            "image_file_name": "74_A_2_28_1_13.png",
+            "crop_box": [
+              992,
+              635,
+              1164,
+              806
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_2_28_1_13.png"
+          },
+          "condensate": {
+            "diameter_px": 40.559566497802734,
+            "radius_px": 20.279783248901367,
+            "center_x": 89.94444274902344,
+            "center_y": 83.61111450195312,
+            "crop_index": 1,
+            "image_id": 21859,
+            "stack_number": 18,
+            "image_file_name": "74_A_2_28_1_19.png",
+            "crop_box": [
+              992,
+              635,
+              1164,
+              806
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_2_28_1_19.png"
+          },
+          "dense_phase_fraction": 0.032010996956580995,
+          "droplet_to_condensate_volume_ratio": 31.239264473904946
+        },
+        {
+          "crop_index": 2,
+          "droplet": {
+            "diameter_px": 128.77999877929688,
+            "radius_px": 64.38999938964844,
+            "center_x": 86.3499984741211,
+            "center_y": 83.05000305175781,
+            "crop_index": 2,
+            "image_id": 21853,
+            "stack_number": 12,
+            "image_file_name": "74_A_2_28_1_13.png",
+            "crop_box": [
+              1327,
+              859,
+              1490,
+              1022
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_2_28_1_13.png"
+          },
+          "condensate": {
+            "diameter_px": 41.67753219604492,
+            "radius_px": 20.83876609802246,
+            "center_x": 85.5,
+            "center_y": 84.0,
+            "crop_index": 2,
+            "image_id": 21843,
+            "stack_number": 2,
+            "image_file_name": "74_A_2_28_1_03.png",
+            "crop_box": [
+              1327,
+              859,
+              1490,
+              1022
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_2_28_1_03.png"
+          },
+          "dense_phase_fraction": 0.033896958924510785,
+          "droplet_to_condensate_volume_ratio": 29.501171542468462
+        },
+        {
+          "crop_index": 3,
+          "droplet": {
+            "diameter_px": 111.36000061035156,
+            "radius_px": 55.68000030517578,
+            "center_x": 79.75,
+            "center_y": 75.3499984741211,
+            "crop_index": 3,
+            "image_id": 21849,
+            "stack_number": 8,
+            "image_file_name": "74_A_2_28_1_09.png",
+            "crop_box": [
+              1099,
+              864,
+              1255,
+              1020
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_2_28_1_09.png"
+          },
+          "condensate": {
+            "diameter_px": 39.68645095825195,
+            "radius_px": 19.843225479125977,
+            "center_x": 91.73279571533203,
+            "center_y": 82.6659927368164,
+            "crop_index": 3,
+            "image_id": 21869,
+            "stack_number": 28,
+            "image_file_name": "74_A_2_28_1_29.png",
+            "crop_box": [
+              1099,
+              864,
+              1255,
+              1020
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_2_28_1_29.png"
+          },
+          "dense_phase_fraction": 0.04526256015191703,
+          "droplet_to_condensate_volume_ratio": 22.093315018939478
+        },
+        {
+          "crop_index": 4,
+          "droplet": {
+            "diameter_px": 115.72000122070312,
+            "radius_px": 57.86000061035156,
+            "center_x": 65.45000457763672,
+            "center_y": 73.1500015258789,
+            "crop_index": 4,
+            "image_id": 21847,
+            "stack_number": 6,
+            "image_file_name": "74_A_2_28_1_07.png",
+            "crop_box": [
+              366,
+              644,
+              513,
+              791
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_2_28_1_07.png"
+          },
+          "condensate": {
+            "diameter_px": 39.25099563598633,
+            "radius_px": 19.625497817993164,
+            "center_x": 78.125,
+            "center_y": 77.625,
+            "crop_index": 4,
+            "image_id": 21867,
+            "stack_number": 26,
+            "image_file_name": "74_A_2_28_1_27.png",
+            "crop_box": [
+              366,
+              644,
+              513,
+              791
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_2_28_1_27.png"
+          },
+          "dense_phase_fraction": 0.0390235472003018,
+          "droplet_to_condensate_volume_ratio": 25.625553588635995
+        }
+      ],
+      "dense_phase_fraction": 0.03754851580832765,
+      "droplet_to_condensate_volume_ratio": 27.11482615598722,
+      "droplet_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_37/site_1/droplet_max_overlay.png",
+      "condensate_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_37/site_1/condensate_max_overlay.png",
+      "temp_crop_directory": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_37/site_1/crops"
+    },
+    {
+      "sample_id": 38,
+      "site_number": 0,
+      "ns_concentration_uM": 67.5,
+      "stack_image_count": 15,
+      "missing_stack_image_count": 0,
+      "crop_count": 5,
+      "valid_crop_count": 4,
+      "event_mean_temperature_c": 28.015274999999995,
+      "per_crop_measurements": [
+        {
+          "crop_index": 0,
+          "droplet": {
+            "diameter_px": 123.94000244140625,
+            "radius_px": 61.970001220703125,
+            "center_x": 107.25,
+            "center_y": 107.25,
+            "crop_index": 0,
+            "image_id": 21877,
+            "stack_number": 6,
+            "image_file_name": "74_D_2_28_0_07.png",
+            "crop_box": [
+              811,
+              785,
+              1010,
+              984
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_D_2_28_0_07.png"
+          },
+          "condensate": {
+            "diameter_px": 47.621395111083984,
+            "radius_px": 23.810697555541992,
+            "center_x": 109.5,
+            "center_y": 97.16666412353516,
+            "crop_index": 0,
+            "image_id": 21893,
+            "stack_number": 22,
+            "image_file_name": "74_D_2_28_0_23.png",
+            "crop_box": [
+              811,
+              785,
+              1010,
+              984
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_D_2_28_0_23.png"
+          },
+          "dense_phase_fraction": 0.05672465220583541,
+          "droplet_to_condensate_volume_ratio": 17.629019502337776
+        },
+        {
+          "crop_index": 2,
+          "droplet": {
+            "diameter_px": 115.54000091552734,
+            "radius_px": 57.77000045776367,
+            "center_x": 96.25,
+            "center_y": 98.45000457763672,
+            "crop_index": 2,
+            "image_id": 21883,
+            "stack_number": 12,
+            "image_file_name": "74_D_2_28_0_13.png",
+            "crop_box": [
+              972,
+              540,
+              1162,
+              731
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_D_2_28_0_13.png"
+          },
+          "condensate": {
+            "diameter_px": 46.87236404418945,
+            "radius_px": 23.436182022094727,
+            "center_x": 90.0,
+            "center_y": 98.5,
+            "crop_index": 2,
+            "image_id": 21899,
+            "stack_number": 28,
+            "image_file_name": "74_D_2_28_0_29.png",
+            "crop_box": [
+              972,
+              540,
+              1162,
+              731
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_D_2_28_0_29.png"
+          },
+          "dense_phase_fraction": 0.06676571038147489,
+          "droplet_to_condensate_volume_ratio": 14.9777482226485
+        },
+        {
+          "crop_index": 3,
+          "droplet": {
+            "diameter_px": 109.9800033569336,
+            "radius_px": 54.9900016784668,
+            "center_x": 87.45000457763672,
+            "center_y": 91.8499984741211,
+            "crop_index": 3,
+            "image_id": 21879,
+            "stack_number": 8,
+            "image_file_name": "74_D_2_28_0_09.png",
+            "crop_box": [
+              551,
+              737,
+              732,
+              917
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_D_2_28_0_09.png"
+          },
+          "condensate": {
+            "diameter_px": 44.20164108276367,
+            "radius_px": 22.100820541381836,
+            "center_x": 96.69434356689453,
+            "center_y": 89.75794982910156,
+            "crop_index": 3,
+            "image_id": 21885,
+            "stack_number": 14,
+            "image_file_name": "74_D_2_28_0_15.png",
+            "crop_box": [
+              551,
+              737,
+              732,
+              917
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_D_2_28_0_15.png"
+          },
+          "dense_phase_fraction": 0.06491932499251908,
+          "droplet_to_condensate_volume_ratio": 15.40373378982659
+        },
+        {
+          "crop_index": 4,
+          "droplet": {
+            "diameter_px": 131.10000610351562,
+            "radius_px": 65.55000305175781,
+            "center_x": 91.8499984741211,
+            "center_y": 108.35000610351562,
+            "crop_index": 4,
+            "image_id": 21887,
+            "stack_number": 16,
+            "image_file_name": "74_D_2_28_0_17.png",
+            "crop_box": [
+              829,
+              368,
+              1009,
+              548
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_D_2_28_0_17.png"
+          },
+          "condensate": {
+            "diameter_px": 42.454891204833984,
+            "radius_px": 21.227445602416992,
+            "center_x": 105.58209228515625,
+            "center_y": 95.19403076171875,
+            "crop_index": 4,
+            "image_id": 21899,
+            "stack_number": 28,
+            "image_file_name": "74_D_2_28_0_29.png",
+            "crop_box": [
+              829,
+              368,
+              1009,
+              548
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_D_2_28_0_29.png"
+          },
+          "dense_phase_fraction": 0.03396057705685001,
+          "droplet_to_condensate_volume_ratio": 29.445907186029256
+        }
+      ],
+      "dense_phase_fraction": 0.055592566159169854,
+      "droplet_to_condensate_volume_ratio": 19.36410217521053,
+      "droplet_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_38/site_0/droplet_max_overlay.png",
+      "condensate_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_38/site_0/condensate_max_overlay.png",
+      "temp_crop_directory": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_38/site_0/crops"
+    },
+    {
+      "sample_id": 38,
+      "site_number": 1,
+      "ns_concentration_uM": 67.5,
+      "stack_image_count": 15,
+      "missing_stack_image_count": 0,
+      "crop_count": 5,
+      "valid_crop_count": 4,
+      "event_mean_temperature_c": 27.96527500000001,
+      "per_crop_measurements": [
+        {
+          "crop_index": 0,
+          "droplet": {
+            "diameter_px": 125.9800033569336,
+            "radius_px": 62.9900016784668,
+            "center_x": 113.85000610351562,
+            "center_y": 95.1500015258789,
+            "crop_index": 0,
+            "image_id": 21907,
+            "stack_number": 6,
+            "image_file_name": "74_D_2_28_1_07.png",
+            "crop_box": [
+              916,
+              866,
+              1125,
+              1076
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_D_2_28_1_07.png"
+          },
+          "condensate": {
+            "diameter_px": 50.80430221557617,
+            "radius_px": 25.402151107788086,
+            "center_x": 110.38299560546875,
+            "center_y": 104.97894287109375,
+            "crop_index": 0,
+            "image_id": 21921,
+            "stack_number": 20,
+            "image_file_name": "74_D_2_28_1_21.png",
+            "crop_box": [
+              916,
+              866,
+              1125,
+              1076
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_D_2_28_1_21.png"
+          },
+          "dense_phase_fraction": 0.06558380741572746,
+          "droplet_to_condensate_volume_ratio": 15.247666145106924
+        },
+        {
+          "crop_index": 2,
+          "droplet": {
+            "diameter_px": 118.63999938964844,
+            "radius_px": 59.31999969482422,
+            "center_x": 99.55000305175781,
+            "center_y": 97.3499984741211,
+            "crop_index": 2,
+            "image_id": 21909,
+            "stack_number": 8,
+            "image_file_name": "74_D_2_28_1_09.png",
+            "crop_box": [
+              1076,
+              627,
+              1271,
+              821
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_D_2_28_1_09.png"
+          },
+          "condensate": {
+            "diameter_px": 46.18570327758789,
+            "radius_px": 23.092851638793945,
+            "center_x": 91.84091186523438,
+            "center_y": 97.5,
+            "crop_index": 2,
+            "image_id": 21927,
+            "stack_number": 26,
+            "image_file_name": "74_D_2_28_1_27.png",
+            "crop_box": [
+              1076,
+              627,
+              1271,
+              821
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_D_2_28_1_27.png"
+          },
+          "dense_phase_fraction": 0.05899691137271598,
+          "droplet_to_condensate_volume_ratio": 16.95003987043405
+        },
+        {
+          "crop_index": 3,
+          "droplet": {
+            "diameter_px": 114.63999938964844,
+            "radius_px": 57.31999969482422,
+            "center_x": 88.55000305175781,
+            "center_y": 95.1500015258789,
+            "crop_index": 3,
+            "image_id": 21911,
+            "stack_number": 10,
+            "image_file_name": "74_D_2_28_1_11.png",
+            "crop_box": [
+              655,
+              819,
+              842,
+              1006
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_D_2_28_1_11.png"
+          },
+          "condensate": {
+            "diameter_px": 46.2430419921875,
+            "radius_px": 23.12152099609375,
+            "center_x": 96.61643981933594,
+            "center_y": 94.79451751708984,
+            "crop_index": 3,
+            "image_id": 21915,
+            "stack_number": 14,
+            "image_file_name": "74_D_2_28_1_15.png",
+            "crop_box": [
+              655,
+              819,
+              842,
+              1006
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_D_2_28_1_15.png"
+          },
+          "dense_phase_fraction": 0.06563427026262823,
+          "droplet_to_condensate_volume_ratio": 15.235942991346002
+        },
+        {
+          "crop_index": 4,
+          "droplet": {
+            "diameter_px": 112.62000274658203,
+            "radius_px": 56.310001373291016,
+            "center_x": 83.05000305175781,
+            "center_y": 87.45000457763672,
+            "crop_index": 4,
+            "image_id": 21913,
+            "stack_number": 12,
+            "image_file_name": "74_D_2_28_1_13.png",
+            "crop_box": [
+              488,
+              645,
+              668,
+              825
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_D_2_28_1_13.png"
+          },
+          "condensate": {
+            "diameter_px": 43.57919692993164,
+            "radius_px": 21.78959846496582,
+            "center_x": 81.95121765136719,
+            "center_y": 84.21951293945312,
+            "crop_index": 4,
+            "image_id": 21929,
+            "stack_number": 28,
+            "image_file_name": "74_D_2_28_1_29.png",
+            "crop_box": [
+              488,
+              645,
+              668,
+              825
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_D_2_28_1_29.png"
+          },
+          "dense_phase_fraction": 0.05794167794141682,
+          "droplet_to_condensate_volume_ratio": 17.258733877383936
+        }
+      ],
+      "dense_phase_fraction": 0.062039166748122127,
+      "droplet_to_condensate_volume_ratio": 16.173095721067728,
+      "droplet_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_38/site_1/droplet_max_overlay.png",
+      "condensate_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_38/site_1/condensate_max_overlay.png",
+      "temp_crop_directory": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_38/site_1/crops"
+    },
+    {
+      "sample_id": 39,
+      "site_number": 0,
+      "ns_concentration_uM": 50.0,
+      "stack_image_count": 15,
+      "missing_stack_image_count": 0,
+      "crop_count": 5,
+      "valid_crop_count": 3,
+      "event_mean_temperature_c": 27.984950000000005,
+      "per_crop_measurements": [
+        {
+          "crop_index": 1,
+          "droplet": {
+            "diameter_px": 73.30000305175781,
+            "radius_px": 36.650001525878906,
+            "center_x": 59.95000076293945,
+            "center_y": 58.85000228881836,
+            "crop_index": 1,
+            "image_id": 21943,
+            "stack_number": 12,
+            "image_file_name": "74_C_3_28_0_13.png",
+            "crop_box": [
+              859,
+              505,
+              978,
+              624
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_3_28_0_13.png"
+          },
+          "condensate": {
+            "diameter_px": 28.641420364379883,
+            "radius_px": 14.320710182189941,
+            "center_x": 54.94078826904297,
+            "center_y": 63.27631759643555,
+            "crop_index": 1,
+            "image_id": 21947,
+            "stack_number": 16,
+            "image_file_name": "74_C_3_28_0_17.png",
+            "crop_box": [
+              859,
+              505,
+              978,
+              624
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_3_28_0_17.png"
+          },
+          "dense_phase_fraction": 0.05965841020684211,
+          "droplet_to_condensate_volume_ratio": 16.762096015178628
+        },
+        {
+          "crop_index": 2,
+          "droplet": {
+            "diameter_px": 81.5999984741211,
+            "radius_px": 40.79999923706055,
+            "center_x": 53.35000228881836,
+            "center_y": 52.25,
+            "crop_index": 2,
+            "image_id": 21941,
+            "stack_number": 10,
+            "image_file_name": "74_C_3_28_0_11.png",
+            "crop_box": [
+              1291,
+              138,
+              1400,
+              248
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_3_28_0_11.png"
+          },
+          "condensate": {
+            "diameter_px": 30.900060653686523,
+            "radius_px": 15.450030326843262,
+            "center_x": 51.71739196777344,
+            "center_y": 58.10869598388672,
+            "crop_index": 2,
+            "image_id": 21933,
+            "stack_number": 2,
+            "image_file_name": "74_C_3_28_0_03.png",
+            "crop_box": [
+              1291,
+              138,
+              1400,
+              248
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_3_28_0_03.png"
+          },
+          "dense_phase_fraction": 0.0543009645200975,
+          "droplet_to_condensate_volume_ratio": 18.41587914391257
+        },
+        {
+          "crop_index": 3,
+          "droplet": {
+            "diameter_px": 78.91999816894531,
+            "radius_px": 39.459999084472656,
+            "center_x": 50.04999923706055,
+            "center_y": 50.04999923706055,
+            "crop_index": 3,
+            "image_id": 21941,
+            "stack_number": 10,
+            "image_file_name": "74_C_3_28_0_11.png",
+            "crop_box": [
+              1352,
+              537,
+              1453,
+              638
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_3_28_0_11.png"
+          },
+          "condensate": {
+            "diameter_px": 28.47631072998047,
+            "radius_px": 14.238155364990234,
+            "center_x": 59.83333206176758,
+            "center_y": 42.83333206176758,
+            "crop_index": 3,
+            "image_id": 21955,
+            "stack_number": 24,
+            "image_file_name": "74_C_3_28_0_25.png",
+            "crop_box": [
+              1352,
+              537,
+              1453,
+              638
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_3_28_0_25.png"
+          },
+          "dense_phase_fraction": 0.046977507468218035,
+          "droplet_to_condensate_volume_ratio": 21.286782843396615
+        }
+      ],
+      "dense_phase_fraction": 0.05364562739838588,
+      "droplet_to_condensate_volume_ratio": 18.82158600082927,
+      "droplet_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_39/site_0/droplet_max_overlay.png",
+      "condensate_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_39/site_0/condensate_max_overlay.png",
+      "temp_crop_directory": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_39/site_0/crops"
+    },
+    {
+      "sample_id": 39,
+      "site_number": 1,
+      "ns_concentration_uM": 50.0,
+      "stack_image_count": 15,
+      "missing_stack_image_count": 0,
+      "crop_count": 5,
+      "valid_crop_count": 2,
+      "event_mean_temperature_c": 27.989950000000007,
+      "per_crop_measurements": [
+        {
+          "crop_index": 3,
+          "droplet": {
+            "diameter_px": 79.5199966430664,
+            "radius_px": 39.7599983215332,
+            "center_x": 58.85000228881836,
+            "center_y": 76.45000457763672,
+            "crop_index": 3,
+            "image_id": 21971,
+            "stack_number": 10,
+            "image_file_name": "74_C_3_28_1_11.png",
+            "crop_box": [
+              894,
+              626,
+              1022,
+              754
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_3_28_1_11.png"
+          },
+          "condensate": {
+            "diameter_px": 30.54879379272461,
+            "radius_px": 15.274396896362305,
+            "center_x": 57.17977523803711,
+            "center_y": 68.6966323852539,
+            "crop_index": 3,
+            "image_id": 21977,
+            "stack_number": 16,
+            "image_file_name": "74_C_3_28_1_17.png",
+            "crop_box": [
+              894,
+              626,
+              1022,
+              754
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_3_28_1_17.png"
+          },
+          "dense_phase_fraction": 0.05669609425314608,
+          "droplet_to_condensate_volume_ratio": 17.637899279887517
+        },
+        {
+          "crop_index": 4,
+          "droplet": {
+            "diameter_px": 98.13999938964844,
+            "radius_px": 49.06999969482422,
+            "center_x": 61.05000305175781,
+            "center_y": 55.55000305175781,
+            "crop_index": 4,
+            "image_id": 21969,
+            "stack_number": 8,
+            "image_file_name": "74_C_3_28_1_09.png",
+            "crop_box": [
+              1284,
+              21,
+              1399,
+              136
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_3_28_1_09.png"
+          },
+          "condensate": {
+            "diameter_px": 29.83981704711914,
+            "radius_px": 14.91990852355957,
+            "center_x": 57.425533294677734,
+            "center_y": 61.808509826660156,
+            "crop_index": 4,
+            "image_id": 21989,
+            "stack_number": 28,
+            "image_file_name": "74_C_3_28_1_29.png",
+            "crop_box": [
+              1284,
+              21,
+              1399,
+              136
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_3_28_1_29.png"
+          },
+          "dense_phase_fraction": 0.028109318433530154,
+          "droplet_to_condensate_volume_ratio": 35.57539121287095
+        }
+      ],
+      "dense_phase_fraction": 0.04240270634333812,
+      "droplet_to_condensate_volume_ratio": 26.60664524637923,
+      "droplet_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_39/site_1/droplet_max_overlay.png",
+      "condensate_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_39/site_1/condensate_max_overlay.png",
+      "temp_crop_directory": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_39/site_1/crops"
+    },
+    {
+      "sample_id": 40,
+      "site_number": 0,
+      "ns_concentration_uM": 37.5,
+      "stack_image_count": 15,
+      "missing_stack_image_count": 0,
+      "crop_count": 5,
+      "valid_crop_count": 4,
+      "event_mean_temperature_c": 28.004349999999995,
+      "per_crop_measurements": [
+        {
+          "crop_index": 1,
+          "droplet": {
+            "diameter_px": 106.41999816894531,
+            "radius_px": 53.209999084472656,
+            "center_x": 80.8499984741211,
+            "center_y": 78.6500015258789,
+            "crop_index": 1,
+            "image_id": 21995,
+            "stack_number": 4,
+            "image_file_name": "74_C_4_28_0_05.png",
+            "crop_box": [
+              1063,
+              549,
+              1237,
+              724
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_4_28_0_05.png"
+          },
+          "condensate": {
+            "diameter_px": 43.416786193847656,
+            "radius_px": 21.708393096923828,
+            "center_x": 84.0,
+            "center_y": 87.5,
+            "crop_index": 1,
+            "image_id": 22003,
+            "stack_number": 12,
+            "image_file_name": "74_C_4_28_0_13.png",
+            "crop_box": [
+              1063,
+              549,
+              1237,
+              724
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_4_28_0_13.png"
+          },
+          "dense_phase_fraction": 0.06790523824509634,
+          "droplet_to_condensate_volume_ratio": 14.726404410667293
+        },
+        {
+          "crop_index": 2,
+          "droplet": {
+            "diameter_px": 108.81999969482422,
+            "radius_px": 54.40999984741211,
+            "center_x": 81.95000457763672,
+            "center_y": 77.55000305175781,
+            "crop_index": 2,
+            "image_id": 22001,
+            "stack_number": 10,
+            "image_file_name": "74_C_4_28_0_11.png",
+            "crop_box": [
+              960,
+              278,
+              1132,
+              451
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_4_28_0_11.png"
+          },
+          "condensate": {
+            "diameter_px": 41.976383209228516,
+            "radius_px": 20.988191604614258,
+            "center_x": 87.5,
+            "center_y": 91.5,
+            "crop_index": 2,
+            "image_id": 22015,
+            "stack_number": 24,
+            "image_file_name": "74_C_4_28_0_25.png",
+            "crop_box": [
+              960,
+              278,
+              1132,
+              451
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_4_28_0_25.png"
+          },
+          "dense_phase_fraction": 0.057396959468366565,
+          "droplet_to_condensate_volume_ratio": 17.422525674920713
+        },
+        {
+          "crop_index": 3,
+          "droplet": {
+            "diameter_px": 102.63999938964844,
+            "radius_px": 51.31999969482422,
+            "center_x": 83.05000305175781,
+            "center_y": 84.1500015258789,
+            "crop_index": 3,
+            "image_id": 21995,
+            "stack_number": 4,
+            "image_file_name": "74_C_4_28_0_05.png",
+            "crop_box": [
+              893,
+              86,
+              1061,
+              254
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_4_28_0_05.png"
+          },
+          "condensate": {
+            "diameter_px": 42.426605224609375,
+            "radius_px": 21.213302612304688,
+            "center_x": 81.0,
+            "center_y": 85.0,
+            "crop_index": 3,
+            "image_id": 22003,
+            "stack_number": 12,
+            "image_file_name": "74_C_4_28_0_13.png",
+            "crop_box": [
+              893,
+              86,
+              1061,
+              254
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_4_28_0_13.png"
+          },
+          "dense_phase_fraction": 0.0706260514679651,
+          "droplet_to_condensate_volume_ratio": 14.15908123440236
+        },
+        {
+          "crop_index": 4,
+          "droplet": {
+            "diameter_px": 94.18000030517578,
+            "radius_px": 47.09000015258789,
+            "center_x": 89.6500015258789,
+            "center_y": 78.6500015258789,
+            "crop_index": 4,
+            "image_id": 21997,
+            "stack_number": 6,
+            "image_file_name": "74_C_4_28_0_07.png",
+            "crop_box": [
+              1453,
+              414,
+              1604,
+              575
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_4_28_0_07.png"
+          },
+          "condensate": {
+            "diameter_px": 42.05986404418945,
+            "radius_px": 21.029932022094727,
+            "center_x": 73.98048400878906,
+            "center_y": 83.43994140625,
+            "crop_index": 4,
+            "image_id": 22011,
+            "stack_number": 20,
+            "image_file_name": "74_C_4_28_0_21.png",
+            "crop_box": [
+              1453,
+              414,
+              1604,
+              575
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_4_28_0_21.png"
+          },
+          "dense_phase_fraction": 0.08906919578196185,
+          "droplet_to_condensate_volume_ratio": 11.227226104611562
+        }
+      ],
+      "dense_phase_fraction": 0.07124936124084746,
+      "droplet_to_condensate_volume_ratio": 14.383809356150481,
+      "droplet_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_40/site_0/droplet_max_overlay.png",
+      "condensate_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_40/site_0/condensate_max_overlay.png",
+      "temp_crop_directory": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_40/site_0/crops"
+    },
+    {
+      "sample_id": 40,
+      "site_number": 1,
+      "ns_concentration_uM": 37.5,
+      "stack_image_count": 15,
+      "missing_stack_image_count": 0,
+      "crop_count": 5,
+      "valid_crop_count": 3,
+      "event_mean_temperature_c": 27.97435000000001,
+      "per_crop_measurements": [
+        {
+          "crop_index": 0,
+          "droplet": {
+            "diameter_px": 99.9800033569336,
+            "radius_px": 49.9900016784668,
+            "center_x": 83.05000305175781,
+            "center_y": 75.3499984741211,
+            "crop_index": 0,
+            "image_id": 22025,
+            "stack_number": 4,
+            "image_file_name": "74_C_4_28_1_05.png",
+            "crop_box": [
+              1196,
+              430,
+              1361,
+              595
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_4_28_1_05.png"
+          },
+          "condensate": {
+            "diameter_px": 41.785362243652344,
+            "radius_px": 20.892681121826172,
+            "center_x": 84.5,
+            "center_y": 81.5,
+            "crop_index": 0,
+            "image_id": 22035,
+            "stack_number": 14,
+            "image_file_name": "74_C_4_28_1_15.png",
+            "crop_box": [
+              1196,
+              430,
+              1361,
+              595
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_4_28_1_15.png"
+          },
+          "dense_phase_fraction": 0.0730017167668763,
+          "droplet_to_condensate_volume_ratio": 13.698307989021686
+        },
+        {
+          "crop_index": 3,
+          "droplet": {
+            "diameter_px": 100.77999877929688,
+            "radius_px": 50.38999938964844,
+            "center_x": 83.05000305175781,
+            "center_y": 79.75,
+            "crop_index": 3,
+            "image_id": 22029,
+            "stack_number": 8,
+            "image_file_name": "74_C_4_28_1_09.png",
+            "crop_box": [
+              1309,
+              922,
+              1461,
+              1074
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_4_28_1_09.png"
+          },
+          "condensate": {
+            "diameter_px": 37.737117767333984,
+            "radius_px": 18.868558883666992,
+            "center_x": 80.07246398925781,
+            "center_y": 86.1159439086914,
+            "crop_index": 3,
+            "image_id": 22043,
+            "stack_number": 22,
+            "image_file_name": "74_C_4_28_1_23.png",
+            "crop_box": [
+              1309,
+              922,
+              1461,
+              1074
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_4_28_1_23.png"
+          },
+          "dense_phase_fraction": 0.05250288100301685,
+          "droplet_to_condensate_volume_ratio": 19.046573843110426
+        },
+        {
+          "crop_index": 4,
+          "droplet": {
+            "diameter_px": 103.41999816894531,
+            "radius_px": 51.709999084472656,
+            "center_x": 72.05000305175781,
+            "center_y": 68.75,
+            "crop_index": 4,
+            "image_id": 22031,
+            "stack_number": 10,
+            "image_file_name": "74_C_4_28_1_11.png",
+            "crop_box": [
+              1101,
+              166,
+              1251,
+              316
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_4_28_1_11.png"
+          },
+          "condensate": {
+            "diameter_px": 37.48695373535156,
+            "radius_px": 18.74347686767578,
+            "center_x": 72.24698638916016,
+            "center_y": 64.00602722167969,
+            "crop_index": 4,
+            "image_id": 22035,
+            "stack_number": 14,
+            "image_file_name": "74_C_4_28_1_15.png",
+            "crop_box": [
+              1101,
+              166,
+              1251,
+              316
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_C_4_28_1_15.png"
+          },
+          "dense_phase_fraction": 0.047624110083241585,
+          "droplet_to_condensate_volume_ratio": 20.997767690611173
+        }
+      ],
+      "dense_phase_fraction": 0.05770956928437824,
+      "droplet_to_condensate_volume_ratio": 17.91421650758109,
+      "droplet_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_40/site_1/droplet_max_overlay.png",
+      "condensate_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_40/site_1/condensate_max_overlay.png",
+      "temp_crop_directory": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_40/site_1/crops"
+    },
+    {
+      "sample_id": 41,
+      "site_number": 0,
+      "ns_concentration_uM": 25.0,
+      "stack_image_count": 15,
+      "missing_stack_image_count": 0,
+      "crop_count": 5,
+      "valid_crop_count": 5,
+      "event_mean_temperature_c": 27.988749999999992,
+      "per_crop_measurements": [
+        {
+          "crop_index": 0,
+          "droplet": {
+            "diameter_px": 198.1199951171875,
+            "radius_px": 99.05999755859375,
+            "center_x": 101.75,
+            "center_y": 102.8499984741211,
+            "crop_index": 0,
+            "image_id": 22067,
+            "stack_number": 16,
+            "image_file_name": "74_A_6_28_0_17.png",
+            "crop_box": [
+              1062,
+              692,
+              1267,
+              897
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_6_28_0_17.png"
+          },
+          "condensate": {
+            "diameter_px": 47.80187225341797,
+            "radius_px": 23.900936126708984,
+            "center_x": 99.0,
+            "center_y": 103.5,
+            "crop_index": 0,
+            "image_id": 22069,
+            "stack_number": 18,
+            "image_file_name": "74_A_6_28_0_19.png",
+            "crop_box": [
+              1062,
+              692,
+              1267,
+              897
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_6_28_0_19.png"
+          },
+          "dense_phase_fraction": 0.014045907207627814,
+          "droplet_to_condensate_volume_ratio": 71.19511650033805
+        },
+        {
+          "crop_index": 1,
+          "droplet": {
+            "diameter_px": 112.4000015258789,
+            "radius_px": 56.20000076293945,
+            "center_x": 127.05000305175781,
+            "center_y": 122.6500015258789,
+            "crop_index": 1,
+            "image_id": 22063,
+            "stack_number": 12,
+            "image_file_name": "74_A_6_28_0_13.png",
+            "crop_box": [
+              1064,
+              954,
+              1263,
+              1100
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_6_28_0_13.png"
+          },
+          "condensate": {
+            "diameter_px": 41.19410705566406,
+            "radius_px": 20.59705352783203,
+            "center_x": 90.0,
+            "center_y": 133.3709716796875,
+            "crop_index": 1,
+            "image_id": 22069,
+            "stack_number": 18,
+            "image_file_name": "74_A_6_28_0_19.png",
+            "crop_box": [
+              1064,
+              954,
+              1263,
+              1100
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_6_28_0_19.png"
+          },
+          "dense_phase_fraction": 0.04922733537993881,
+          "droplet_to_condensate_volume_ratio": 20.31391689763329
+        },
+        {
+          "crop_index": 2,
+          "droplet": {
+            "diameter_px": 193.0,
+            "radius_px": 96.5,
+            "center_x": 85.25,
+            "center_y": 91.8499984741211,
+            "crop_index": 2,
+            "image_id": 22061,
+            "stack_number": 10,
+            "image_file_name": "74_A_6_28_0_11.png",
+            "crop_box": [
+              1305,
+              215,
+              1502,
+              411
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_6_28_0_11.png"
+          },
+          "condensate": {
+            "diameter_px": 56.82019805908203,
+            "radius_px": 28.410099029541016,
+            "center_x": 39.8636360168457,
+            "center_y": 30.863636016845703,
+            "crop_index": 2,
+            "image_id": 22067,
+            "stack_number": 16,
+            "image_file_name": "74_A_6_28_0_17.png",
+            "crop_box": [
+              1305,
+              215,
+              1502,
+              411
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_6_28_0_17.png"
+          },
+          "dense_phase_fraction": 0.025517393015981583,
+          "droplet_to_condensate_volume_ratio": 39.1889563081032
+        },
+        {
+          "crop_index": 3,
+          "droplet": {
+            "diameter_px": 158.24000549316406,
+            "radius_px": 79.12000274658203,
+            "center_x": 111.6500015258789,
+            "center_y": 92.95000457763672,
+            "crop_index": 3,
+            "image_id": 22053,
+            "stack_number": 2,
+            "image_file_name": "74_A_6_28_0_03.png",
+            "crop_box": [
+              1387,
+              684,
+              1582,
+              879
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_6_28_0_03.png"
+          },
+          "condensate": {
+            "diameter_px": 49.26490020751953,
+            "radius_px": 24.632450103759766,
+            "center_x": 119.0,
+            "center_y": 81.55101776123047,
+            "crop_index": 3,
+            "image_id": 22067,
+            "stack_number": 16,
+            "image_file_name": "74_A_6_28_0_17.png",
+            "crop_box": [
+              1387,
+              684,
+              1582,
+              879
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_6_28_0_17.png"
+          },
+          "dense_phase_fraction": 0.030176158641795976,
+          "droplet_to_condensate_volume_ratio": 33.13874412811887
+        },
+        {
+          "crop_index": 4,
+          "droplet": {
+            "diameter_px": 167.4600067138672,
+            "radius_px": 83.7300033569336,
+            "center_x": 96.25,
+            "center_y": 92.95000457763672,
+            "crop_index": 4,
+            "image_id": 22065,
+            "stack_number": 14,
+            "image_file_name": "74_A_6_28_0_15.png",
+            "crop_box": [
+              1241,
+              453,
+              1432,
+              644
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_6_28_0_15.png"
+          },
+          "condensate": {
+            "diameter_px": 46.01106643676758,
+            "radius_px": 23.00553321838379,
+            "center_x": 15.5,
+            "center_y": 173.0,
+            "crop_index": 4,
+            "image_id": 22077,
+            "stack_number": 26,
+            "image_file_name": "74_A_6_28_0_27.png",
+            "crop_box": [
+              1241,
+              453,
+              1432,
+              644
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_6_28_0_27.png"
+          },
+          "dense_phase_fraction": 0.020742141150051262,
+          "droplet_to_condensate_volume_ratio": 48.21103051829963
+        }
+      ],
+      "dense_phase_fraction": 0.027941787079079083,
+      "droplet_to_condensate_volume_ratio": 42.40955287049861,
+      "droplet_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_41/site_0/droplet_max_overlay.png",
+      "condensate_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_41/site_0/condensate_max_overlay.png",
+      "temp_crop_directory": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_41/site_0/crops"
+    },
+    {
+      "sample_id": 41,
+      "site_number": 1,
+      "ns_concentration_uM": 25.0,
+      "stack_image_count": 15,
+      "missing_stack_image_count": 0,
+      "crop_count": 5,
+      "valid_crop_count": 5,
+      "event_mean_temperature_c": 28.00375000000001,
+      "per_crop_measurements": [
+        {
+          "crop_index": 0,
+          "droplet": {
+            "diameter_px": 81.8830795288086,
+            "radius_px": 40.9415397644043,
+            "center_x": 105.82809448242188,
+            "center_y": 116.95563507080078,
+            "crop_index": 0,
+            "image_id": 22091,
+            "stack_number": 10,
+            "image_file_name": "74_A_6_28_1_11.png",
+            "crop_box": [
+              1370,
+              436,
+              1586,
+              653
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_6_28_1_11.png"
+          },
+          "condensate": {
+            "diameter_px": 50.60652160644531,
+            "radius_px": 25.303260803222656,
+            "center_x": 101.0,
+            "center_y": 127.5,
+            "crop_index": 0,
+            "image_id": 22109,
+            "stack_number": 28,
+            "image_file_name": "74_A_6_28_1_29.png",
+            "crop_box": [
+              1370,
+              436,
+              1586,
+              653
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_6_28_1_29.png"
+          },
+          "dense_phase_fraction": 0.23606791248401557,
+          "droplet_to_condensate_volume_ratio": 4.23606914416084
+        },
+        {
+          "crop_index": 1,
+          "droplet": {
+            "diameter_px": 189.1199951171875,
+            "radius_px": 94.55999755859375,
+            "center_x": 102.8499984741211,
+            "center_y": 109.45000457763672,
+            "crop_index": 1,
+            "image_id": 22097,
+            "stack_number": 16,
+            "image_file_name": "74_A_6_28_1_17.png",
+            "crop_box": [
+              981,
+              766,
+              1190,
+              976
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_6_28_1_17.png"
+          },
+          "condensate": {
+            "diameter_px": 49.17079544067383,
+            "radius_px": 24.585397720336914,
+            "center_x": 96.37476348876953,
+            "center_y": 105.61954498291016,
+            "crop_index": 1,
+            "image_id": 22101,
+            "stack_number": 20,
+            "image_file_name": "74_A_6_28_1_21.png",
+            "crop_box": [
+              981,
+              766,
+              1190,
+              976
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_6_28_1_21.png"
+          },
+          "dense_phase_fraction": 0.017575567541763294,
+          "droplet_to_condensate_volume_ratio": 56.89716691218004
+        },
+        {
+          "crop_index": 2,
+          "droplet": {
+            "diameter_px": 167.9199981689453,
+            "radius_px": 83.95999908447266,
+            "center_x": 110.55000305175781,
+            "center_y": 90.75,
+            "crop_index": 2,
+            "image_id": 22085,
+            "stack_number": 4,
+            "image_file_name": "74_A_6_28_1_05.png",
+            "crop_box": [
+              1223,
+              293,
+              1419,
+              489
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_6_28_1_05.png"
+          },
+          "condensate": {
+            "diameter_px": 57.45452880859375,
+            "radius_px": 28.727264404296875,
+            "center_x": 38.0,
+            "center_y": 28.5,
+            "crop_index": 2,
+            "image_id": 22099,
+            "stack_number": 18,
+            "image_file_name": "74_A_6_28_1_19.png",
+            "crop_box": [
+              1223,
+              293,
+              1419,
+              489
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_6_28_1_19.png"
+          },
+          "dense_phase_fraction": 0.04005581193768768,
+          "droplet_to_condensate_volume_ratio": 24.965166142572205
+        },
+        {
+          "crop_index": 3,
+          "droplet": {
+            "diameter_px": 184.1999969482422,
+            "radius_px": 92.0999984741211,
+            "center_x": 114.95000457763672,
+            "center_y": 105.05000305175781,
+            "crop_index": 3,
+            "image_id": 22085,
+            "stack_number": 4,
+            "image_file_name": "74_A_6_28_1_05.png",
+            "crop_box": [
+              1304,
+              758,
+              1500,
+              953
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_6_28_1_05.png"
+          },
+          "condensate": {
+            "diameter_px": 47.8649787902832,
+            "radius_px": 23.9324893951416,
+            "center_x": 117.0,
+            "center_y": 83.40425872802734,
+            "crop_index": 3,
+            "image_id": 22099,
+            "stack_number": 18,
+            "image_file_name": "74_A_6_28_1_19.png",
+            "crop_box": [
+              1304,
+              758,
+              1500,
+              953
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_6_28_1_19.png"
+          },
+          "dense_phase_fraction": 0.017546267918302546,
+          "droplet_to_condensate_volume_ratio": 56.992176607362644
+        },
+        {
+          "crop_index": 4,
+          "droplet": {
+            "diameter_px": 68.4569320678711,
+            "radius_px": 34.22846603393555,
+            "center_x": 82.78670501708984,
+            "center_y": 92.86219024658203,
+            "crop_index": 4,
+            "image_id": 22091,
+            "stack_number": 10,
+            "image_file_name": "74_A_6_28_1_11.png",
+            "crop_box": [
+              877,
+              931,
+              1054,
+              1100
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_6_28_1_11.png"
+          },
+          "condensate": {
+            "diameter_px": 40.311485290527344,
+            "radius_px": 20.155742645263672,
+            "center_x": 84.0,
+            "center_y": 93.5,
+            "crop_index": 4,
+            "image_id": 22099,
+            "stack_number": 18,
+            "image_file_name": "74_A_6_28_1_19.png",
+            "crop_box": [
+              877,
+              931,
+              1054,
+              1100
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_A_6_28_1_19.png"
+          },
+          "dense_phase_fraction": 0.20418982842013145,
+          "droplet_to_condensate_volume_ratio": 4.897403596140189
+        }
+      ],
+      "dense_phase_fraction": 0.1030870776603801,
+      "droplet_to_condensate_volume_ratio": 29.59759648048318,
+      "droplet_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_41/site_1/droplet_max_overlay.png",
+      "condensate_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_41/site_1/condensate_max_overlay.png",
+      "temp_crop_directory": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_41/site_1/crops"
+    },
+    {
+      "sample_id": 42,
+      "site_number": 0,
+      "ns_concentration_uM": 12.5,
+      "stack_image_count": 15,
+      "missing_stack_image_count": 0,
+      "crop_count": 5,
+      "valid_crop_count": 5,
+      "event_mean_temperature_c": 28.014250000000004,
+      "per_crop_measurements": [
+        {
+          "crop_index": 0,
+          "droplet": {
+            "diameter_px": 70.43815612792969,
+            "radius_px": 35.219078063964844,
+            "center_x": 101.27777862548828,
+            "center_y": 99.27777862548828,
+            "crop_index": 0,
+            "image_id": 22123,
+            "stack_number": 12,
+            "image_file_name": "74_B_6_28_0_13.png",
+            "crop_box": [
+              829,
+              263,
+              1034,
+              467
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_6_28_0_13.png"
+          },
+          "condensate": {
+            "diameter_px": 48.04990005493164,
+            "radius_px": 24.02495002746582,
+            "center_x": 102.78901672363281,
+            "center_y": 100.93352508544922,
+            "crop_index": 0,
+            "image_id": 22137,
+            "stack_number": 26,
+            "image_file_name": "74_B_6_28_0_27.png",
+            "crop_box": [
+              829,
+              263,
+              1034,
+              467
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_6_28_0_27.png"
+          },
+          "dense_phase_fraction": 0.3174340641433707,
+          "droplet_to_condensate_volume_ratio": 3.1502605200818805
+        },
+        {
+          "crop_index": 1,
+          "droplet": {
+            "diameter_px": 61.189117431640625,
+            "radius_px": 30.594558715820312,
+            "center_x": 102.0952377319336,
+            "center_y": 93.5,
+            "crop_index": 1,
+            "image_id": 22119,
+            "stack_number": 8,
+            "image_file_name": "74_B_6_28_0_09.png",
+            "crop_box": [
+              1238,
+              182,
+              1436,
+              379
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_6_28_0_09.png"
+          },
+          "condensate": {
+            "diameter_px": 45.319129943847656,
+            "radius_px": 22.659564971923828,
+            "center_x": 101.91584014892578,
+            "center_y": 94.16831970214844,
+            "crop_index": 1,
+            "image_id": 22111,
+            "stack_number": 0,
+            "image_file_name": "74_B_6_28_0_01.png",
+            "crop_box": [
+              1238,
+              182,
+              1436,
+              379
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_6_28_0_01.png"
+          },
+          "dense_phase_fraction": 0.4062768935001031,
+          "droplet_to_condensate_volume_ratio": 2.4613755199931058
+        },
+        {
+          "crop_index": 2,
+          "droplet": {
+            "diameter_px": 65.18952178955078,
+            "radius_px": 32.59476089477539,
+            "center_x": 101.85884094238281,
+            "center_y": 99.92030334472656,
+            "crop_index": 2,
+            "image_id": 22121,
+            "stack_number": 10,
+            "image_file_name": "74_B_6_28_0_11.png",
+            "crop_box": [
+              1065,
+              266,
+              1262,
+              464
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_6_28_0_11.png"
+          },
+          "condensate": {
+            "diameter_px": 45.500125885009766,
+            "radius_px": 22.750062942504883,
+            "center_x": 102.05217742919922,
+            "center_y": 100.59130096435547,
+            "crop_index": 2,
+            "image_id": 22115,
+            "stack_number": 4,
+            "image_file_name": "74_B_6_28_0_05.png",
+            "crop_box": [
+              1065,
+              266,
+              1262,
+              464
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_6_28_0_05.png"
+          },
+          "dense_phase_fraction": 0.3400199577481879,
+          "droplet_to_condensate_volume_ratio": 2.941003835841249
+        },
+        {
+          "crop_index": 3,
+          "droplet": {
+            "diameter_px": 59.417633056640625,
+            "radius_px": 29.708816528320312,
+            "center_x": 83.45587921142578,
+            "center_y": 90.13235473632812,
+            "crop_index": 3,
+            "image_id": 22123,
+            "stack_number": 12,
+            "image_file_name": "74_B_6_28_0_13.png",
+            "crop_box": [
+              1336,
+              353,
+              1519,
+              537
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_6_28_0_13.png"
+          },
+          "condensate": {
+            "diameter_px": 53.15092849731445,
+            "radius_px": 26.575464248657227,
+            "center_x": 162.0,
+            "center_y": 165.5,
+            "crop_index": 3,
+            "image_id": 22135,
+            "stack_number": 24,
+            "image_file_name": "74_B_6_28_0_25.png",
+            "crop_box": [
+              1336,
+              353,
+              1519,
+              537
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_6_28_0_25.png"
+          },
+          "dense_phase_fraction": 0.7157914801105221,
+          "droplet_to_condensate_volume_ratio": 1.3970549074509724
+        },
+        {
+          "crop_index": 4,
+          "droplet": {
+            "diameter_px": 57.65510177612305,
+            "radius_px": 28.827550888061523,
+            "center_x": 90.06673431396484,
+            "center_y": 89.23660278320312,
+            "crop_index": 4,
+            "image_id": 22121,
+            "stack_number": 10,
+            "image_file_name": "74_B_6_28_0_11.png",
+            "crop_box": [
+              1301,
+              532,
+              1483,
+              714
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_6_28_0_11.png"
+          },
+          "condensate": {
+            "diameter_px": 41.65602493286133,
+            "radius_px": 20.828012466430664,
+            "center_x": 89.92105102539062,
+            "center_y": 88.92105102539062,
+            "crop_index": 4,
+            "image_id": 22121,
+            "stack_number": 10,
+            "image_file_name": "74_B_6_28_0_11.png",
+            "crop_box": [
+              1301,
+              532,
+              1483,
+              714
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_6_28_0_11.png"
+          },
+          "dense_phase_fraction": 0.3771553255622548,
+          "droplet_to_condensate_volume_ratio": 2.6514274947840715
+        }
+      ],
+      "dense_phase_fraction": 0.4313355442128877,
+      "droplet_to_condensate_volume_ratio": 2.5202244556302555,
+      "droplet_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_42/site_0/droplet_max_overlay.png",
+      "condensate_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_42/site_0/condensate_max_overlay.png",
+      "temp_crop_directory": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_42/site_0/crops"
+    },
+    {
+      "sample_id": 42,
+      "site_number": 1,
+      "ns_concentration_uM": 12.5,
+      "stack_image_count": 15,
+      "missing_stack_image_count": 0,
+      "crop_count": 5,
+      "valid_crop_count": 5,
+      "event_mean_temperature_c": 27.994250000000008,
+      "per_crop_measurements": [
+        {
+          "crop_index": 0,
+          "droplet": {
+            "diameter_px": 70.45275115966797,
+            "radius_px": 35.226375579833984,
+            "center_x": 102.625,
+            "center_y": 103.0,
+            "crop_index": 0,
+            "image_id": 22153,
+            "stack_number": 12,
+            "image_file_name": "74_B_6_28_1_13.png",
+            "crop_box": [
+              847,
+              265,
+              1053,
+              470
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_6_28_1_13.png"
+          },
+          "condensate": {
+            "diameter_px": 49.51787185668945,
+            "radius_px": 24.758935928344727,
+            "center_x": 104.0,
+            "center_y": 106.0,
+            "crop_index": 0,
+            "image_id": 22169,
+            "stack_number": 28,
+            "image_file_name": "74_B_6_28_1_29.png",
+            "crop_box": [
+              847,
+              265,
+              1053,
+              470
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_6_28_1_29.png"
+          },
+          "dense_phase_fraction": 0.3472098556913727,
+          "droplet_to_condensate_volume_ratio": 2.8801025766068067
+        },
+        {
+          "crop_index": 1,
+          "droplet": {
+            "diameter_px": 65.15120697021484,
+            "radius_px": 32.57560348510742,
+            "center_x": 104.54827880859375,
+            "center_y": 100.33158874511719,
+            "crop_index": 1,
+            "image_id": 22151,
+            "stack_number": 10,
+            "image_file_name": "74_B_6_28_1_11.png",
+            "crop_box": [
+              1082,
+              271,
+              1285,
+              474
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_6_28_1_11.png"
+          },
+          "condensate": {
+            "diameter_px": 46.66663360595703,
+            "radius_px": 23.333316802978516,
+            "center_x": 104.65908813476562,
+            "center_y": 100.43181610107422,
+            "crop_index": 1,
+            "image_id": 22145,
+            "stack_number": 4,
+            "image_file_name": "74_B_6_28_1_05.png",
+            "crop_box": [
+              1082,
+              271,
+              1285,
+              474
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_6_28_1_05.png"
+          },
+          "dense_phase_fraction": 0.3674954976242804,
+          "droplet_to_condensate_volume_ratio": 2.7211217728234014
+        },
+        {
+          "crop_index": 2,
+          "droplet": {
+            "diameter_px": 61.21779251098633,
+            "radius_px": 30.608896255493164,
+            "center_x": 99.27973937988281,
+            "center_y": 91.63847351074219,
+            "crop_index": 2,
+            "image_id": 22149,
+            "stack_number": 8,
+            "image_file_name": "74_B_6_28_1_09.png",
+            "crop_box": [
+              1261,
+              189,
+              1456,
+              384
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_6_28_1_09.png"
+          },
+          "condensate": {
+            "diameter_px": 44.73613739013672,
+            "radius_px": 22.36806869506836,
+            "center_x": 99.63805389404297,
+            "center_y": 92.36725616455078,
+            "crop_index": 2,
+            "image_id": 22157,
+            "stack_number": 16,
+            "image_file_name": "74_B_6_28_1_17.png",
+            "crop_box": [
+              1261,
+              189,
+              1456,
+              384
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_6_28_1_17.png"
+          },
+          "dense_phase_fraction": 0.3902495898841056,
+          "droplet_to_condensate_volume_ratio": 2.562462654469349
+        },
+        {
+          "crop_index": 3,
+          "droplet": {
+            "diameter_px": 51.12479782104492,
+            "radius_px": 25.56239891052246,
+            "center_x": 89.92552947998047,
+            "center_y": 92.0,
+            "crop_index": 3,
+            "image_id": 22147,
+            "stack_number": 6,
+            "image_file_name": "74_B_6_28_1_07.png",
+            "crop_box": [
+              1305,
+              899,
+              1486,
+              1080
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_6_28_1_07.png"
+          },
+          "condensate": {
+            "diameter_px": 42.431270599365234,
+            "radius_px": 21.215635299682617,
+            "center_x": 92.411865234375,
+            "center_y": 93.12129211425781,
+            "crop_index": 3,
+            "image_id": 22159,
+            "stack_number": 18,
+            "image_file_name": "74_B_6_28_1_19.png",
+            "crop_box": [
+              1305,
+              899,
+              1486,
+              1080
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_6_28_1_19.png"
+          },
+          "dense_phase_fraction": 0.5716935598817796,
+          "droplet_to_condensate_volume_ratio": 1.7491888490169274
+        },
+        {
+          "crop_index": 4,
+          "droplet": {
+            "diameter_px": 57.715980529785156,
+            "radius_px": 28.857990264892578,
+            "center_x": 91.79662322998047,
+            "center_y": 89.87945556640625,
+            "crop_index": 4,
+            "image_id": 22151,
+            "stack_number": 10,
+            "image_file_name": "74_B_6_28_1_11.png",
+            "crop_box": [
+              1319,
+              537,
+              1500,
+              718
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_6_28_1_11.png"
+          },
+          "condensate": {
+            "diameter_px": 41.52717590332031,
+            "radius_px": 20.763587951660156,
+            "center_x": 91.57142639160156,
+            "center_y": 90.28571319580078,
+            "crop_index": 4,
+            "image_id": 22153,
+            "stack_number": 12,
+            "image_file_name": "74_B_6_28_1_13.png",
+            "crop_box": [
+              1319,
+              537,
+              1500,
+              718
+            ],
+            "image_path": "/Volumes/T7/Temika/Images/74_B_6_28_1_13.png"
+          },
+          "dense_phase_fraction": 0.372485145290569,
+          "droplet_to_condensate_volume_ratio": 2.6846708188051847
+        }
+      ],
+      "dense_phase_fraction": 0.40982672967442146,
+      "droplet_to_condensate_volume_ratio": 2.5195093343443338,
+      "droplet_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_42/site_1/droplet_max_overlay.png",
+      "condensate_overlay_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_42/site_1/condensate_max_overlay.png",
+      "temp_crop_directory": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/sample_42/site_1/crops"
+    }
+  ],
+  "sample_summary": [
+    {
+      "sample_id": 42,
+      "ns_concentration_uM": 12.5,
+      "site_count": 2,
+      "mean_dense_phase_fraction": 0.4205811369436546,
+      "std_dense_phase_fraction": 0.01075440726923313,
+      "mean_droplet_to_condensate_volume_ratio": 2.5198668949872944
+    },
+    {
+      "sample_id": 41,
+      "ns_concentration_uM": 25.0,
+      "site_count": 2,
+      "mean_dense_phase_fraction": 0.06551443236972959,
+      "std_dense_phase_fraction": 0.037572645290650505,
+      "mean_droplet_to_condensate_volume_ratio": 36.003574675490896
+    },
+    {
+      "sample_id": 40,
+      "ns_concentration_uM": 37.5,
+      "site_count": 2,
+      "mean_dense_phase_fraction": 0.06447946526261285,
+      "std_dense_phase_fraction": 0.006769895978234613,
+      "mean_droplet_to_condensate_volume_ratio": 16.149012931865787
+    },
+    {
+      "sample_id": 39,
+      "ns_concentration_uM": 50.0,
+      "site_count": 2,
+      "mean_dense_phase_fraction": 0.048024166870862,
+      "std_dense_phase_fraction": 0.0056214605275238805,
+      "mean_droplet_to_condensate_volume_ratio": 22.71411562360425
+    },
+    {
+      "sample_id": 38,
+      "ns_concentration_uM": 67.5,
+      "site_count": 2,
+      "mean_dense_phase_fraction": 0.05881586645364599,
+      "std_dense_phase_fraction": 0.0032233002944761363,
+      "mean_droplet_to_condensate_volume_ratio": 17.76859894813913
+    },
+    {
+      "sample_id": 37,
+      "ns_concentration_uM": 75.0,
+      "site_count": 2,
+      "mean_dense_phase_fraction": 0.03735058244315348,
+      "std_dense_phase_fraction": 0.00019793336517417298,
+      "mean_droplet_to_condensate_volume_ratio": 28.116543033003147
+    },
+    {
+      "sample_id": 36,
+      "ns_concentration_uM": 87.5,
+      "site_count": 2,
+      "mean_dense_phase_fraction": 0.2715626521730921,
+      "std_dense_phase_fraction": 0.24286655245323746,
+      "mean_droplet_to_condensate_volume_ratio": 26.721785973957104
+    },
+    {
+      "sample_id": 35,
+      "ns_concentration_uM": 100.0,
+      "site_count": 2,
+      "mean_dense_phase_fraction": 0.029252976531542994,
+      "std_dense_phase_fraction": 0.00211935838379149,
+      "mean_droplet_to_condensate_volume_ratio": 51.86273043808205
+    }
+  ],
+  "dropped_sites": [],
+  "plot_path": "outputs/phase_diagrams/experiment_6/result_run_74/temp_28.00_led_6/ratio_vs_concentration.png"
+}
