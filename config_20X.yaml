@@ -63,6 +63,10 @@ movie_file_directory: /home/sd2030/data/temika/movies # linux
 image_file_directory: /home/sd2030/data/temika/images # linux
 
 movie_extension: .movie
+movie2tiff_output_format: png
+movie2tiff_downsample: true
+movie2tiff_convert_8bit: false
+movie2tiff_compression: tiff_lzw
 
 
 # Roboflow settings

@@ -60,6 +60,10 @@ script_output_path: ./opentrons_protocols/script
 movie_file_directory: /Volumes/T7/Temika/Movies # Macos
 image_file_directory: /Volumes/T7/Temika/Images # Macos
 movie_extension: .movie
+movie2tiff_output_format: png
+movie2tiff_downsample: true
+movie2tiff_convert_8bit: false
+movie2tiff_compression: tiff_lzw
 
 # Roboflow settings
 roboflow_inference_host: http://localhost:9001

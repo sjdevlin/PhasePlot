@@ -3,6 +3,7 @@ from pathlib import Path
 from threading import Event
 from time import sleep, monotonic
 import random
+from PIL import Image as PILImage
 
 from hardware import *
 from models import Experiment, Sample, ImageSet, ResultRun, Image
@@ -30,7 +31,12 @@ class ResultRunOperator:
 
         self.plate = self.db.get_plate_by_id(self.experiment.plate_id)
         self.image_set = self.db.get_image_set_by_id(self.result_set.image_set_id)
-        self.converter = Movie2Tiff()
+        self.converter = Movie2Tiff(
+            compression=self.app_config.get("movie2tiff_compression", "tiff_lzw"),
+            downsample=bool(self.app_config.get("movie2tiff_downsample", True)),
+            convert_8bit=bool(self.app_config.get("movie2tiff_convert_8bit", False)),
+            output_format=str(self.app_config.get("movie2tiff_output_format", "png")),
+        )
 
         self.assumed_temperature = float(self.app_config.get("assumed_temperature_celsius", 25.0))
         self.number_of_sites = self.image_set.number_of_sites or 1
@@ -395,6 +401,7 @@ class ResultRunOperator:
 
         for idx, (file, score) in enumerate(zip(filenames, focus_scores)):
             file_path = Path(str(file)).name
+            dimension_x, dimension_y = self._resolve_saved_image_dimensions(Path(str(file)))
 
             sample_temp, sample_time = self._read_sample_runtime(sample.id)
             channel = self.active_channels[idx % channel_count]
@@ -406,8 +413,8 @@ class ResultRunOperator:
                 site_number=site_number,
                 stack_number=z_stack_number,
                 led_number=channel["number"],
-                dimension_x=getattr(self.camera_controller, "image_dimension_x", 0),
-                dimension_y=getattr(self.camera_controller, "image_dimension_y", 0),
+                dimension_x=dimension_x,
+                dimension_y=dimension_y,
                 file_path=file_path,
                 timestamp=datetime.now(),
                 temperature=sample_temp,
@@ -419,6 +426,16 @@ class ResultRunOperator:
             self.db.add_result_run_image(new_image)
 
         self.logger.info(f"Image stack extracted for movie {movie_filename}")
+
+    def _resolve_saved_image_dimensions(self, image_path: Path):
+        fallback_x = int(getattr(self.camera_controller, "image_dimension_x", 0) or 0)
+        fallback_y = int(getattr(self.camera_controller, "image_dimension_y", 0) or 0)
+        try:
+            with PILImage.open(image_path) as img:
+                width, height = img.size
+                return int(width), int(height)
+        except Exception:
+            return fallback_x, fallback_y
 
     def _read_sample_runtime(self, sample_id):
         if self.shared_lock is None:

@@ -132,7 +132,13 @@ class FrameHeader:
 class Movie2Tiff:
     """Extract every frame from a TemI movie to TIFF or PNG and return focus scores."""
 
-    def __init__(self, compression: str = "tiff_lzw", downsample: bool = True, convert_8bit: bool = True, output_format: str = "png") -> None:
+    def __init__(
+        self,
+        compression: str = "tiff_lzw",
+        downsample: bool = True,
+        convert_8bit: bool = False,
+        output_format: str = "png",
+    ) -> None:
         compression = compression.lower()
         output_format = output_format.lower()
         
@@ -477,12 +483,20 @@ class Movie2Tiff:
         extra: bytes,
         focus_score: float,
     ) -> None:
-        # PNG only supports 8-bit, so always convert if needed
-        if arr.dtype != np.uint8:
+        # PNG supports both 8-bit and 16-bit grayscale. Keep 16-bit by default.
+        # Only force 8-bit when convert_8bit is explicitly requested.
+        if self.convert_8bit and arr.dtype != np.uint8:
             arr = self._convert_to_8bit(arr, method="percentile")
-        
-        # Explicitly create grayscale image from 8-bit array
-        img = Image.fromarray(arr, mode='L')  # 'L' mode ensures grayscale
+
+        if arr.dtype == np.uint8:
+            img = Image.fromarray(arr, mode="L")
+        elif arr.dtype == np.uint16:
+            # Preserve 12-bit sensor data in a 16-bit PNG container.
+            img = Image.fromarray(arr)
+        else:
+            # Fallback to uint16 for unsupported integer/float dtypes.
+            arr16 = np.clip(arr, 0, np.iinfo(np.uint16).max).astype(np.uint16)
+            img = Image.fromarray(arr16)
         
         # Create metadata for PNG (stored as text chunks)
         meta_json = json.loads(hdr.to_json(extra))
