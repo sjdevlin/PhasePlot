@@ -307,15 +307,16 @@ class ResultRunOperator:
         return False
 
     def _capture_sample(self, sample):
-        integer_temperature = int(self.target_temperature[sample.id])
+        target_temperature = float(self.target_temperature[sample.id])
+        temperature_tag = f"{target_temperature:.2f}".replace(".", "p")
         last_site_z_height = None
 
         for site_number in range(self.number_of_sites):
             self._raise_if_stopped()
             self._wait_if_paused()
 
-            movie_stub = f"{self.movie_path}/{self.result_run.id}_{sample.well_row}_{sample.well_column}_{integer_temperature}_{site_number}"
-            image_stub = f"{self.image_path}/{self.result_run.id}_{sample.well_row}_{sample.well_column}_{integer_temperature}_{site_number}"
+            movie_stub = f"{self.movie_path}/{self.result_run.id}_{sample.well_row}_{sample.well_column}_{temperature_tag}_{site_number}"
+            image_stub = f"{self.image_path}/{self.result_run.id}_{sample.well_row}_{sample.well_column}_{temperature_tag}_{site_number}"
             self.camera_controller.set_filename(movie_stub)
 
             self._move_stage_to_site(sample, site_number)
@@ -655,7 +656,7 @@ class ResultRunOperator:
             return [(0.0, 0.0)]
 
         well_diameter = float(self.plate.well_dimension or 0.0)
-        offset_limit = well_diameter * 0.10
+        offset_limit = well_diameter * 0.15
         offsets = [(0.0, 0.0)]
 
         for _ in range(1, self.number_of_sites):
