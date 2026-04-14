@@ -3,6 +3,9 @@ SQLAlchemy
 typing_extensions
 customtkinter
 matplotlib
+Pillow
+pandas
+plotly
 pyueye
 pySerial
 numpy
@@ -11,3 +14,4 @@ scipy
 opencv-python
 requests
 inference_sdk
+opentrons

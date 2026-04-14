@@ -7,6 +7,7 @@ __pycache__/
 *.movie
 *.tiff
 *.png
+outputs/
 
 # Log Files
 logs/
@@ -132,6 +133,8 @@ venv.bak/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+.ruff_cache/
+.pytype/
 
 # Pyre type checker
 .pyre/
@@ -141,6 +144,9 @@ dmypy.json
 #*.sqlite
 #*.sqlite3
 #*.db
+*.sqlite-shm
+*.sqlite-wal
+*.db-journal
 
 # Excel files (if these are generated/temporary)
 *.xlsx
