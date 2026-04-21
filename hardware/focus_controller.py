@@ -19,6 +19,9 @@ class Focus(ABC):
     def get_z(self):
         pass
 
+    def move_autofocus_offset(self, offset_um=0.0):
+        return True
+
 
 
 class OlympusX81FocusController(Focus):
@@ -65,6 +68,12 @@ class OlympusX81FocusController(Focus):
 
     def get_z(self):
         pass
+
+    def move_autofocus_offset(self, offset_um=0.0):
+        self.logger.debug(
+            f"Olympus focus controller does not support autofocus offset axis move; ignoring offset {offset_um}."
+        )
+        return True
 
 
 class TemikaFocusController(Focus):
@@ -126,6 +135,20 @@ class TemikaFocusController(Focus):
             self.logger.error(f"No status found in reply, returning 0.0 position for focus.")
             pos = 0.0
         return pos
+
+    def move_autofocus_offset(self, offset_um=0.0):
+        command = f"<{self.name}>"
+        command += "<stepper axis=\"a\">\n"
+        command += f"\t<move_absolute>{float(offset_um)} 1000</move_absolute>\n"
+        command += "\t<wait_moving_end></wait_moving_end>\n"
+        command += "</stepper>\n"
+        command += f"</{self.name}>"
+        reply = self.temika_comms.send_command(command, wait_for="Done")
+        if reply is None:
+            self.logger.error(f"Autofocus offset axis move failed for offset {offset_um}.")
+            return False
+        self.logger.info(f"Autofocus offset axis moved to {float(offset_um):.2f} um.")
+        return True
 
 
 

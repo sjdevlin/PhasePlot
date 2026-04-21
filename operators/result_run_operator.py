@@ -540,6 +540,7 @@ class ResultRunOperator:
         return self.focus_controller.get_z()
 
     def _attempt_autofocus_lock(self, sample, site_number):
+        self._apply_autofocus_offset(sample, site_number)
         baseline_z = self._get_autofocus_baseline(sample)
         start_z = baseline_z - self.autofocus_margin
 
@@ -570,6 +571,20 @@ class ResultRunOperator:
             )
 
         return False
+
+    def _apply_autofocus_offset(self, sample, site_number):
+        autofocus_offset = self.plate.get_well_autofocus_offset(sample.well_row, sample.well_column)
+        if autofocus_offset is None:
+            autofocus_offset = 0.0
+
+        if not self.focus_controller.move_autofocus_offset(autofocus_offset):
+            raise RuntimeError(
+                f"Failed to apply autofocus offset {autofocus_offset} um at sample {sample.id}, site {site_number}."
+            )
+
+        self.logger.info(
+            f"Applied autofocus offset {float(autofocus_offset):.2f} um for sample {sample.id}, site {site_number}."
+        )
 
     def _pause_for_autofocus_recovery(self, reason, sample, site_number):
         self.logger.error(reason)

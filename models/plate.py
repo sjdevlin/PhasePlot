@@ -52,6 +52,13 @@ class Plate(Base):
             if well.well_row == well_row and well.well_column == well_column:
                 return well.z_height
         return None
+
+    def get_well_autofocus_offset(self, well_row, well_column):
+        """Retrieve the autofocus offset for a specific well in the plate."""
+        for well in self.well:
+            if well.well_row == well_row and well.well_column == well_column:
+                return well.autofocus_offset
+        return None
     
 class PlateWell(Base):
     __tablename__ = "PlateWell"
@@ -60,7 +67,7 @@ class PlateWell(Base):
     well_row = Column(String)
     well_column = Column(Integer)
     z_height = Column(Float)
-
+    autofocus_offset = Column(Float, default=0.0)
 
 
 
