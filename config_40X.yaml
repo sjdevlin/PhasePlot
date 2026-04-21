@@ -72,6 +72,13 @@ image_processing_workflow_name: test-validation-set/detect-count-and-visualize-3
 # image_processing_model_id: phaseplotv2/5
 image_processing_task: object_detection
 image_processing_confidence_threshold: 0.8
+image_processing_high_confidence_threshold: 0.9
+image_processing_focus_selection_mode: droplet_aware # droplet_aware | global
+image_processing_focus_weight_edge: 0.55
+image_processing_focus_weight_count: 0.20
+image_processing_focus_weight_conf: 0.20
+image_processing_focus_weight_global: 0.05
+image_processing_focus_debug: false
 roboflow_api_key: TMlSASZ8SV6bioL6KYD3
 
 # Annealer Settings

@@ -6,6 +6,8 @@ from collections import defaultdict
 from math import hypot
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+import cv2
+import numpy as np
 
 # SQLAlchemy Image model is imported for type hinting / ORM updates
 from models import Image
@@ -39,36 +41,22 @@ class ImageProcessor:
         self.api_key = self.app_config.get("roboflow_api_key")
         self.inference_host = str(self.app_config.get("roboflow_inference_host", "http://localhost:9001")).rstrip("/")
         self.confidence_threshold = float(self.app_config.get("image_processing_confidence_threshold", 0.8))
-
-        self.inference_mode = str(self.app_config.get("image_processing_mode", "workflow")).strip().lower()
-        if self.inference_mode not in {"workflow", "model", "auto"}:
-            raise ValueError(
-                f"Invalid image_processing_mode='{self.inference_mode}'. "
-                "Use one of: workflow, model, auto."
-            )
+        self.high_confidence_threshold = float(
+            self.app_config.get("image_processing_high_confidence_threshold", 0.9)
+        )
+        self.focus_selection_mode = str(
+            self.app_config.get("image_processing_focus_selection_mode", "droplet_aware")
+        ).strip().lower()
+        self.focus_weight_edge = float(self.app_config.get("image_processing_focus_weight_edge", 0.55))
+        self.focus_weight_count = float(self.app_config.get("image_processing_focus_weight_count", 0.20))
+        self.focus_weight_conf = float(self.app_config.get("image_processing_focus_weight_conf", 0.20))
+        self.focus_weight_global = float(self.app_config.get("image_processing_focus_weight_global", 0.05))
+        self.focus_debug = bool(self.app_config.get("image_processing_focus_debug", False))
 
         self.workflow_name = self.app_config.get("image_processing_workflow_name")
-        self.model_id = self.app_config.get("image_processing_model_id")
-        self.model_task = str(self.app_config.get("image_processing_task", "object_detection")).strip()
-        self.model_confidence = self.app_config.get("image_processing_model_confidence")
-        self.model_iou_threshold = self.app_config.get("image_processing_model_iou_threshold")
-
-        if self.inference_mode == "auto":
-            self.inference_mode = "model" if self.model_id else "workflow"
-
-        if self.inference_mode == "workflow":
-            if not self.workflow_name:
-                raise ValueError("image_processing_workflow_name is required when image_processing_mode=workflow")
-            self.url = f"{self.inference_host}/infer/workflows/{self.workflow_name}"
-        else:
-            if not self.model_id:
-                # Small compatibility bridge: if user set phaseplotv2/5 in workflow field
-                # while intending direct model inference.
-                if self.workflow_name and self.workflow_name.count("/") == 1:
-                    self.model_id = self.workflow_name
-                else:
-                    raise ValueError("image_processing_model_id is required when image_processing_mode=model")
-            self.url = f"{self.inference_host}/infer/{self.model_task}"
+        if not self.workflow_name:
+            raise ValueError("image_processing_workflow_name is required")
+        self.url = f"{self.inference_host}/infer/workflows/{self.workflow_name}"
 
     # ------------------------------------------------------------------
     # Private helpers
@@ -83,6 +71,204 @@ class ImageProcessor:
             x - w / 2 <= 0 or y - h / 2 <= 0 or
             x + w / 2 >= img_w or y + h / 2 >= img_h
         )
+
+    @staticmethod
+    def _normalize_series(values: List[float]) -> List[float]:
+        if not values:
+            return []
+        vmin = min(values)
+        vmax = max(values)
+        if vmax <= vmin:
+            return [0.0 for _ in values]
+        return [(v - vmin) / (vmax - vmin) for v in values]
+
+    @staticmethod
+    def _to_gray_uint8(arr: np.ndarray) -> np.ndarray:
+        if arr.ndim == 3:
+            arr = cv2.cvtColor(arr, cv2.COLOR_BGR2GRAY)
+        if arr.dtype == np.uint8:
+            return arr
+        arr_f = arr.astype(np.float32)
+        lo, hi = np.percentile(arr_f, (1.0, 99.0))
+        if hi <= lo:
+            lo = float(np.min(arr_f))
+            hi = float(np.max(arr_f))
+        if hi <= lo:
+            return np.zeros(arr.shape, dtype=np.uint8)
+        arr_f = np.clip((arr_f - lo) / (hi - lo), 0.0, 1.0)
+        return (arr_f * 255.0).astype(np.uint8)
+
+    def _resolve_raw_path(self, base_image_dir: Path, db_file_path: str) -> Path:
+        return (base_image_dir / db_file_path).resolve()
+
+    def _droplet_edge_sharpness(self, gray: np.ndarray, pred: dict) -> float:
+        h, w = gray.shape[:2]
+        cx = float(pred.get("x", 0.0))
+        cy = float(pred.get("y", 0.0))
+        bw = float(pred.get("width", 0.0))
+        bh = float(pred.get("height", 0.0))
+        if bw < 6 or bh < 6:
+            return 0.0
+
+        x0 = max(0, int(cx - bw * 0.7))
+        x1 = min(w, int(cx + bw * 0.7))
+        y0 = max(0, int(cy - bh * 0.7))
+        y1 = min(h, int(cy + bh * 0.7))
+        if x1 - x0 < 8 or y1 - y0 < 8:
+            return 0.0
+
+        roi = gray[y0:y1, x0:x1]
+        roi_h, roi_w = roi.shape[:2]
+        yy, xx = np.mgrid[0:roi_h, 0:roi_w]
+
+        ecx = (cx - x0)
+        ecy = (cy - y0)
+        rx = max(1.0, bw * 0.5)
+        ry = max(1.0, bh * 0.5)
+        ellipse_r = np.sqrt(((xx - ecx) / rx) ** 2 + ((yy - ecy) / ry) ** 2)
+
+        inner_mask = (ellipse_r >= 0.65) & (ellipse_r <= 0.85)
+        edge_mask = (ellipse_r >= 0.90) & (ellipse_r <= 1.10)
+        outer_mask = (ellipse_r >= 1.15) & (ellipse_r <= 1.35)
+        if not np.any(edge_mask) or not np.any(inner_mask) or not np.any(outer_mask):
+            return 0.0
+
+        roi_f = roi.astype(np.float32)
+        inner_mean = float(np.mean(roi_f[inner_mask]))
+        outer_mean = float(np.mean(roi_f[outer_mask]))
+        edge_contrast = abs(inner_mean - outer_mean)
+
+        grad_x = cv2.Sobel(roi_f, cv2.CV_32F, 1, 0, ksize=3)
+        grad_y = cv2.Sobel(roi_f, cv2.CV_32F, 0, 1, ksize=3)
+        grad_mag = np.hypot(grad_x, grad_y)
+
+        edge_vals = grad_mag[edge_mask]
+        bg_vals = grad_mag[inner_mask | outer_mask]
+        if edge_vals.size < 10 or bg_vals.size < 10:
+            return 0.0
+
+        edge_strength = float(np.percentile(edge_vals, 85))
+        bg_strength = float(np.percentile(bg_vals, 85))
+        boundary_specific_strength = max(0.0, edge_strength - bg_strength)
+
+        # Weight gradient dominance more heavily than brightness contrast.
+        return boundary_specific_strength + 0.5 * edge_contrast
+
+    def _compute_image_focus_metrics(
+        self,
+        img: Image,
+        preds: List[Dict],
+        raw_path: Path,
+    ) -> Dict[str, float]:
+        high_conf_preds = [p for p in preds if float(p.get("confidence", 0.0)) >= self.high_confidence_threshold]
+        chosen_preds = high_conf_preds if high_conf_preds else preds
+
+        conf_sum = float(sum(float(p.get("confidence", 0.0)) for p in chosen_preds))
+        high_conf_count = float(len(high_conf_preds))
+        pred_count = float(len(preds))
+        global_focus = float(img.focus_score or 0.0)
+
+        edge_sharpness = 0.0
+        try:
+            arr = cv2.imread(str(raw_path), cv2.IMREAD_UNCHANGED)
+            if arr is not None and chosen_preds:
+                gray = self._to_gray_uint8(arr)
+                valid_scores = []
+                img_h, img_w = gray.shape[:2]
+                for p in chosen_preds:
+                    if self._is_touching_edge(p, img_w, img_h):
+                        continue
+                    valid_scores.append(self._droplet_edge_sharpness(gray, p))
+                if valid_scores:
+                    edge_sharpness = float(np.mean(valid_scores))
+        except Exception:
+            edge_sharpness = 0.0
+
+        return {
+            "high_conf_count": high_conf_count,
+            "pred_count": pred_count,
+            "conf_sum": conf_sum,
+            "edge_sharpness": edge_sharpness,
+            "global_focus": global_focus,
+        }
+
+    def _select_best_focus_image(
+        self,
+        img_list: List[Image],
+        prediction_cache: Dict[int, List[Dict]],
+        base_image_dir: Path,
+    ) -> Image:
+        if not img_list:
+            raise ValueError("Cannot select focus image from empty image list.")
+
+        if self.focus_selection_mode != "droplet_aware":
+            return max(img_list, key=lambda im: im.focus_score or 0)
+
+        metrics_per_image: List[Tuple[Image, Dict[str, float]]] = []
+        for img in img_list:
+            preds = prediction_cache.get(img.id, [])
+            raw_path = self._resolve_raw_path(base_image_dir, img.file_path)
+            metrics = self._compute_image_focus_metrics(img, preds, raw_path)
+            metrics_per_image.append((img, metrics))
+
+        edge_series = self._normalize_series([m["edge_sharpness"] for _, m in metrics_per_image])
+        count_series = self._normalize_series([m["high_conf_count"] for _, m in metrics_per_image])
+        conf_series = self._normalize_series([m["conf_sum"] for _, m in metrics_per_image])
+        global_series = self._normalize_series([m["global_focus"] for _, m in metrics_per_image])
+
+        best_idx = 0
+        best_score = float("-inf")
+        combined_scores: List[float] = []
+        for idx, (img, metrics) in enumerate(metrics_per_image):
+            combined = (
+                self.focus_weight_edge * edge_series[idx]
+                + self.focus_weight_count * count_series[idx]
+                + self.focus_weight_conf * conf_series[idx]
+                + self.focus_weight_global * global_series[idx]
+            )
+            combined_scores.append(combined)
+            # Hard tie-break: higher high-confidence count then global focus.
+            tie_break = (metrics["high_conf_count"], metrics["global_focus"])
+            if combined > best_score:
+                best_score = combined
+                best_idx = idx
+            elif combined == best_score:
+                prev_metrics = metrics_per_image[best_idx][1]
+                if tie_break > (prev_metrics["high_conf_count"], prev_metrics["global_focus"]):
+                    best_idx = idx
+
+        if self.focus_debug:
+            for idx, (img, metrics) in enumerate(metrics_per_image):
+                print(
+                    "focus_rank "
+                    f"img_id={img.id} stack={getattr(img, 'stack_number', None)} "
+                    f"score={combined_scores[idx]:.4f} "
+                    f"edge={metrics['edge_sharpness']:.2f} "
+                    f"high_conf={metrics['high_conf_count']:.0f} "
+                    f"conf_sum={metrics['conf_sum']:.2f} "
+                    f"global={metrics['global_focus']:.2f}"
+                )
+            chosen = metrics_per_image[best_idx][0]
+            print(
+                "focus_selected "
+                f"img_id={chosen.id} stack={getattr(chosen, 'stack_number', None)} "
+                f"score={best_score:.4f}"
+            )
+
+        return metrics_per_image[best_idx][0]
+
+    def _image_dimensions(self, img: Image, base_image_dir: Path) -> Tuple[int, int]:
+        if (img.dimension_x or 0) > 0 and (img.dimension_y or 0) > 0:
+            return int(img.dimension_x), int(img.dimension_y)
+        try:
+            raw_path = self._resolve_raw_path(base_image_dir, img.file_path)
+            arr = cv2.imread(str(raw_path), cv2.IMREAD_UNCHANGED)
+            if arr is not None:
+                h, w = arr.shape[:2]
+                return int(w), int(h)
+        except Exception:
+            pass
+        return 0, 0
 
 
 
@@ -149,13 +335,6 @@ class ImageProcessor:
             )
             return parsed, img_bytes
 
-        # Direct model route response shape:
-        # {"predictions":[...], "image":{"type":"base64","value":"..."}}
-        if isinstance(data, dict):
-            parsed = self._coerce_predictions(data.get("predictions", []))
-            img_bytes = self._decode_base64_image(data.get("image"))
-            return parsed, img_bytes
-
         return [], None
 
     def _infer_image(self, image_path: str):
@@ -163,21 +342,10 @@ class ImageProcessor:
         with open(image_path, "rb") as image_file:
             image_base64 = base64.b64encode(image_file.read()).decode('utf-8')
 
-        if self.inference_mode == "workflow":
-            payload = {
-                "api_key": self.api_key,
-                "inputs": {"image": {"type": "base64", "value": image_base64}},
-            }
-        else:
-            payload = {
-                "api_key": self.api_key,
-                "model_id": self.model_id,
-                "image": {"type": "base64", "value": image_base64},
-            }
-            if self.model_confidence is not None:
-                payload["confidence"] = float(self.model_confidence)
-            if self.model_iou_threshold is not None:
-                payload["iou_threshold"] = float(self.model_iou_threshold)
+        payload = {
+            "api_key": self.api_key,
+            "inputs": {"image": {"type": "base64", "value": image_base64}},
+        }
 
         response = requests.post(self.url, json=payload, timeout=60)
 
@@ -231,7 +399,7 @@ class ImageProcessor:
             prediction_cache = {}
             for img in img_list:
                 try:
-                    raw_path = str((base_image_dir / img.file_path).resolve())
+                    raw_path = str(self._resolve_raw_path(base_image_dir, img.file_path))
                     preds, anno = self._infer_image(raw_path)
                 except Exception as exc:
                     print(f"Roboflow fail on {img.file_path}: {exc}")
@@ -243,8 +411,8 @@ class ImageProcessor:
             # ------------------------------------------------------------------
             # 2) Pick **one** best‑focus slice for the whole site to seed droplet centres
             # ------------------------------------------------------------------
-            best_img = max(img_list, key=lambda im: im.focus_score or 0)
-            w, h = best_img.dimension_x, best_img.dimension_y
+            best_img = self._select_best_focus_image(img_list, prediction_cache, base_image_dir)
+            w, h = self._image_dimensions(best_img, base_image_dir)
 
             seed_droplets = []  # list[dict]: {x,y,max_width}
             for p in prediction_cache[best_img.id]:
