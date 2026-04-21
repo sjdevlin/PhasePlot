@@ -2,7 +2,7 @@ from datetime import datetime
 from pathlib import Path
 from threading import Event
 from time import sleep, monotonic
-import random
+import math
 from PIL import Image as PILImage
 
 from hardware import *
@@ -670,17 +670,16 @@ class ResultRunOperator:
         if self.number_of_sites <= 0:
             return [(0.0, 0.0)]
 
-        well_diameter = float(self.plate.well_dimension or 0.0)
-        offset_limit = well_diameter * 0.15
-        offsets = [(0.0, 0.0)]
-
-        for _ in range(1, self.number_of_sites):
-            offsets.append(
-                (
-                    random.uniform(-offset_limit, offset_limit),
-                    random.uniform(-offset_limit, offset_limit),
-                )
-            )
+        if self.number_of_sites == 1:
+            offsets = [(0.0, 0.0)]
+        else:
+            # Stage coordinates are in mm at this level; Temika conversion to um happens in stage controller.
+            site_circle_diameter_mm = 0.5
+            radius_mm = site_circle_diameter_mm / 2.0
+            offsets = []
+            for idx in range(self.number_of_sites):
+                theta = (2.0 * math.pi * idx) / float(self.number_of_sites)
+                offsets.append((radius_mm * math.cos(theta), radius_mm * math.sin(theta)))
 
         for idx, (offset_x, offset_y) in enumerate(offsets):
             self.logger.info(
