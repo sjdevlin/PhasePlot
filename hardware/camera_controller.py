@@ -95,6 +95,14 @@ class FlirCameraAdapter(BaseCamera):
         command += "</camera>"
         self.temika_comms.send_command(command)
 
+    def set_trigger_off(self):
+        command = f"<camera name=\"{self.camera_name}\">"
+        command += "<genicam>"
+        command += "<enumeration feature=\"TriggerMode\">Off</enumeration>"
+        command += "</genicam>"
+        command += "</camera>"
+        self.temika_comms.send_command(command)
+
 
     def set_exposure_time(self, exposure_time):
         command = f"<camera name=\"{self.camera_name}\">"

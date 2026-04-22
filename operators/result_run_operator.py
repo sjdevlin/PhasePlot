@@ -15,7 +15,16 @@ class RunStopped(Exception):
 
 
 class ResultRunOperator:
-    def __init__(self, experiment, result_set, temperature_profile, db, stop_event=None, error_callback=None):
+    def __init__(
+        self,
+        experiment,
+        result_set,
+        temperature_profile,
+        db,
+        stop_event=None,
+        error_callback=None,
+        manual_site_callback=None,
+    ):
         self.db = db
         self.logger = Logger()
         self.app_config = AppConfig()
@@ -25,6 +34,7 @@ class ResultRunOperator:
         self.temperature_step = 0.0
         self.stop_event = stop_event
         self.error_callback = error_callback
+        self.manual_site_callback = manual_site_callback
 
         if self.temperature_profile is not None:
             self.temperature_step = self._resolve_temperature_step()
@@ -90,7 +100,9 @@ class ResultRunOperator:
         for channel in self.active_channels:
             self.illumination_controller.illumination_setup(channel["number"], channel["intensity"])
 
-        self.camera_controller.set_exposure_time(self.app_config.get("exposure_time", 200000))
+        self.imaging_exposure_time = self.app_config.get("exposure_time", 200000)
+        self.manual_site_exposure_time = 150000
+        self.camera_controller.set_exposure_time(self.imaging_exposure_time)
         self.movie_path = self.app_config.get("movie_file_directory", "./")
         self.image_path = self.app_config.get("image_file_directory", "./")
 
@@ -129,6 +141,10 @@ class ResultRunOperator:
         self.manual_pause_active = False
         self.autofocus_pause_active = False
         self.site_offsets = self._build_site_offsets()
+        self.manual_sites_calibrated = False
+        self.sample_site_positions = {}
+        self.current_capture_sample = None
+        self.current_capture_site_number = None
 
         for sample in self.experiment.sample:
             sample_target = (
@@ -175,6 +191,7 @@ class ResultRunOperator:
                 self.logger.info(
                     "No temperature profile attached to result set; imaging samples sequentially with assumed stable temperature."
                 )
+                self._select_manual_sites()
                 for sample in self.experiment.sample:
                     self._raise_if_stopped()
                     self._capture_sample(sample)
@@ -188,25 +205,33 @@ class ResultRunOperator:
                     sleep(0.2)
                     continue
 
+                target_temp = self._current_target_temperature()
+                self._select_manual_sites()
+                self.logger.info(
+                    f"Waiting for all wells to soak at shared target {target_temp:.2f} C before imaging."
+                )
+                self._wait_for_all_samples_soak()
+                self.logger.info(
+                    f"All wells reached soak time at shared target {target_temp:.2f} C. Imaging all samples."
+                )
+
                 for sample in self.experiment.sample:
                     self._raise_if_stopped()
                     self._wait_if_paused()
-                    self._wait_for_soak(sample.id)
-                    target_temp = self.target_temperature.get(sample.id, self.assumed_temperature)
                     self.logger.info(
-                        f"Soak time reached for sample {sample.id} at target {target_temp:.2f} C. Proceeding to image."
+                        f"Imaging sample {sample.id} at shared target {target_temp:.2f} C."
                     )
                     self._capture_sample(sample)
 
-                    if self.shared_lock is None:
-                        self.target_temperature[sample.id] += self.temperature_step
-                        self.time_at_temperature[sample.id] = 0
-                    else:
-                        with self.shared_lock:
-                            self.target_temperature[sample.id] += self.temperature_step
-                            self.time_at_temperature[sample.id] = 0
-
-                self.result_run.status = "Running" if self._has_remaining_temperature_steps() else "Complete"
+                if self._is_final_temperature(target_temp):
+                    self.result_run.status = "Complete"
+                else:
+                    next_target = self._next_target_temperature(target_temp)
+                    self._set_all_target_temperatures(next_target)
+                    self.logger.info(
+                        f"Completed imaging all samples at {target_temp:.2f} C. "
+                        f"Advancing all wells to shared target {next_target:.2f} C."
+                    )
 
         except RunStopped:
             if self.result_run.status in {"Running", "Paused"}:
@@ -291,29 +316,239 @@ class ResultRunOperator:
 
             sleep(1)
 
-    def _has_remaining_temperature_steps(self):
-        for sample in self.experiment.sample:
-            if self.shared_lock is None:
-                target_temp = self.target_temperature[sample.id]
-            else:
-                with self.shared_lock:
-                    target_temp = self.target_temperature[sample.id]
+    def _select_manual_sites(self):
+        if self.manual_sites_calibrated:
+            return
 
-            epsilon = 1e-6
-            if self.temperature_step > 0 and target_temp <= (self.temperature_profile.end_temp + epsilon):
-                return True
-            if self.temperature_step < 0 and target_temp >= (self.temperature_profile.end_temp - epsilon):
-                return True
-        return False
+        if self.manual_site_callback is None:
+            raise RuntimeError("Manual site selection is required, but no UI callback is configured.")
+
+        self.logger.info("Starting manual site selection for this imaging run.")
+        self._configure_camera_for_manual_site_selection()
+        for sample in self.experiment.sample:
+            self._raise_if_stopped()
+            self._wait_if_paused()
+
+            self._move_stage_to_well_center(sample)
+
+            for site_number in range(self.number_of_sites):
+                self._raise_if_stopped()
+                self._wait_if_paused()
+
+                self.logger.info(
+                    f"Waiting for manual site selection for sample {sample.id}, "
+                    f"well {sample.well_row}{sample.well_column}, site {site_number + 1}/{self.number_of_sites}."
+                )
+                self.manual_site_callback(sample, site_number, self.number_of_sites)
+
+                x = self._read_stage_position("x")
+                y = self._read_stage_position("y")
+                z = float(self.focus_controller.get_z())
+                autofocus_offset = float(self.focus_controller.get_autofocus_offset())
+                self.sample_site_positions[(sample.id, site_number)] = {
+                    "x": x,
+                    "y": y,
+                    "autofocus_offset": autofocus_offset,
+                }
+                self._update_plate_well_z_height(sample, z)
+                self.logger.info(
+                    f"Stored manual site for sample {sample.id}, site {site_number}: "
+                    f"x={x:.3f}, y={y:.3f}, z={z:.2f}, autofocus_offset={autofocus_offset:.2f}."
+                )
+
+        self.manual_sites_calibrated = True
+        self._configure_camera_for_imaging()
+        self.logger.info("Manual site selection complete. Continuing imaging run.")
+
+    def _configure_camera_for_manual_site_selection(self):
+        if hasattr(self.camera_controller, "set_trigger_off"):
+            self.camera_controller.set_trigger_off()
+        else:
+            self.logger.warning("Camera controller does not support trigger-off mode for manual site selection.")
+        self.camera_controller.set_exposure_time(self.manual_site_exposure_time)
+        self.logger.info(
+            f"Camera configured for manual site selection: trigger off, exposure {self.manual_site_exposure_time}."
+        )
+
+    def _configure_camera_for_imaging(self):
+        self.camera_controller.set_exposure_time(self.imaging_exposure_time)
+        self.camera_controller.set_trigger()
+        self.logger.info(
+            f"Camera configured for imaging: trigger on, exposure {self.imaging_exposure_time}."
+        )
+
+    def _read_stage_position(self, axis):
+        if hasattr(self.stage_controller, "get_position"):
+            return float(self.stage_controller.get_position(axis))
+        return float(self.stage_controller.get(axis))
+
+    def _move_stage_to_well_center(self, sample):
+        x, y = self._get_well_center_position(sample)
+        if self.use_autofocus:
+            self._prepare_for_stage_move()
+
+        self.stage_controller.move(position=x, axis="x", speed="normal")
+        self.stage_controller.move(position=y, axis="y", speed="normal")
+        sleep(1)
+
+    def _get_well_center_position(self, sample):
+        row_index = ord(sample.well_row.upper()) - ord('A')
+        col_index = sample.well_column - 1
+        x = self.plate.centre_first_well_offset_x + (col_index * self.plate.well_spacing_x)
+        y = self.plate.centre_first_well_offset_y + (row_index * self.plate.well_spacing_y)
+        return x, y
+
+    def _update_plate_well_z_height(self, sample, z_height):
+        for well in self.plate.well:
+            if well.well_row == sample.well_row and well.well_column == sample.well_column:
+                well.z_height = float(z_height)
+                self.db.update_plate(self.plate)
+                self.logger.info(
+                    f"Updated plate well {sample.well_row}{sample.well_column} z height to {float(z_height):.2f}."
+                )
+                return
+
+        self.logger.warning(
+            f"Could not update z height: no plate well found for {sample.well_row}{sample.well_column}."
+        )
+
+    def _wait_for_all_samples_soak(self):
+        if self.shared_lock is None:
+            return
+
+        soak_target_seconds = float(self.temperature_profile.soak_time_seconds)
+        wait_started = monotonic()
+        wait_timeout = max(
+            self.soak_wait_timeout_min_seconds,
+            soak_target_seconds * self.soak_wait_timeout_factor,
+        )
+        next_progress_log = self.soak_wait_log_interval
+
+        while True:
+            self._raise_if_stopped()
+            self._wait_if_paused()
+
+            with self.shared_lock:
+                sample_states = [
+                    (
+                        sample.id,
+                        self.time_at_temperature.get(sample.id, 0),
+                        self.target_temperature.get(sample.id, self.assumed_temperature),
+                        self.actual_temperature.get(sample.id, self.assumed_temperature),
+                        self.temperature_last_update.get(sample.id),
+                    )
+                    for sample in self.experiment.sample
+                ]
+
+            if all(time_at_temp >= soak_target_seconds for _, time_at_temp, _, _, _ in sample_states):
+                return
+
+            elapsed = monotonic() - wait_started
+            min_time_at_temp = min((time_at_temp for _, time_at_temp, _, _, _ in sample_states), default=0)
+
+            stalled_samples = []
+            for sample_id, current_time_at_temp, _, _, last_temp_update in sample_states:
+                if current_time_at_temp >= soak_target_seconds or last_temp_update is None:
+                    continue
+                stalled_for = max(0.0, monotonic() - float(last_temp_update))
+                if stalled_for >= self.temperature_stall_timeout_seconds:
+                    stalled_samples.append((sample_id, stalled_for, current_time_at_temp))
+
+            if stalled_samples:
+                sample_id, stalled_for, current_time_at_temp = stalled_samples[0]
+                raise RuntimeError(
+                    f"Temperature updates stalled for sample {sample_id}: "
+                    f"no update for {stalled_for:.0f}s while waiting for all wells to soak "
+                    f"({current_time_at_temp}s/{soak_target_seconds:.0f}s)."
+                )
+
+            non_soak_elapsed = max(0.0, elapsed - float(min_time_at_temp))
+            if non_soak_elapsed >= wait_timeout:
+                slowest_sample = min(sample_states, key=lambda state: state[1])
+                sample_id, current_time_at_temp, target_temp, actual_temp, _ = slowest_sample
+                raise RuntimeError(
+                    f"Soak wait timed out before all wells were ready: "
+                    f"slowest sample {sample_id} at {current_time_at_temp}s/{soak_target_seconds:.0f}s, "
+                    f"target {target_temp:.2f} C, actual {actual_temp:.2f} C, "
+                    f"elapsed {elapsed:.0f}s, non-soak elapsed {non_soak_elapsed:.0f}s."
+                )
+
+            if elapsed >= next_progress_log:
+                slowest_sample = min(sample_states, key=lambda state: state[1])
+                sample_id, current_time_at_temp, target_temp, actual_temp, _ = slowest_sample
+                self.logger.info(
+                    f"Waiting for all wells to soak: slowest sample {sample_id} "
+                    f"{current_time_at_temp}/{soak_target_seconds:.0f}s, "
+                    f"elapsed {elapsed:.0f}s, non-soak elapsed {non_soak_elapsed:.0f}s, "
+                    f"target {target_temp:.2f} C, actual {actual_temp:.2f} C."
+                )
+                next_progress_log += self.soak_wait_log_interval
+
+            sleep(1)
+
+    def _current_target_temperature(self):
+        if not self.experiment.sample:
+            return self.assumed_temperature
+
+        sample_id = self.experiment.sample[0].id
+        if self.shared_lock is None:
+            return float(self.target_temperature.get(sample_id, self.assumed_temperature))
+
+        with self.shared_lock:
+            return float(self.target_temperature.get(sample_id, self.assumed_temperature))
+
+    def _set_all_target_temperatures(self, target_temperature):
+        target_temperature = float(target_temperature)
+        if self.shared_lock is None:
+            for sample in self.experiment.sample:
+                self.target_temperature[sample.id] = target_temperature
+                self.time_at_temperature[sample.id] = 0
+            return
+
+        with self.shared_lock:
+            for sample in self.experiment.sample:
+                self.target_temperature[sample.id] = target_temperature
+                self.time_at_temperature[sample.id] = 0
+
+    def _is_final_temperature(self, target_temperature):
+        if self.temperature_profile is None:
+            return True
+
+        epsilon = 1e-6
+        end_temp = float(self.temperature_profile.end_temp)
+        if abs(self.temperature_step) <= epsilon:
+            return True
+        if self.temperature_step > 0:
+            return target_temperature >= (end_temp - epsilon)
+        return target_temperature <= (end_temp + epsilon)
+
+    def _next_target_temperature(self, target_temperature):
+        next_target = float(target_temperature) + self.temperature_step
+        end_temp = float(self.temperature_profile.end_temp)
+
+        if self.temperature_step > 0 and next_target > end_temp:
+            return end_temp
+        if self.temperature_step < 0 and next_target < end_temp:
+            return end_temp
+        return next_target
+
+    def _get_sample_target_temperature(self, sample_id):
+        if self.shared_lock is None:
+            return float(self.target_temperature.get(sample_id, self.assumed_temperature))
+
+        with self.shared_lock:
+            return float(self.target_temperature.get(sample_id, self.assumed_temperature))
 
     def _capture_sample(self, sample):
-        target_temperature = float(self.target_temperature[sample.id])
+        target_temperature = self._get_sample_target_temperature(sample.id)
         temperature_tag = f"{target_temperature:.2f}".replace(".", "p")
         last_site_z_height = None
 
         for site_number in range(self.number_of_sites):
             self._raise_if_stopped()
             self._wait_if_paused()
+            self.current_capture_sample = sample
+            self.current_capture_site_number = site_number
 
             movie_stub = f"{self.movie_path}/{self.result_run.id}_{sample.well_row}_{sample.well_column}_{temperature_tag}_{site_number}"
             image_stub = f"{self.image_path}/{self.result_run.id}_{sample.well_row}_{sample.well_column}_{temperature_tag}_{site_number}"
@@ -346,14 +581,18 @@ class ResultRunOperator:
 
         if last_site_z_height is not None:
             self.focus_controller.move_z(last_site_z_height - self.focus_clearance)
+        self.current_capture_sample = None
+        self.current_capture_site_number = None
 
     def _move_stage_to_site(self, sample, site_number):
-        row_index = ord(sample.well_row.upper()) - ord('A')
-        col_index = sample.well_column - 1
-        x = self.plate.centre_first_well_offset_x + (col_index * self.plate.well_spacing_x)
-        y = self.plate.centre_first_well_offset_y + (row_index * self.plate.well_spacing_y)
+        stored_site = self.sample_site_positions.get((sample.id, site_number))
+        if stored_site is not None:
+            x = stored_site["x"]
+            y = stored_site["y"]
+        else:
+            x, y = self._get_well_center_position(sample)
 
-        if site_number < len(self.site_offsets):
+        if stored_site is None and site_number < len(self.site_offsets):
             offset_x, offset_y = self.site_offsets[site_number]
         else:
             offset_x, offset_y = (0.0, 0.0)
@@ -363,6 +602,9 @@ class ResultRunOperator:
         if self.use_autofocus:
             self._prepare_for_stage_move()
 
+        if stored_site is not None:
+            self._apply_autofocus_offset(sample, site_number)
+
         self.stage_controller.move(position=x, axis="x", speed="normal")
         self.stage_controller.move(position=y, axis="y", speed="normal")
         sleep(1)
@@ -371,6 +613,7 @@ class ResultRunOperator:
             self._reacquire_focus_after_stage_move(sample, site_number)
 
     def _take_stack(self, sample, site_number):
+        self._configure_camera_for_imaging()
         self.logger.info(
             f"Taking image stack for sample {sample.id} at well ({sample.well_row}, {sample.well_column}), site {site_number}"
         )
@@ -478,10 +721,32 @@ class ResultRunOperator:
         while self.manual_pause_event.is_set():
             self._raise_if_stopped()
             sleep(0.2)
+        self._refresh_current_site_autofocus_offset_after_pause()
         if self.manual_pause_active and not self.autofocus_pause_active and self.result_run.status == "Paused":
             self._set_result_run_status("Running")
         self.manual_pause_active = False
         self.logger.info("Run resumed by user.")
+
+    def _refresh_current_site_autofocus_offset_after_pause(self):
+        if not self.manual_pause_active:
+            return
+        if self.current_capture_sample is None or self.current_capture_site_number is None:
+            return
+
+        site_key = (self.current_capture_sample.id, self.current_capture_site_number)
+        stored_site = self.sample_site_positions.get(site_key)
+        if stored_site is None:
+            return
+
+        offset_at_current_temp = float(self.focus_controller.get_autofocus_offset())
+        temperature_adjustment = self._temperature_autofocus_adjustment(self.current_capture_sample.id)
+        base_offset = offset_at_current_temp - temperature_adjustment
+        stored_site["autofocus_offset"] = base_offset
+        self.logger.info(
+            f"Updated stored autofocus offset for sample {self.current_capture_sample.id}, "
+            f"site {self.current_capture_site_number} after pause: "
+            f"stepper_a={offset_at_current_temp:.2f}, base_offset={base_offset:.2f}."
+        )
 
     def _notify_error(self, source, exc):
         if self.stop_event is not None:
@@ -573,9 +838,14 @@ class ResultRunOperator:
         return False
 
     def _apply_autofocus_offset(self, sample, site_number):
-        autofocus_offset = self.plate.get_well_autofocus_offset(sample.well_row, sample.well_column)
+        stored_site = self.sample_site_positions.get((sample.id, site_number))
+        if stored_site is not None:
+            autofocus_offset = stored_site.get("autofocus_offset", 0.0)
+        else:
+            autofocus_offset = self.plate.get_well_autofocus_offset(sample.well_row, sample.well_column)
         if autofocus_offset is None:
             autofocus_offset = 0.0
+        autofocus_offset = float(autofocus_offset) + self._temperature_autofocus_adjustment(sample.id)
 
         if not self.focus_controller.move_autofocus_offset(autofocus_offset):
             raise RuntimeError(
@@ -585,6 +855,14 @@ class ResultRunOperator:
         self.logger.info(
             f"Applied autofocus offset {float(autofocus_offset):.2f} um for sample {sample.id}, site {site_number}."
         )
+
+    def _temperature_autofocus_adjustment(self, sample_id):
+        if self.temperature_profile is None:
+            return 0.0
+
+        start_temp = float(self.temperature_profile.start_temp)
+        current_temp = self._get_sample_target_temperature(sample_id)
+        return (current_temp - start_temp) * 20.0
 
     def _pause_for_autofocus_recovery(self, reason, sample, site_number):
         self.logger.error(reason)

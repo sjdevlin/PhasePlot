@@ -109,5 +109,5 @@ calibration_heating_time: 30.0 # rem to change this
 
 # Annealer PID settings
 kp: 300.0
-ki: 10
+ki: 15
 kd: 0

@@ -4,6 +4,11 @@ from tkinter import ttk
 from PIL import Image, ImageTk
 from services import Movie2Tiff
 
+DISPLAY_BLACK_POINT_PERCENTILE = 1
+DISPLAY_WHITE_POINT_PERCENTILE = 99.8
+DISPLAY_MAX_VALUE = 245
+
+
 class ResultRunDetailView():
     def __init__(self):
 
@@ -172,15 +177,33 @@ class ResultRunDetailView():
                     print("Warning: Image appears to have uniform values")
                     img_array = np.full_like(img_array, 128, dtype=np.uint8)
                 else:
-                    # Use percentile-based normalization for better contrast
-                    p2, p98 = np.percentile(img_array, (2, 98))
-                    print(f"2nd percentile: {p2}, 98th percentile: {p98}")
+                    # Use gentle percentile-based normalization for display.
+                    # Keeping the white point high prevents bright detail from
+                    # being collapsed into clipped highlights.
+                    p_low, p_high = np.percentile(
+                        img_array,
+                        (DISPLAY_BLACK_POINT_PERCENTILE, DISPLAY_WHITE_POINT_PERCENTILE),
+                    )
+                    print(
+                        f"{DISPLAY_BLACK_POINT_PERCENTILE}th percentile: {p_low}, "
+                        f"{DISPLAY_WHITE_POINT_PERCENTILE}th percentile: {p_high}"
+                    )
+
+                    if p_high <= p_low:
+                        p_low = float(img_array.min())
+                        p_high = float(img_array.max())
+                        print(f"Percentile range was flat; using min/max: {p_low}/{p_high}")
                     
                     # Clip values to remove extreme outliers
-                    img_array = np.clip(img_array, p2, p98)
+                    img_array = np.clip(img_array, p_low, p_high)
                     
-                    # Normalize to 0-255 range
-                    img_array = ((img_array - p2) * 255 / (p98 - p2)).astype(np.uint8)
+                    # Normalize with a little highlight headroom rather than
+                    # pushing the display mapping all the way to pure white.
+                    img_array = (
+                        (img_array - p_low)
+                        * DISPLAY_MAX_VALUE
+                        / (p_high - p_low)
+                    ).astype(np.uint8)
                 
                 img = Image.fromarray(img_array, mode='L')  # Convert to 8-bit grayscale
                 print(f"Converted 16-bit to 8-bit grayscale, new min/max: {img_array.min()}/{img_array.max()}")

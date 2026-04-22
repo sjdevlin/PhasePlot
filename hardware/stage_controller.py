@@ -19,6 +19,9 @@ class Stage(ABC):
     def get(self):
         pass
 
+    def get_position(self, axis="x"):
+        return self.get()
+
 
 
 class OlympusStageController(Stage):
@@ -65,6 +68,9 @@ class OlympusStageController(Stage):
 
     def get(self):
         pass
+
+    def get_position(self, axis="x"):
+        return self.get()
 
 
 
@@ -122,6 +128,16 @@ class TemikaStageController(Stage):
             self.logger.error(f"No status found in reply, returning 0.0 position for {axis}.")
             pos = 0.0
         return pos
+
+    def get_position(self, axis="x"):
+        raw_position = self.get(axis)
+        scale = self.my_app_config.get("stage_scale", 1.0)
+        offset = self.my_app_config.get("origin_offset_x") if axis == "x" else self.my_app_config.get("origin_offset_y")
+        offset_position = offset / scale
+
+        if axis == "y":
+            return offset_position - raw_position
+        return raw_position + offset_position
 
 
 class StageControllerFactory:

@@ -181,6 +181,35 @@ class ExperimentListPresenter():
                     f"{source.capitalize()} thread failed:\n{error_message}",
                 ),
             )
+
+        def request_manual_site_selection(sample, site_number, total_sites):
+            dialog_closed = threading.Event()
+            dialog_error = {"message": None}
+
+            def show_dialog():
+                try:
+                    messagebox.showinfo(
+                        "Manual Site Selection",
+                        (
+                            f"Well {sample.well_row}{sample.well_column}, "
+                            f"site {site_number + 1} of {total_sites}\n\n"
+                            "Move the microscope stage to the desired frame and set the focus offset "
+                            "using stepper A.\n\n"
+                            "Click OK when the image and focus offset are ready."
+                        ),
+                    )
+                except Exception as exc:
+                    dialog_error["message"] = str(exc)
+                finally:
+                    dialog_closed.set()
+
+            self.view.root_window.after(0, show_dialog)
+            while not dialog_closed.wait(0.2):
+                if stop_event is not None and stop_event.is_set():
+                    raise RuntimeError("Run stopped during manual site selection.")
+
+            if dialog_error["message"]:
+                raise RuntimeError(f"Manual site selection dialog failed: {dialog_error['message']}")
         
         # start camera with trigger off and then on when imaging starts
         result_run_operator = ResultRunOperator(
@@ -190,6 +219,7 @@ class ExperimentListPresenter():
             self.db,
             stop_event=stop_event,
             error_callback=handle_operator_error,
+            manual_site_callback=request_manual_site_selection,
         )
         result_run_operator.shared_lock = shared_lock
 
