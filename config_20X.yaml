@@ -10,7 +10,7 @@ robot_ip:
 #Camera settings
 camera_type: FLIR
 camera_name: "Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410" # camera name 
-exposure_time: 200000 # in microseconds
+exposure_time: 250000 # in microseconds
 image_dimension_x: 1920 # in pixels
 image_dimension_y: 1080 # in pixels
 
@@ -58,9 +58,9 @@ script_output_path: ./opentrons_protocols/script
 
 #Image file settings
 #movie_file_directory: /run/media/sd2030/T7/Temika/Movies # linux
-#image_file_directory: /run/media/sd2030/T7/Temika/Images # linux
+image_file_directory: /run/media/sd2030/T7/Temika/Images # linux
 movie_file_directory: /home/sd2030/data/temika/movies # linux
-image_file_directory: /home/sd2030/data/temika/images # linux
+#image_file_directory: /home/sd2030/data/temika/images # linux
 
 movie_extension: .movie
 movie2tiff_output_format: png
@@ -103,7 +103,7 @@ annealer_get_serial_number: "N"
 annealer_set_serial_number: "S"
 annealer_get_num_wells: "W"
 celsius_multiplier: 0.005
-max_heat_intensity: 250
+max_heat_intensity: 240
 calibration_min_temp_rise: 2.0 # rem to chnage this
 calibration_heating_time: 30.0 # rem to change this
 
