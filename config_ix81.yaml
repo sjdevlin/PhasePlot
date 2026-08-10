@@ -1,0 +1,102 @@
+log_dir: logs
+log_file: phase_plot
+error_file: phase_plot_error
+
+sqlite_db: sqlite:///sandbox.sqlite
+
+#Liquid Robot settings
+robot_ip: 
+
+#Camera settings
+camera_type: FLIR
+camera_name: "Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410" # camera name 
+exposure_time: 250000 # in microseconds
+image_dimension_x: 1920 # in pixels
+image_dimension_y: 1080 # in pixels
+
+
+# Illuminator settings
+illumination_type: Temika
+
+# Focus settings
+focus_type: Temika
+normal_focus_speed: 25 # in microns/s
+max_focus_speed: 100 # in microns/s
+autofocus_margin: 20 # in microns
+autofocus_step: 20 # in microns
+autofocus_tries: 7
+
+# Stage settings
+384_plate_minimum_column: 3
+384_plate_minimum_row: 3
+384_plate_maximum_column: 21
+384_plate_maximum_row: 14
+stage_type: Olympus
+stage_force_to_origin: 130 # in mm
+stage_scale: 1000.0 # convert mm to microns
+max_stage_speed: 10000 # in microns/s
+normal_stage_speed: 5000 # in microns/s
+origin_offset_x: 4500 # in microns - for 24 well
+origin_offset_y: 3300 # in microns - for 24 well 
+stage_port: COM6
+stage_timeout: 1.0
+
+# Opentrons settings
+script_template: ./opentrons_protocols/template.json
+script_output_path: ./opentrons_protocols/script
+
+#Image file settings
+#movie_file_directory: /run/media/sd2030/T7/Temika/Movies # linux
+image_file_directory: /run/media/sd2030/T7/Temika/Images # linux
+movie_file_directory: /home/sd2030/data/temika/movies # linux
+#image_file_directory: /home/sd2030/data/temika/images # linux
+
+movie_extension: .movie
+movie2tiff_output_format: png
+movie2tiff_downsample: true
+movie2tiff_convert_8bit: false
+movie2tiff_compression: tiff_lzw
+
+
+# Roboflow settings
+roboflow_inference_host: http://localhost:9001
+image_processing_mode: workflow # workflow | model | auto
+image_processing_workflow_name: test-validation-set/detect-count-and-visualize-3
+# image_processing_model_id: phaseplotv2/5
+image_processing_task: object_detection
+image_processing_confidence_threshold: 0.8
+image_processing_high_confidence_threshold: 0.9
+image_processing_focus_selection_mode: droplet_aware # droplet_aware | global
+image_processing_focus_weight_edge: 0.55
+image_processing_focus_weight_count: 0.20
+image_processing_focus_weight_conf: 0.20
+image_processing_focus_weight_global: 0.05
+image_processing_focus_debug: false
+roboflow_api_key: TMlSASZ8SV6bioL6KYD3
+
+# Annealer Settings
+annealer_port: /dev/ttyACM1 # linux
+
+#can use following script to find correct port on linux
+#for port in /dev/ttyACM*; do echo "=== $port ==="; udevadm info --name=$port | grep -E "ID_VENDOR|ID_MODEL|ID_SERIAL" | head -5; done
+
+annealer_baudrate: 115200
+annealer_retries: 2
+annealer_timeout: 2
+annealer_serial_delay: 0.2
+annealer_heat: "H"
+annealer_get_temp: "T"
+annealer_get_address: "C"
+annealer_zero_all_wells: "A"
+annealer_get_serial_number: "N"
+annealer_set_serial_number: "S"
+annealer_get_num_wells: "W"
+celsius_multiplier: 0.005
+max_heat_intensity: 240
+calibration_min_temp_rise: 2.0 # rem to chnage this
+calibration_heating_time: 30.0 # rem to change this
+
+# Annealer PID settings
+kp: 300.0
+ki: 15
+kd: 0
