@@ -25,12 +25,34 @@ class CameraControllerFactory:
     @staticmethod
     def create_camera_controller(camera_type=None):#TODO put getting camera_type back here
         if camera_type == "IDS":
-#            return IdsCameraAdapter() 
-            pass
+            return IdsCameraAdapter()
         elif camera_type == "FLIR":
             return FlirCameraAdapter()
         else:
             raise ValueError(f"Unsupported camera manufacturer: {camera_type}")
+
+
+class IdsCameraAdapter(BaseCamera):
+    """Temporary PhasePlot adapter backed by the IDS peak smoke-test client."""
+
+    def __init__(self):
+        super().__init__()
+        from .ids_camera import IDSCamera
+
+        self._camera = IDSCamera(
+            model=self.app_config.get("camera_model", "U3-3990SE-M-GL"),
+            serial_number=self.app_config.get("camera_serial"),
+        )
+        self._camera.connect()
+
+    def set_exposure_time(self, exposure_time):
+        self._camera.set_exposure_time(exposure_time)
+
+    def capture_image(self):
+        return self._camera.capture_image()
+
+    def close(self):
+        self._camera.close()
 
 """class IdsCameraAdapter(BaseCamera):
 
@@ -90,7 +112,6 @@ class FlirCameraAdapter(BaseCamera):
         command += "<enumeration feature=\"AcquisitionMode\">Continuous</enumeration>"
         command += f"<enumeration feature=\"TriggerMode\">On</enumeration>"
         command += "<enumeration feature=\"TriggerSource\">Software</enumeration>"
-        command += "<command feature=\"TriggerSoftware\"></command>"
         command += "</genicam>"
         command += "</camera>"
         self.temika_comms.send_command(command)
