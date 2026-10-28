@@ -69,14 +69,14 @@ class PhaseDiagramAnalyzer:
         image_directory: Optional[str] = None,
         output_directory: str = "outputs/phase_diagrams",
         temperature_tolerance: float = 0.15,
-        max_droplets_per_site: int = 5,
+        max_droplets_per_site: int = 10,
         crop_padding_fraction: float = 0.05,
         stack_gap_seconds: float = 2.0,
         droplet_led_channel: int = 5,
         condensate_led_channel: int = 6,
         min_droplets_per_site: int = 5,
-        min_droplet_width_fraction: float = 0.08,
-        max_droplet_width_fraction: float = 0.16,
+        min_droplet_width_fraction: float = 0.05,
+        max_droplet_width_fraction: float = 0.15,
         axis_consistency_tolerance: float = 0.05,
         center_offset_penalty_weight: float = 2.0,
         max_center_offset_over_radius: float = 0.95,
@@ -823,6 +823,17 @@ class PhaseDiagramAnalyzer:
                     ),
                 }
 
+        droplet_overlay_path = self._save_site_overlay_montage(
+            candidates=[row["droplet"] for row in per_crop_measurements],
+            out_path=site_output_dir / f"droplet_sizing_montage_led_{self.droplet_led_channel}.png",
+            channel_key="droplet",
+        )
+        condensate_overlay_path = self._save_site_overlay_montage(
+            candidates=[row["condensate"] for row in per_crop_measurements],
+            out_path=site_output_dir / f"condensate_sizing_montage_led_{self.condensate_led_channel}.png",
+            channel_key="condensate",
+        )
+
         return {
             "sample_id": sample_id,
             "site_number": site_number,
@@ -865,8 +876,8 @@ class PhaseDiagramAnalyzer:
             "dropped_crop_measurements": dropped_crop_measurements,
             "dense_phase_fraction": site_dense_fraction,
             "droplet_to_condensate_volume_ratio": site_inverse_ratio,
-            "droplet_overlay_path": None,
-            "condensate_overlay_path": None,
+            "droplet_overlay_path": droplet_overlay_path,
+            "condensate_overlay_path": condensate_overlay_path,
             "selected_crop_directory": (str(used_crop_dir) if used_crop_dir is not None else None),
             "debug_crop_directory": None,
             "debug_csv_path": str(debug_csv_path),
@@ -1274,6 +1285,19 @@ class PhaseDiagramAnalyzer:
         *,
         channel_key: str,
     ) -> Optional[str]:
+        vis = self._render_candidate_overlay(candidate, channel_key=channel_key)
+        if vis is None:
+            return None
+        if cv2.imwrite(str(out_path), vis):
+            return str(out_path)
+        return None
+
+    def _render_candidate_overlay(
+        self,
+        candidate: MeasurementCandidate,
+        *,
+        channel_key: str,
+    ) -> Optional[np.ndarray]:
         image = cv2.imread(candidate.image_path, cv2.IMREAD_UNCHANGED)
         if image is None:
             return None
@@ -1313,8 +1337,41 @@ class PhaseDiagramAnalyzer:
             f"fit={candidate.fit_score:.2f} "
             f"inlier={candidate.inlier_fraction:.2f}"
         )
-        cv2.putText(vis, text, (8, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 2, cv2.LINE_AA)
-        if cv2.imwrite(str(out_path), vis):
+        cv2.putText(vis, text, (8, 18), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 255, 255), 1, cv2.LINE_AA)
+        return vis
+
+    def _save_site_overlay_montage(
+        self,
+        *,
+        candidates: Sequence[MeasurementCandidate],
+        out_path: Path,
+        channel_key: str,
+    ) -> Optional[str]:
+        if not candidates:
+            return None
+        tiles: List[np.ndarray] = []
+        for candidate in candidates:
+            tile = self._render_candidate_overlay(candidate, channel_key=channel_key)
+            if tile is not None:
+                tiles.append(tile)
+        if not tiles:
+            return None
+
+        cols = min(3, len(tiles))
+        rows = int(np.ceil(len(tiles) / cols))
+        tile_h = max(tile.shape[0] for tile in tiles)
+        tile_w = max(tile.shape[1] for tile in tiles)
+        canvas = np.zeros((rows * tile_h, cols * tile_w, 3), dtype=np.uint8)
+
+        for idx, tile in enumerate(tiles):
+            r = idx // cols
+            c = idx % cols
+            h, w = tile.shape[:2]
+            y0 = r * tile_h
+            x0 = c * tile_w
+            canvas[y0:y0 + h, x0:x0 + w] = tile
+
+        if cv2.imwrite(str(out_path), canvas):
             return str(out_path)
         return None
 
@@ -1332,19 +1389,37 @@ class PhaseDiagramAnalyzer:
         for sample_id, rows in per_sample.items():
             conc_values = [r.get("ns_concentration_uM") for r in rows if r.get("ns_concentration_uM") is not None]
             concentration = float(np.mean(conc_values)) if conc_values else None
-            dense_fractions = [float(r["dense_phase_fraction"]) for r in rows]
-            inverse_ratios = [
-                float(r["droplet_to_condensate_volume_ratio"])
-                for r in rows
-                if r.get("droplet_to_condensate_volume_ratio") is not None
-            ]
+
+            # Use all accepted per-crop measurements (stack-derived readings) to
+            # estimate central tendency and uncertainty for each concentration point.
+            dense_fractions: List[float] = []
+            inverse_ratios: List[float] = []
+            for row in rows:
+                per_crop = row.get("per_crop_measurements", []) or []
+                if per_crop:
+                    for crop_row in per_crop:
+                        if crop_row.get("dense_phase_fraction") is not None:
+                            dense_fractions.append(float(crop_row["dense_phase_fraction"]))
+                        if crop_row.get("droplet_to_condensate_volume_ratio") is not None:
+                            inverse_ratios.append(float(crop_row["droplet_to_condensate_volume_ratio"]))
+                else:
+                    if row.get("dense_phase_fraction") is not None:
+                        dense_fractions.append(float(row["dense_phase_fraction"]))
+                    if row.get("droplet_to_condensate_volume_ratio") is not None:
+                        inverse_ratios.append(float(row["droplet_to_condensate_volume_ratio"]))
+
+            dense_std = float(np.std(dense_fractions)) if len(dense_fractions) > 1 else 0.0
+            dense_sem = float(dense_std / np.sqrt(len(dense_fractions))) if dense_fractions else 0.0
+            mean_dense_fraction = float(np.mean(dense_fractions)) if dense_fractions else None
             summary.append(
                 {
                     "sample_id": sample_id,
                     "ns_concentration_uM": concentration,
                     "site_count": len(rows),
-                    "mean_dense_phase_fraction": float(np.mean(dense_fractions)),
-                    "std_dense_phase_fraction": float(np.std(dense_fractions)) if len(dense_fractions) > 1 else 0.0,
+                    "reading_count": len(dense_fractions),
+                    "mean_dense_phase_fraction": mean_dense_fraction,
+                    "std_dense_phase_fraction": dense_std,
+                    "sem_dense_phase_fraction": dense_sem,
                     "mean_droplet_to_condensate_volume_ratio": (
                         float(np.mean(inverse_ratios)) if inverse_ratios else None
                     ),
@@ -1413,6 +1488,7 @@ class PhaseDiagramAnalyzer:
     ) -> Path:
         x_vals: List[float] = []
         y_vals: List[float] = []
+        y_err_vals: List[float] = []
         for row in sample_summary:
             concentration = row.get("ns_concentration_uM")
             fraction = row.get("mean_dense_phase_fraction")
@@ -1420,17 +1496,30 @@ class PhaseDiagramAnalyzer:
                 continue
             x_vals.append(float(concentration))
             y_vals.append(float(fraction))
+            y_err_vals.append(float(row.get("std_dense_phase_fraction") or 0.0))
 
         fig, ax = plt.subplots(figsize=(9, 6))
-        ax.scatter(x_vals, y_vals, color="tab:blue", label="Measured (mean per sample)")
+        ax.errorbar(
+            x_vals,
+            y_vals,
+            yerr=y_err_vals,
+            fmt="o",
+            color="tab:blue",
+            ecolor="tab:blue",
+            elinewidth=1.2,
+            capsize=3,
+            alpha=0.9,
+            label="Measured mean ±1 SD",
+        )
 
         for row in sample_summary:
             c = row.get("ns_concentration_uM")
             f = row.get("mean_dense_phase_fraction")
             n = row.get("site_count", 0)
+            n_read = row.get("reading_count", 0)
             if c is None or f is None:
                 continue
-            ax.text(float(c), float(f), f" n={n}", fontsize=8, va="bottom")
+            ax.text(float(c), float(f), f" sites={n}, reads={n_read}", fontsize=8, va="bottom")
 
         if fit_result.get("success", False):
             slope = float(fit_result["slope"])

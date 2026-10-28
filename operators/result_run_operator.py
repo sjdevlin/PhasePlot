@@ -1,5 +1,7 @@
 from datetime import datetime
+import json
 from pathlib import Path
+import shutil
 from threading import Event
 from time import sleep, monotonic
 import math
@@ -642,6 +644,40 @@ class ResultRunOperator:
         self.logger.info(f"Processing image stack {movie_filename} at site number {site_number} for sample {sample.id}")
         filenames, focus_scores = self.converter.convert(movie_name=movie_filename, file_stub=image_stub)
         channel_count = max(1, len(self.active_channels))
+        expected_frame_count = int(self.stack_size) * int(channel_count)
+
+        # Safety check: frame count must match expected channel interleave length.
+        # If there is exactly one extra frame, we recover by dropping the first frame
+        # (commonly caused by an unintended early software trigger).
+        if len(filenames) != expected_frame_count:
+            if len(filenames) == expected_frame_count + 1:
+                self.logger.warning(
+                    f"Frame count mismatch (+1) for movie {movie_filename}: "
+                    f"expected {expected_frame_count}, got {len(filenames)}. "
+                    "Applying recovery by dropping first frame before DB write."
+                )
+                filenames = filenames[1:]
+                focus_scores = focus_scores[1:]
+            else:
+                reason = (
+                    f"frame_count_mismatch expected={expected_frame_count} got={len(filenames)} "
+                    f"channels={channel_count} stack_size={self.stack_size}"
+                )
+                self.logger.error(
+                    f"Unrecoverable frame count mismatch for movie {movie_filename}: {reason}. "
+                    "Quarantining files and skipping DB insert for this stack."
+                )
+                self._quarantine_stack_outputs(
+                    movie_filename=movie_filename,
+                    sample=sample,
+                    site_number=site_number,
+                    image_stub=image_stub,
+                    filenames=filenames,
+                    focus_scores=focus_scores,
+                    expected_frame_count=expected_frame_count,
+                    reason=reason,
+                )
+                return
 
         for idx, (file, score) in enumerate(zip(filenames, focus_scores)):
             file_path = Path(str(file)).name
@@ -670,6 +706,53 @@ class ResultRunOperator:
             self.db.add_result_run_image(new_image)
 
         self.logger.info(f"Image stack extracted for movie {movie_filename}")
+
+    def _quarantine_stack_outputs(
+        self,
+        *,
+        movie_filename,
+        sample,
+        site_number,
+        image_stub,
+        filenames,
+        focus_scores,
+        expected_frame_count,
+        reason,
+    ):
+        quarantine_root = Path(self.image_path).expanduser() / "quarantine_mismatch" / f"run_{self.result_run.id}"
+        quarantine_root.mkdir(parents=True, exist_ok=True)
+
+        manifest = {
+            "timestamp": datetime.now().isoformat(),
+            "result_run_id": int(self.result_run.id),
+            "movie_filename": str(movie_filename),
+            "image_stub": str(image_stub),
+            "sample_id": int(sample.id),
+            "site_number": int(site_number),
+            "expected_frame_count": int(expected_frame_count),
+            "actual_frame_count": int(len(filenames)),
+            "reason": str(reason),
+            "files": [str(Path(str(p)).name) for p in filenames],
+            "focus_scores": [float(s) for s in focus_scores],
+        }
+
+        # Move generated files to quarantine to avoid accidental downstream use.
+        for file_path in filenames:
+            src = Path(str(file_path))
+            if not src.exists():
+                continue
+            dst = quarantine_root / src.name
+            try:
+                shutil.move(str(src), str(dst))
+            except Exception as exc:
+                self.logger.error(f"Failed to move mismatched frame {src} to quarantine: {exc}")
+
+        manifest_name = f"{Path(str(image_stub)).name}_mismatch_manifest.json"
+        manifest_path = quarantine_root / manifest_name
+        try:
+            manifest_path.write_text(json.dumps(manifest, indent=2))
+        except Exception as exc:
+            self.logger.error(f"Failed to write mismatch manifest {manifest_path}: {exc}")
 
     def _resolve_saved_image_dimensions(self, image_path: Path):
         fallback_x = int(getattr(self.camera_controller, "image_dimension_x", 0) or 0)
