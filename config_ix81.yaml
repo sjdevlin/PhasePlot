@@ -19,7 +19,9 @@ image_dimension_y: 1080 # in pixels
 illumination_type: Temika
 
 # Focus settings
-focus_type: Temika
+focus_type: OlympusIX81
+ix81_port: COM9
+micromanager_path: "C:/Program Files/Micro-Manager-2.0"
 normal_focus_speed: 25 # in microns/s
 max_focus_speed: 100 # in microns/s
 autofocus_margin: 20 # in microns
@@ -31,11 +33,11 @@ autofocus_tries: 7
 384_plate_minimum_row: 3
 384_plate_maximum_column: 21
 384_plate_maximum_row: 14
-stage_type: Olympus
+stage_type: Olympus_STC
 stage_force_to_origin: 130 # in mm
 stage_scale: 1000.0 # convert mm to microns
 max_stage_speed: 10000 # in microns/s
-normal_stage_speed: 5000 # in microns/s
+normal_stage_speed: 6250 # in microns/s (25% of controller maximum)
 origin_offset_x: 4500 # in microns - for 24 well
 origin_offset_y: 3300 # in microns - for 24 well 
 stage_port: COM6

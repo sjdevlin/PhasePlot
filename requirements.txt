@@ -16,3 +16,4 @@ requests
 inference_sdk
 opentrons
 ids_peak
+pymmcore==11.2.1.71.0  # Device API 71, matching bundled Micro-Manager 2.0 adapters

@@ -1,11 +1,8 @@
-from tokenize import String
-from serial import Serial
-from time import sleep
 from services import Logger, AppConfig
 from abc import ABC, abstractmethod
 
 class Stage(ABC):
-    """Abstract base class defining the interface for all cameras."""
+    """Abstract base class defining the interface for all stages."""
 
     def __init__(self):
         self.logger = Logger() # Singleton instance
@@ -28,49 +25,82 @@ class OlympusStageController(Stage):
 
     def __init__(self):
         super().__init__()
+        from hardware.olympus_stc import OlympusSTC
 
-        self.port = self.my_app_config.get("stage_port")
-        self.baudrate = self.my_app_config.get("stage_baudrate")
-        self.parity = self.my_app_config.get("stage_parity")
-        self.stopbits = self.my_app_config.get("stage_stopbits")
-        self.bytesize = self.my_app_config.get("stage_bytesize")
-        self.timeout = self.my_app_config.get("stage_timeout")
+        self.normal_stage_speed = float(
+            self.my_app_config.get("normal_stage_speed", 6250)
+        ) / 1000.0
+        self.max_stage_speed = float(
+            self.my_app_config.get("max_stage_speed", 25000)
+        ) / 1000.0
+        self.origin_offset_x = float(
+            self.my_app_config.get("origin_offset_x", 0)
+        ) / 1000.0
+        self.origin_offset_y = float(
+            self.my_app_config.get("origin_offset_y", 0)
+        ) / 1000.0
+        self.stc = OlympusSTC(
+            port=self.my_app_config.get("stage_port"),
+            timeout=float(self.my_app_config.get("stage_timeout", 1.0)),
+        )
 
     def connect(self):
         try:
-
-            self.ser = Serial(
-                        port=self.port,
-                        baudrate=self.baudrate,
-                        parity=self.parity,
-                        stopbits=self.stopbits,
-                        bytesize=self.bytesize,
-                        timeout=self.timeout)
-
-            if self.ser.is_open:
-                self.logger.debug(f"Connected to stage.")
-                return True
-            else:
-                return False
+            self.stc.connect()
+            identity = self.stc.identify()
+            self.logger.debug(f"Connected to Olympus stage: {identity}")
+            return True
         except Exception as e:
             self.logger.error(f"Error connecting to stage: {e}")
             return False
 
+    def _ensure_connected(self):
+        if self.stc.serial is None or not self.stc.serial.is_open:
+            if not self.connect():
+                raise ConnectionError("Could not connect to the Olympus STC stage")
 
-    def send_command(self, command):
-        self.ser.write((command + '\n').encode())
+    def move(self, axis, position, speed="normal"):
+        """Move one axis to an absolute PhasePlot position in millimetres."""
+        if axis not in ("x", "y"):
+            raise ValueError("axis must be 'x' or 'y'")
+        self._ensure_connected()
+        stage_speed = self.max_stage_speed if speed == "max" else self.normal_stage_speed
+        self.stc.set_velocity(stage_speed)
 
-    def read_response(self):
-        return self.ser.readline().decode().strip()
+        raw_x, raw_y = self.stc.get_position()
+        if axis == "x":
+            raw_x = float(position) - self.origin_offset_x
+        else:
+            # Preserve PhasePlot's existing convention that increasing plate Y
+            # corresponds to decreasing hardware Y.
+            raw_y = self.origin_offset_y - float(position)
+        self.stc.move_absolute(raw_x, raw_y)
+        self.stc.wait_until_ready()
 
-    def move(self, distance):
-        pass
+    def reset(self, axis="x"):
+        """Set the selected hardware axis coordinate to zero without moving."""
+        if axis not in ("x", "y"):
+            raise ValueError("axis must be 'x' or 'y'")
+        self._ensure_connected()
+        raw_x, raw_y = self.stc.get_position()
+        if axis == "x":
+            raw_x = 0.0
+        else:
+            raw_y = 0.0
+        self.stc.set_position(raw_x, raw_y)
 
-    def get(self):
-        pass
+    def get(self, axis="x"):
+        if axis not in ("x", "y"):
+            raise ValueError("axis must be 'x' or 'y'")
+        self._ensure_connected()
+        raw_x, raw_y = self.stc.get_position()
+        return raw_x if axis == "x" else raw_y
 
     def get_position(self, axis="x"):
-        return self.get()
+        raw_position = self.get(axis)
+        if axis == "y":
+            return self.origin_offset_y - raw_position
+        return raw_position + self.origin_offset_x
 
 
 
@@ -148,7 +178,7 @@ class StageControllerFactory:
         my_app_config = AppConfig()  # Singleton instance - may be opened multiple times from different classes
         stage_type = my_app_config.get("stage_type")
 
-        if stage_type == "Olympus":
+        if stage_type in ("Olympus", "Olympus_STC"):
             return OlympusStageController()
         elif stage_type == "Temika":
             return TemikaStageController()

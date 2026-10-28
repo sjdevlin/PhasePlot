@@ -1,4 +1,5 @@
 from .temika_comms import TemikaComms
+from .olympus_ix81 import OlympusIX81Hub
 from .stage_controller import StageControllerFactory
 from .camera_controller import CameraControllerFactory
 from .focus_controller import FocusControllerFactory

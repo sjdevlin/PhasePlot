@@ -1,14 +1,10 @@
-from tokenize import String
-from serial import Serial
-from time import sleep
 from services import Logger, AppConfig
 from abc import ABC, abstractmethod
 
 class Focus(ABC):
-    """Abstract base class defining the interface for all cameras."""
+    """Abstract base class defining the interface for all focus drives."""
 
-    def __init__(self, port, parity, baudrate, stopbits, bytesize, timeout):
-        
+    def __init__(self):
         self.logger = Logger() # Singleton instance
         self.my_app_config = AppConfig()  # Singleton instance - may be opened multiple times from different classes
 
@@ -27,50 +23,34 @@ class Focus(ABC):
 
 
 
-class OlympusX81FocusController(Focus):
+class OlympusIX81FocusController(Focus):
 
     def __init__(self):
-        self.my_app_config = AppConfig()  # Initialize before use
-        self.logger = Logger()
-        
-        self.port = self.my_app_config.get("focus_port")
-        self.baudrate = self.my_app_config.get("focus_baudrate")
-        self.parity = self.my_app_config.get("focus_parity")
-        self.stopbits = self.my_app_config.get("focus_stopbits")
-        self.bytesize = self.my_app_config.get("focus_bytesize")
-        self.timeout = self.my_app_config.get("focus_timeout")
+        super().__init__()
+        from hardware.olympus_ix81 import OlympusIX81Hub
+
+        self.ix81 = OlympusIX81Hub()
 
     def connect(self):
         try:
-            self.ser = Serial(
-                        port=self.port,
-                        baudrate=self.baudrate,
-                        parity=self.parity,
-                        stopbits=self.stopbits,
-                        bytesize=self.bytesize,
-                        timeout=self.timeout)
-
-            if self.ser.is_open:
-                self.logger.debug(f"Connected to Olympus focus.")
-                return True
-            else:
-                return False
+            return self.ix81.connect()
         except Exception as e:
             self.logger.error(f"Error connecting to Olympus focus: {e}")
             return False
 
-
-    def send_command(self, command):
-        self.ser.write((command + '\n').encode())
-
-    def read_response(self):
-        return self.ser.readline().decode().strip()
-
-    def move_z(self, distance):
-        pass
+    def move_z(self, distance="0", speed="normal"):
+        # The IX81 adapter does not expose focus velocity. Keep the speed
+        # argument for compatibility with the PhasePlot focus interface.
+        self.ix81.move_focus_absolute(float(distance))
 
     def get_z(self):
-        pass
+        return self.ix81.get_focus_position()
+
+    def autofocus(self, status=False):
+        success = self.ix81.set_autofocus(bool(status))
+        if not success:
+            self.logger.warning("IX81 ZDC autofocus is unavailable.")
+        return success
 
     def move_autofocus_offset(self, offset_um=0.0):
         self.logger.debug(
@@ -187,10 +167,10 @@ class FocusControllerFactory:
         my_app_config = AppConfig()  # Singleton instance - may be opened multiple times from different classes
         focus_type = my_app_config.get("focus_type")
 
-        if focus_type == "OlympusX81":
-            return OlympusX81FocusController()
+        if focus_type in ("OlympusIX81", "OlympusX81"):
+            return OlympusIX81FocusController()
         elif focus_type == "Temika":
             return TemikaFocusController()
         else:
-            logger.error(f"Unknown stage type: {focus_type}")
+            logger.error(f"Unknown focus type: {focus_type}")
             return None

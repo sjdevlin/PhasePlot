@@ -11,9 +11,12 @@ from serial import EIGHTBITS, PARITY_NONE, STOPBITS_ONE, Serial
 class OlympusSTC:
     """Small STC client intended for initial hardware smoke testing.
 
-    Coordinates are expressed in millimetres, as specified by the STC manual.
-    The controller uses reverse-polish commands, for example ``1 0 r``.
+    The public API uses millimetres. The tested U-STC firmware communicates in
+    micrometres despite the STC manual labelling coordinates as millimetres.
+    The controller uses reverse-polish commands, for example ``1000 0 r``.
     """
+
+    CONTROLLER_UNITS_PER_MM = 1000.0
 
     def __init__(
         self,
@@ -91,13 +94,42 @@ class OlympusSTC:
         fields = response.replace(",", ".").split()
         if len(fields) != 2:
             raise RuntimeError(f"Unexpected STC position response: {response!r}")
-        return float(fields[0]), float(fields[1])
+        return (
+            float(fields[0]) / self.CONTROLLER_UNITS_PER_MM,
+            float(fields[1]) / self.CONTROLLER_UNITS_PER_MM,
+        )
 
     def move_relative(self, x_mm: float, y_mm: float) -> None:
-        self.send(f"{x_mm:g} {y_mm:g} r")
+        self.send(
+            f"{x_mm * self.CONTROLLER_UNITS_PER_MM:g} "
+            f"{y_mm * self.CONTROLLER_UNITS_PER_MM:g} r"
+        )
 
     def move_absolute(self, x_mm: float, y_mm: float) -> None:
-        self.send(f"{x_mm:g} {y_mm:g} m")
+        self.send(
+            f"{x_mm * self.CONTROLLER_UNITS_PER_MM:g} "
+            f"{y_mm * self.CONTROLLER_UNITS_PER_MM:g} m"
+        )
+
+    def set_position(self, x_mm: float, y_mm: float) -> None:
+        """Set the controller coordinates at the current physical position."""
+        self.send(
+            f"{x_mm * self.CONTROLLER_UNITS_PER_MM:g} "
+            f"{y_mm * self.CONTROLLER_UNITS_PER_MM:g} setpos"
+        )
+
+    def get_velocity(self) -> float:
+        """Return stage velocity in millimetres per second."""
+        response = self.query("gv")
+        try:
+            return float(response) / self.CONTROLLER_UNITS_PER_MM
+        except ValueError as error:
+            raise RuntimeError(f"Unexpected STC velocity response: {response!r}") from error
+
+    def set_velocity(self, velocity_mm_s: float) -> None:
+        if velocity_mm_s <= 0:
+            raise ValueError("velocity_mm_s must be greater than zero")
+        self.send(f"{velocity_mm_s * self.CONTROLLER_UNITS_PER_MM:g} sv")
 
     def get_status(self) -> int:
         response = self.query("st")
