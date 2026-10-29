@@ -73,6 +73,7 @@ class TemikaFocusController(Focus):
         self.name = self.my_app_config.get("temika_name")
         self.max_focus_speed = self.my_app_config.get("max_focus_speed", 100)  # in microns/s
         self.normal_focus_speed = self.my_app_config.get("normal_focus_speed", 5)
+        self.focus_drop_between_moves = self.my_app_config.get("focus_drop_between_moves", 200)  # in microns
 
         
     def autofocus(self, status=False):

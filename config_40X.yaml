@@ -99,9 +99,9 @@ annealer_get_serial_number: "N"
 annealer_set_serial_number: "S"
 annealer_get_num_wells: "W"
 celsius_multiplier: 0.005
-max_heat_intensity: 250
+max_heat_intensity: 200
 calibration_min_temp_rise: 2.0 # rem to chnage this
-calibration_heating_time: 30.0 # rem to change this
+calibration_heating_time: 15.0 # rem to change this
 
 # Annealer PID settings
 kp: 300.0

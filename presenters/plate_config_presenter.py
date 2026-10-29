@@ -39,8 +39,10 @@ class PlateConfigPresenter():
 
     def store_z_value(self):
         if self.selected_well_index is not None:
-            z_value = self.focus_controller.get_z()
+            z_value = self.focus_controller.get_z() 
+            autofocus_offset = self.focus_controller.get_autofocus_offset()
             self.plate.well[self.selected_well_index].z_height = z_value
+            self.plate.well[self.selected_well_index].autofocus_offset = autofocus_offset
             self.db.update_plate(self.plate)
             self.display_plate()
         else:
@@ -57,7 +59,7 @@ class PlateConfigPresenter():
                     break
             # Move stage to selected well
             old_z_height = self.focus_controller.get_z()
-            self.focus_controller.move_z(old_z_height - 200, speed="normal") 
+            self.focus_controller.move_z(old_z_height - self.focus_controller.focus_drop_between_moves, speed="normal") 
             x = self.plate.centre_first_well_offset_x + column_int * self.plate.well_spacing_x
             y = self.plate.centre_first_well_offset_y + row_int * self.plate.well_spacing_y
             self.stage_controller.move(position = x, axis= "x", speed="normal")

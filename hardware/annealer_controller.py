@@ -131,7 +131,7 @@ class AnnealerController():
         else:
             self.logger.info(f"Failed to get all addresses.  Found {len(addresses)} out of {num_wells}.")
             self.logger.error(f"Failed to get all addresses.  Found {len(addresses)} out of {num_wells}.")
-            return addresses
+        return addresses
 
     def get_temperature_celsius(self, sensor_address=None, calibration_factor=1.0):
 
