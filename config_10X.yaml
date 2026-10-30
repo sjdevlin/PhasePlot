@@ -104,7 +104,13 @@ max_heat_intensity: 200
 calibration_min_temp_rise: 2.0 # rem to chnage this
 calibration_heating_time: 15.0 # rem to change this
 
+temperature_target_tolerance: 0.2
+temperature_target_hysteresis: 0.25
+temperature_target_reset_grace_seconds: 10.0
+temperature_poll_interval_seconds: 1.0
+
+
 # Annealer PID settings
-kp: 300.0
+kp: 150.0
 ki: 10
 kd: 0

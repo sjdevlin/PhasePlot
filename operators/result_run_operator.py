@@ -386,12 +386,17 @@ class ResultRunOperator:
 
     def _move_stage_to_well_center(self, sample):
         x, y = self._get_well_center_position(sample)
+        stored_z_height = self.plate.get_well_z_height(sample.well_row, sample.well_column)
         if self.use_autofocus:
             self._prepare_for_stage_move()
 
         self.stage_controller.move(position=x, axis="x", speed="normal")
         self.stage_controller.move(position=y, axis="y", speed="normal")
+        self.focus_controller.move_z(stored_z_height)
         sleep(1)
+
+        if self.use_autofocus and stored_z_height is not None:
+            self.focus_controller.move_z(stored_z_height)
 
     def _get_well_center_position(self, sample):
         row_index = ord(sample.well_row.upper()) - ord('A')
@@ -860,7 +865,8 @@ class ResultRunOperator:
         if self.focus_position is None:
             self.focus_position = self.focus_controller.get_z()
         self.focus_controller.autofocus(False)
-        self.focus_controller.move_z(self.focus_position - self.focus_clearance)
+        current_z = self.focus_controller.get_z()
+        self.focus_controller.move_z(current_z - self.focus_controller.focus_drop_between_moves)
 
     def _reacquire_focus_after_stage_move(self, sample, site_number):
         if self._attempt_autofocus_lock(sample, site_number):

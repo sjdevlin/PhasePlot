@@ -146,11 +146,10 @@ class AnnealerConfigOperator():
         self.logger.info(f"Annealer configured with ID: {new_annealer.id}.")
 
     def _calculate_row_col(self, well_index):
-        """Calculate row and column from well index based on annealer type."""
-        # TODO: make this more felxible based on different annealer types
+        """Calculate plate coordinates from the annealer's hardware index."""
         if self.annealer.num_wells == 24:
-            row = chr(ord('A') + (well_index // 6))
-            column = well_index % 6 + 1
+            row = chr(ord("D") - (well_index % 4))
+            column = 6 - (well_index // 4)
             return row, column
         else:   
             return 0, 0
