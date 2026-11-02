@@ -69,7 +69,7 @@ movie2tiff_convert_8bit: false
 movie2tiff_compression: tiff_lzw
 
 #Peltier settings
-Peltier_present: true
+Peltier_present: false
 Peltier_Kp: 1000
 Peltier_Ki: 5
 Peltier_Max_Duty_Cycle: 0.5
@@ -93,7 +93,7 @@ image_processing_focus_debug: false
 roboflow_api_key: TMlSASZ8SV6bioL6KYD3
 
 # Annealer Settings
-annealer_port: /dev/ttyACM1 # linux
+annealer_port: /dev/ttyACM0 # linux
 
 #can use following script to find correct port on linux
 #for port in /dev/ttyACM*; do echo "=== $port ==="; udevadm info --name=$port | grep -E "ID_VENDOR|ID_MODEL|ID_SERIAL" | head -5; done

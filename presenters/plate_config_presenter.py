@@ -16,6 +16,7 @@ class PlateConfigPresenter():
 
         self.selected_well_row = None
         self.selected_well_column = None
+        self.selected_well_index = None
 #        self.display_plate()
         self.view.retrieve_plate_button.configure(command=self.retrieve_plate_details)
 #        self.view.next_button.configure(command=self.move_to_next_well)
@@ -57,6 +58,8 @@ class PlateConfigPresenter():
                     self.selected_well_index = index
                     row_int, column_int = well_to_indices(well.well_row, well.well_column)
                     break
+            else:
+                return
             # Move stage to selected well
             old_z_height = self.focus_controller.get_z()
             self.focus_controller.move_z(old_z_height - self.focus_controller.focus_drop_between_moves, speed="normal") 
@@ -64,10 +67,13 @@ class PlateConfigPresenter():
             y = self.plate.centre_first_well_offset_y + row_int * self.plate.well_spacing_y
             self.stage_controller.move(position = x, axis= "x", speed="normal")
             self.stage_controller.move(position = y, axis= "y", speed="normal")
-            self.focus_controller.move_z(old_z_height, speed="normal")
-            stored_z_height = self.plate.well[self.selected_well_index].z_height
-            if stored_z_height is not None:
-                self.view.z_height.configure(text=f"{stored_z_height:.2f} um")
+            stored_z_height = well.z_height
+            target_z_height = stored_z_height if stored_z_height is not None else old_z_height
+            self.focus_controller.move_z(target_z_height, speed="normal")
+            if well.autofocus_offset is not None:
+                if not self.focus_controller.move_autofocus_offset(well.autofocus_offset):
+                    self.view.display_error("Could not set the stored autofocus offset for this well.")
+            self.view.z_height.configure(text=f"{target_z_height:.2f} um")
             self.display_plate()
 
     def display_plate(self):
