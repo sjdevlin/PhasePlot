@@ -48,6 +48,8 @@ class ResultRunOperator:
             downsample=bool(self.app_config.get("movie2tiff_downsample", True)),
             convert_8bit=bool(self.app_config.get("movie2tiff_convert_8bit", False)),
             output_format=str(self.app_config.get("movie2tiff_output_format", "png")),
+            crop_factor_x=float(self.app_config.get("image_crop_factor_x", 1.0)),
+            crop_factor_y=float(self.app_config.get("image_crop_factor_y", 1.0)),
         )
 
         self.assumed_temperature = float(self.app_config.get("assumed_temperature_celsius", 25.0))

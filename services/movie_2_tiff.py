@@ -138,6 +138,8 @@ class Movie2Tiff:
         downsample: bool = True,
         convert_8bit: bool = False,
         output_format: str = "png",
+        crop_factor_x: float = 1.0,
+        crop_factor_y: float = 1.0,
     ) -> None:
         compression = compression.lower()
         output_format = output_format.lower()
@@ -148,11 +150,15 @@ class Movie2Tiff:
         if output_format == "tiff" and compression not in _LOSSLESS_TIFF:
             raise ValueError(
                 f"Unsupported compression '{compression}'. Choose from {', '.join(sorted(_LOSSLESS_TIFF))}")
+        if not 0 < crop_factor_x <= 1 or not 0 < crop_factor_y <= 1:
+            raise ValueError("Crop factors must be greater than 0 and no greater than 1")
         
         self.compression = compression
         self.downsample = downsample
         self.convert_8bit = convert_8bit
         self.output_format = output_format
+        self.crop_factor_x = crop_factor_x
+        self.crop_factor_y = crop_factor_y
 
     # ------------------------------------------------------------------
     # Public API
@@ -263,6 +269,18 @@ class Movie2Tiff:
         return float(np.max(img))
 
     # -------------- Image processing helpers ---------------
+    def _crop_array(self, arr: np.ndarray) -> np.ndarray:
+        """Crop the array around its centre using the configured width and height factors."""
+        if self.crop_factor_x == 1.0 and self.crop_factor_y == 1.0:
+            return arr
+
+        height, width = arr.shape
+        crop_width = max(1, min(width, round(width * self.crop_factor_x)))
+        crop_height = max(1, min(height, round(height * self.crop_factor_y)))
+        left = (width - crop_width) // 2
+        top = (height - crop_height) // 2
+        return arr[top : top + crop_height, left : left + crop_width]
+
     @staticmethod
     def _downsample_array(arr: np.ndarray, method: str = "bilinear") -> np.ndarray:
         """Downsample array to 25% area (50% linear) using various methods."""
@@ -355,11 +373,7 @@ class Movie2Tiff:
                 off = r * stride
                 out[r] = np.frombuffer(buf[off : off + w], dtype=np.uint8, count=w)
             
-            # Apply downsampling if requested
-            if self.downsample:
-                out = self._downsample_array(out, method="averaging")
-            
-            return out
+            return self._process_decoded_array(out)
 
         if hdr.pixelformat == CAMERA_PIXELFORMAT_MONO_16:
             out = np.empty((h, w), dtype=np.uint16)
@@ -380,11 +394,7 @@ class Movie2Tiff:
                     row = row.byteswap()
                 out[r] = row
             
-            # Apply downsampling if requested
-            if self.downsample:
-                out = self._downsample_array(out, method="averaging")
-            
-            return out
+            return self._process_decoded_array(out)
 
         if hdr.pixelformat == CAMERA_PIXELFORMAT_MONO_12_PACKED:
             out = np.empty((h, w), dtype=np.uint16)
@@ -399,11 +409,7 @@ class Movie2Tiff:
                         out[r, c + 1] = (b1 >> 4) | (b2 << 4)
                     j += 3
             
-            # Apply downsampling if requested
-            if self.downsample:
-                out = self._downsample_array(out, method="averaging")
-            
-            return out
+            return self._process_decoded_array(out)
 
         if hdr.pixelformat == CAMERA_PIXELFORMAT_MONO_32:
             out = np.empty((h, w), dtype=np.uint32)
@@ -414,13 +420,16 @@ class Movie2Tiff:
                     row = row.byteswap()
                 out[r] = row
             
-            # Apply downsampling if requested
-            if self.downsample:
-                out = self._downsample_array(out, method="averaging")
-            
-            return out
+            return self._process_decoded_array(out)
 
         raise NotImplementedError(f"Unsupported pixel format 0x{hdr.pixelformat:08X}")
+
+    def _process_decoded_array(self, arr: np.ndarray) -> np.ndarray:
+        """Apply cropping before optional downsampling."""
+        arr = self._crop_array(arr)
+        if self.downsample:
+            arr = self._downsample_array(arr, method="averaging")
+        return arr
 
     # -------------- Image writing ---------------
     def _save_image(
@@ -462,6 +471,10 @@ class Movie2Tiff:
         if self.downsample:
             meta_json["processed_downsampled"] = True
             meta_json["downsampling_factor"] = 0.5
+        if self.crop_factor_x != 1.0 or self.crop_factor_y != 1.0:
+            meta_json["processed_cropped"] = True
+            meta_json["crop_factor_x"] = self.crop_factor_x
+            meta_json["crop_factor_y"] = self.crop_factor_y
         if self.convert_8bit:
             meta_json["processed_8bit_conversion"] = True
             
@@ -506,6 +519,10 @@ class Movie2Tiff:
         if self.downsample:
             meta_json["processed_downsampled"] = True
             meta_json["downsampling_factor"] = 0.5
+        if self.crop_factor_x != 1.0 or self.crop_factor_y != 1.0:
+            meta_json["processed_cropped"] = True
+            meta_json["crop_factor_x"] = self.crop_factor_x
+            meta_json["crop_factor_y"] = self.crop_factor_y
         if self.convert_8bit:
             meta_json["processed_8bit_conversion"] = True
         

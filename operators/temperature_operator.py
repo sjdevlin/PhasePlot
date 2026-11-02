@@ -1,7 +1,7 @@
 from datetime import datetime
 from time import sleep, monotonic
 
-from hardware import AnnealerController
+from hardware import AnnealerController, PeltierController
 from models import ResultRunData
 from services import Logger, AppConfig, PIDCalculator
 
@@ -42,11 +42,23 @@ class TemperatureOperator:
         self.experiment = self.db.get_experiment_by_id(self.result_run.experiment_id)
 
         self.annealer_controller = AnnealerController()
+        self.peltier_controller = None
+        self.peltier_offset = 0.0
+        self.last_peltier_target = None
+
+        if bool(self.app_config.get("Peltier_present", False)):
+            self.peltier_controller = PeltierController()
+            self.peltier_offset = float(self.app_config.get("Peltier_offset", 0.0))
 
         if not self.annealer_controller.connect():
             raise RuntimeError("Failed to connect to annealer; aborting temperature operator setup")
 
         self.logger.info("Annealer connected")
+        if self.peltier_controller is not None:
+            self.peltier_controller.set_status("active")
+            self.logger.info(
+                f"Peltier enabled with temperature offset {self.peltier_offset:.2f} C."
+            )
         serial_number = self.annealer_controller.get_serial_number()
         self.annealer_parameters = self.db.get_annealer_by_serial_number(serial_number)
         if not self.annealer_parameters:
@@ -102,6 +114,21 @@ class TemperatureOperator:
 
                 cycle_started = datetime.now()
                 result_rows = []
+                lowest_target_temperature = self._get_lowest_target_temperature()
+                if (
+                    self.peltier_controller is not None
+                    and (
+                        self.last_peltier_target is None
+                        or abs(lowest_target_temperature - self.last_peltier_target) > 1e-9
+                    )
+                ):
+                    peltier_target = lowest_target_temperature + self.peltier_offset
+                    self.peltier_controller.set_temperature(peltier_target)
+                    self.last_peltier_target = lowest_target_temperature
+                    self.logger.info(
+                        f"Peltier target set to {peltier_target:.2f} C "
+                        f"(lowest well target {lowest_target_temperature:.2f} C)."
+                    )
 
                 for sample in self.experiment.sample:
                     self._raise_if_stopped()
@@ -263,6 +290,13 @@ class TemperatureOperator:
             except Exception as exc:
                 self.logger.error(f"Failed to zero annealer wells: {exc}")
 
+            if self.peltier_controller is not None:
+                try:
+                    self.peltier_controller.set_status("inactive")
+                    self.logger.info("Peltier disabled.")
+                except Exception as exc:
+                    self.logger.error(f"Failed to disable Peltier: {exc}")
+
             try:
                 self.db.update_result_run(self.result_run)
             except Exception as exc:
@@ -279,6 +313,17 @@ class TemperatureOperator:
         if self._stop_requested():
             self.logger.warning("Temperature control stop event detected.")
             raise RunStopped()
+
+    def _get_lowest_target_temperature(self):
+        if self.shared_lock is None:
+            target_temperatures = list(self.target_temperature.values())
+        else:
+            with self.shared_lock:
+                target_temperatures = list(self.target_temperature.values())
+
+        if not target_temperatures:
+            raise RuntimeError("Cannot set Peltier temperature: no well targets are available")
+        return min(float(target_temperature) for target_temperature in target_temperatures)
 
     def _notify_error(self, source, exc):
         if self.stop_event is not None:

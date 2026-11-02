@@ -5,3 +5,4 @@ from .camera_controller import CameraControllerFactory
 from .focus_controller import FocusControllerFactory
 from .illumination_controller import IlluminationControllerFactory
 from .annealer_controller import AnnealerController
+from .peltier_controller import PeltierController
