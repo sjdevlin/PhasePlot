@@ -27,6 +27,7 @@ max_focus_speed: 100 # in microns/s
 autofocus_margin: 20 # in microns
 autofocus_step: 20 # in microns
 autofocus_tries: 7
+temperature_autofocus_adjustment_per_degree: 20 # in microns per degree Celsius
 
 # Stage settings
 384_plate_minimum_column: 3

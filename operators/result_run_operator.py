@@ -56,12 +56,16 @@ class ResultRunOperator:
         self.number_of_sites = self.image_set.number_of_sites or 1
         self.stack_size = self.image_set.stack_size or 1
         self.stack_step_size = self.image_set.stack_step_size or 0
+        self.first_image_offset = float(self.image_set.first_image_offset or 0)
         self.focus_clearance = float(self.app_config.get("focus_clearance_um", 100))
         self.autofocus_retry_interval = float(self.app_config.get("autofocus_retry_interval_seconds", 2))
         self.use_autofocus = bool(getattr(self.image_set, "autofocus", False))
         self.autofocus_margin = float(self.app_config.get("autofocus_margin", 40))
         self.autofocus_step = float(self.app_config.get("autofocus_step", 20))
         self.autofocus_tries = max(1, int(self.app_config.get("autofocus_tries", 5)))
+        self.temperature_autofocus_adjustment_per_degree = float(
+            self.app_config.get("temperature_autofocus_adjustment_per_degree", 20)
+        )
         self.autofocus_recovery_max_attempts = max(1, int(self.app_config.get("autofocus_recovery_max_attempts", 20)))
         self.soak_wait_log_interval = float(self.app_config.get("soak_wait_log_interval_seconds", 60))
         self.soak_wait_timeout_factor = float(self.app_config.get("soak_wait_timeout_factor", 3.0))
@@ -258,6 +262,11 @@ class ResultRunOperator:
                 self.illumination_controller.illumination_enable(0x00, hex_mode=True)
             except Exception as exc:
                 self.logger.error(f"Failed to switch off illumination: {exc}")
+
+            try:
+                self.focus_controller.autofocus(False)
+            except Exception as exc:
+                self.logger.error(f"Failed to disable autofocus: {exc}")
 
             try:
                 self.camera_controller.stop_recording()
@@ -626,6 +635,14 @@ class ResultRunOperator:
         self.logger.info(
             f"Taking image stack for sample {sample.id} at well ({sample.well_row}, {sample.well_column}), site {site_number}"
         )
+        if self.use_autofocus and self.first_image_offset:
+            autofocus_z = self.focus_controller.get_z()
+            first_image_z = autofocus_z + self.first_image_offset
+            self.focus_controller.move_z(first_image_z, speed="normal")
+            self.logger.info(
+                f"Applied first image offset of {self.first_image_offset:.2f} um after autofocus; "
+                f"z={first_image_z:.2f}."
+            )
         self.camera_controller.start_recording()
         for _ in range(self.stack_size):
             self._raise_if_stopped()
@@ -914,6 +931,7 @@ class ResultRunOperator:
                 self.focus_position = locked_z
                 self.sample_focus_positions[sample.id] = locked_z
                 sample.autofocus_z = locked_z
+                self._cache_autofocus_offset(sample, site_number)
                 self.logger.info(
                     f"Autofocus locked at sample {sample.id}, site {site_number}, z={locked_z:.2f}, "
                     f"try {attempt + 1}/{self.autofocus_tries}."
@@ -947,13 +965,47 @@ class ResultRunOperator:
             f"Applied autofocus offset {float(autofocus_offset):.2f} um for sample {sample.id}, site {site_number}."
         )
 
+    def _cache_autofocus_offset(self, sample, site_number):
+        offset_at_current_temp = float(self.focus_controller.get_autofocus_offset())
+        base_offset = offset_at_current_temp - self._temperature_autofocus_adjustment(sample.id)
+        stored_site = self.sample_site_positions.get((sample.id, site_number))
+
+        if stored_site is not None:
+            cached_offset = stored_site.get("autofocus_offset", 0.0)
+            if not math.isclose(float(cached_offset), base_offset, abs_tol=1e-6):
+                stored_site["autofocus_offset"] = base_offset
+                self.logger.info(
+                    f"Updated cached autofocus offset for sample {sample.id}, site {site_number}: "
+                    f"{float(cached_offset):.2f} -> {base_offset:.2f} um base offset. "
+                    "This value will be used for the next autofocus."
+                )
+        else:
+            for well in self.plate.well:
+                if well.well_row == sample.well_row and well.well_column == sample.well_column:
+                    cached_offset = well.autofocus_offset or 0.0
+                    if not math.isclose(float(cached_offset), base_offset, abs_tol=1e-6):
+                        well.autofocus_offset = base_offset
+                        self.logger.info(
+                            f"Updated cached autofocus offset for sample {sample.id}, site {site_number}: "
+                            f"{float(cached_offset):.2f} -> {base_offset:.2f} um base offset. "
+                            "This value will be used for the next autofocus."
+                        )
+                    break
+
+        self.logger.info(
+            f"Checked autofocus offset for sample {sample.id}, site {site_number}: "
+            f"stepper_a={offset_at_current_temp:.2f}, base_offset={base_offset:.2f}."
+        )
+
     def _temperature_autofocus_adjustment(self, sample_id):
         if self.temperature_profile is None:
             return 0.0
 
         start_temp = float(self.temperature_profile.start_temp)
         current_temp = self._get_sample_target_temperature(sample_id)
-        return (current_temp - start_temp) * 20.0
+        return (
+            current_temp - start_temp
+        ) * self.temperature_autofocus_adjustment_per_degree
 
     def _pause_for_autofocus_recovery(self, reason, sample, site_number):
         self.logger.error(reason)
